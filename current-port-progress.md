@@ -964,3 +964,111 @@ Phone is in temporary recovery; the evidence-only system mount was unmounted.
 
 
 
+## 15. Build14 runtime evidence and ROM policy capture (2026-10-06)
+
+This section supersedes the earlier build14 **staged-only/not-booted**
+status and the earlier RPMB/missing-init interpretations; historical notes
+above are retained. Build14 ran, but no newly applied source fixes have
+been built or deployed, and neither an Android boot fix nor context-overlay
+policy integration is verified.
+
+### Authoritative build14 runtime
+
+- Saved evidence: `porting/artifacts/ack-android-snapshot18h-build14-logdump-20261006-211656.bin`
+  and matching `.log`. Raw dump: 67,108,864 bytes, SHA256
+  `3b7d5492f66f03b72d4cb74b488b51c0a3a80e643c27c793abd62dd271abf6b3`.
+  Decoded log: 162,104 bytes, SHA256
+  `f52e4d178ed71bde5c41e81ec83f3236f907a92b04d5632274b87890b2b4600f`.
+  Records 0–1569 run through 319.852645 s; the first EOF excludes stale
+  tail data. No panic/oops was captured.
+- DRM minor 0 registered at 6.577221 s, followed by a GPU warning;
+  fbcon at 7.079499 s, msmdrmfb at 7.114878 s, and panel ready at
+  7.115921 s. These events do not prove a working Android display.
+- Android init first stage ran at 22.522773 s; `system_a` mounted
+  read-only at 22.673220 s; enforcing became active at 63.931519 s;
+  second stage ran at 64.084233 s. `/data` mounted as f2fs and early
+  `mount_all` succeeded at 92.382047 s. Missing-init/storage-failure
+  explanations are not supported by this run.
+- `qseecomd` started at 93.208384 s. At 93.425765 s, `tee` was denied
+  read/write on `mmcblk0p4` labeled `block_device`; exit 255 followed at
+  93.432107 s, with 46 exits total. Partition p4 is **SSD, not RPMB**.
+  Installed `init.target.rc` starts `vendor.qseecomd`, then waits for
+  `vendor.sys.listeners.registered=true`; continued waiting is an
+  **inference**, not an observed live property. No SurfaceFlinger crash
+  is established by this evidence.
+
+### Immutable installed-ROM SELinux inventory
+
+- Saved `porting/artifacts/rom-sepolicy-system-a-b9cb6955d584.tar`:
+  8,475,136 bytes, SHA256
+  `b9cb6955d584602b4ef82bd0512cdf51cd37e60a7655da2f8dcb61d8cd3c7e59`.
+  Full per-file byte/SHA/path manifest:
+  `porting/artifacts/rom-sepolicy-system-a-b9cb6955d584.list`.
+  The capture contains 93 regular files totaling 8,401,044 bytes:
+  platform 27, vendor 18, ODM 7, product 17, system_ext 24.
+- Source was `/dev/block/by-name/system_a`, mounted ext4 `ro,noload`
+  in OrangeFox and subsequently unmounted; this is installed-ROM policy,
+  **not live recovery policy**. Vendor `plat_sepolicy_vers.txt` is
+  `202604`. Platform/product/system_ext stored input hashes each matched
+  their precompiled companion files.
+- `vendor_file_contexts:681` labels
+  `/dev/block/platform/soc/7824900.sdhci/by-name/ssd` as `ssd_device`.
+  `vendor_sepolicy.cil:13595` already permits `tee_202604` to access
+  `ssd_device` `blk_file` (read/write/open/etc.). ACK instead exposes
+  `/dev/block/platform/soc@0/7824900.mmc/by-name/ssd`. The label-path
+  mismatch is the outstanding integration target; no generic TEE
+  `block_device` allow or extra SELinux permission was added.
+
+### Applied source changes — not built or deployed
+
+- `drivers/misc/qseecom.c`: unlocked DMA-BUF APIs, platform-owned
+  `dma_parms`, failed-open cleanup, and non-ICE key handling separated
+  from unsupported ICE; `compat_qseecom.h`: 20-byte MDTP ioctl;
+  `compat_qseecom.c`: fixed-width CE forwarding.
+- `ion_cma_heap.c`: default-CMA selection and rejection of secure flags;
+  tissot DTS: DMA heap 27; `scripts/initramfs-diag/init.c`: restored
+  protected-fstab guards and context overlay; draft overlay:
+  `porting/drafts/vendor_file_contexts.ack`.
+- Checked pinned references: Google common `android16-6.12` at
+  `3a7d1771d4925a56f7eeb8a5ba1faff0c544a9ef` (`drivers/base/platform.c`
+  DMA-parameter ownership, `drivers/dma-buf/dma-buf.c` unlocked APIs,
+  `msm8953.dtsi` GPU at `1c00000`, not `3d00000`, disabled);
+  donor `android14-5.15` at `76efa001ea197723c0423fdb9136e83b483f7aa1`
+  has no `qseecom.c` (the legacy driver is a local extension).
+  AOSP `system/core` at `a3b721a32242006b59cb12bd62c9133632af3a2d`
+  `init/devices.cpp` considers symlinks during label lookup.
+
+### Exercised checks and limits
+
+- Host `cc -std=gnu11 -Os -Wall -Wextra -Werror` passed for diagnostic
+  default, `ANDROID_CAPTURE`, `HEARTBEAT_RECORDER`, and
+  `ANDROID_CAPTURE+ANDROID_GUARD_TEST`; built-in guard safety selfcheck
+  returned 0. Actual ACK compat-header ABI check passed: MDTP
+  `0xc0149722`, encoded/payload 20 bytes versus native 32; CE layouts agree.
+  Production QSEE helper excerpts passed GPCE/ICE return and failed-open
+  ownership checks with controlled allocation failures.
+- Standalone preprocessing + `dtc` + `fdtget` passed: `/ion` compatible
+  `qcom,msm-ion`, DMA heap reg `0x1b`, GPU disabled at `1c00000`, QSEE
+  reserved/reg `84a00000+1900000`. Existing duplicate I2C/SPI unit-address
+  warnings remain; this was **not schema validation**.
+- NDK static AArch64 guard smoke ran in OrangeFox 4.9 in an isolated
+  mount namespace/chroot: loaded SID rejected; a synthetic initial SID
+  exercised deleted-input read-only bind, dangling-alias repair, and
+  regular-file preservation successfully. The synthetic SID does **not**
+  prove an Android SELinux transition or an ACK boot.
+- Throwaway binaries, DTB, and recovery temporary directory were removed.
+  These checks involved no kernel build, flash, or ROM writes.
+
+### Remaining prerequisites
+
+- Integrate and verify the SSD label/context overlay against installed
+  ROM policy and Android device-node/symlink labeling; integration remains
+  **unverified**. Preserve existing type-specific permissions.
+- Retain `hardware=qcom`: installed `init.rc` imports vendor
+  `init.${ro.hardware}.rc`, and vendor has `init.qcom.rc`, not
+  `init.tissot.rc`. `init.debug` support is unverified; init logs are already
+  captured.
+- A kernel build and subsequent ACK boot require explicit authorization.
+  Only such a boot can establish that the applied fixes work together,
+  SSD receives the intended label, and the listener/Android startup path
+  progresses. No new kernel-boot success is claimed here.
