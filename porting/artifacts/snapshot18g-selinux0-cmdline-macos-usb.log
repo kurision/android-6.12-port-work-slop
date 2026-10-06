@@ -1222,3 +1222,66 @@ ex
 14,1513,281069244,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_374
 14,1515,283958516,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_375
 14,1516,283988692,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 375
+14,1542,304018739,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1543,304033939,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_379
+36,1545,305788691,-,caller=T318;type=1400 audit(75363.259:159): avc:  denied  { read write } for  comm="qseecomd" name="mmcblk0p4" dev="tmpfs" ino=767 scontext=u:r:tee:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=0
+14,1546,305796100,-,caller=T1;init: Service 'vendor.qseecomd' (pid 379) exited with status 255
+14,1547,305796336,-,caller=T1;init: Sending SIGKILL to service 'vendor.qseecomd' (pid 379) process group...
+14,1548,305798377,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_379
+14,1551,309093045,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 380
+14,1558,314104497,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 381
+14,1563,319075635,-,caller=T1;init: starting service 'vendor.qseecomd'...
+36,1566,319843607,-,caller=T318;type=1400 audit(75377.311:162): avc:  denied  { read write } for  comm="qseecomd" name="mmcblk0p4" dev="tmpfs" ino=767 scontext=u:r:tee:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=0
+14,1567,319850072,-,caller=T1;init: Service 'vendor.qseecomd' (pid 383) exited with status 255
+14,1568,319850311,-,caller=T1;init: Sending SIGKILL to service 'vendor.qseecomd' (pid 383) process group...
+14,1569,319852645,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_383
+14,1570,323160163,-,caller=T1;init: Untracked process (pid: 168 name: (init) ppid: 1 pgrp: 0 state: Z) exited with status 0
+14,1571,323160388,-,caller=T1;init: Untracked process (pid: 168 name: (init) ppid: 1 pgrp: 0 state: Z) did not have an associated service entry and will not be reaped
+14,1572,323161303,-,caller=T1;init: Untracked process (pid: 172 name: (init) ppid: 1 pgrp: 0 state: Z) exited with status 0
+14,1573,323161355,-,caller=T1;init: Untracked process (pid: 172 name: (init) ppid: 1 pgrp: 0 state: Z) did not have an associated service entry and will not be reaped
+14,1574,323161843,-,caller=T1;init: Untracked process (pid: 173 name: (init) ppid: 1 pgrp: 0 state: Z) exited with status 1
+14,1575,323161890,-,caller=T1;init: Untracked process (pid: 173 name: (init) ppid: 1 pgrp: 0 state: Z) did not have an associated service entry and will not be reaped
+14,1576,324092467,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1577,324107550,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_384
+14,1578,324140913,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 384
+14,1590,334129911,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1591,334145790,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_386
+14,1592,334172205,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 386
+14,1597,339150086,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1598,339165380,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_387
+14,1599,339196727,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 387
+36,1600,339389946,-,caller=T318;type=1400 audit(75396.859:166): avc:  denied  { read write } for  comm="qseecomd" name="mmcblk0p4" dev="tmpfs" ino=767 scontext=u:r:tee:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=0
+14,1601,339396226,-,caller=T1;init: Service 'vendor.qseecomd' (pid 387) exited with status 255
+14,1602,339396473,-,caller=T1;init: Sending SIGKILL to service 'vendor.qseecomd' (pid 387) process group...
+14,1603,339398925,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_387
+14,1604,344165311,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1605,344179933,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_388
+14,1606,344208363,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 388
+14,1611,349182952,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1612,349197794,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_389
+14,1613,349228528,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 389
+14,1618,354200544,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1619,354215892,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_390
+14,1620,354244694,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 390
+14,1625,359218707,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1626,359233286,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_391
+14,1627,359256624,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 391
+14,1632,364238413,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1633,364253303,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_392
+36,1642,369879352,-,caller=T318;type=1400 audit(75427.347:172): avc:  denied  { read write } for  comm="qseecomd" name="mmcblk0p4" dev="tmpfs" ino=767 scontext=u:r:tee:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=0
+14,1643,369885526,-,caller=T1;init: Service 'vendor.qseecomd' (pid 393) exited with status 255
+14,1644,369885760,-,caller=T1;init: Sending SIGKILL to service 'vendor.qseecomd' (pid 393) process group...
+14,1645,369888184,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_393
+14,1648,374324235,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 395
+36,1649,374768185,-,caller=T318;type=1400 audit(75432.239:173): avc:  denied  { read write } for  comm="qseecomd" name="mmcblk0p4" dev="tmpfs" ino=767 scontext=u:r:tee:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=0
+14,1650,374775050,-,caller=T1;init: Service 'vendor.qseecomd' (pid 395) exited with status 255
+14,1651,374775311,-,caller=T1;init: Sending SIGKILL to service 'vendor.qseecomd' (pid 395) process group...
+14,1653,379299583,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1654,379315775,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_396
+14,1655,379363868,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 396
+36,1656,380110382,-,caller=T318;type=1400 audit(75437.579:174): avc:  denied  { read write } for  comm="qseecomd" name="mmcblk0p4" dev="tmpfs" ino=767 scontext=u:r:tee:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=0
+14,1657,380116855,-,caller=T1;init: Service 'vendor.qseecomd' (pid 396) exited with status 255
+14,1658,380117097,-,caller=T1;init: Sending SIGKILL to service 'vendor.qseecomd' (pid 396) process group...
+14,1659,380119470,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_396
+
+DIAG: EOF Android USB kmsg dump complete
