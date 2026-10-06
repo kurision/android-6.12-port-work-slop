@@ -1,0 +1,2 @@
+DIAG: USB kmsg write open failed
+DIAG: USB kmsg read open failed errno=2

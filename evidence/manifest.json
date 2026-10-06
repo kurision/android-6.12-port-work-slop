@@ -1,0 +1,251 @@
+{
+  "upstream_branch": "android16-6.12",
+  "upstream_commit": "3a7d1771d4925a56f7eeb8a5ba1faff0c544a9ef",
+  "source_snapshot_files": 87276,
+  "kernel_and_dtb_sha256": "50bea980c7f0622f128b516b495d1581d600b7d6705bd9321f13d6f72250dbd9",
+  "snapshot12_image_sha256": "7952f600abc0442fa5c206fc690f582113c1d60b30ee92dc2f5b0c42679abbe6",
+  "files": [
+    {
+      "path": "scripts/ack-driver-audit.py",
+      "source": "scripts/ack-driver-audit.py",
+      "bytes": 7255,
+      "sha256": "4477f5c834b01f40d54c50dbffc00f4fd4b1b7f6b79b0c4b39ef5431d2f2820d"
+    },
+    {
+      "path": "scripts/build-ack-tissot.sh",
+      "source": "scripts/build-ack-tissot.sh",
+      "bytes": 4441,
+      "sha256": "6dd7a26ca63f6edf93e17fcb2e61b1042badc059445feba0fe146e1f0dd860b2"
+    },
+    {
+      "path": "scripts/repack-tissot-probe.sh",
+      "source": "scripts/repack-tissot-probe.sh",
+      "bytes": 5354,
+      "sha256": "d8461101739016dd5f6694f1386c612d31c234eed264b1923483e3e30672a3db"
+    },
+    {
+      "path": "scripts/tissot-ack.config",
+      "source": "scripts/tissot-ack.config",
+      "bytes": 6646,
+      "sha256": "ad4325ded6dc0588f03659e8173071809617ef0c1a16606ca5fddfe9d55f84ce"
+    },
+    {
+      "path": "scripts/initramfs-diag/init.c",
+      "source": "scripts/initramfs-diag/init.c",
+      "bytes": 16099,
+      "sha256": "a86b6f3d4619a557ceca385ab0c1854c1cb8338f7808699642797a5089c80e5e"
+    },
+    {
+      "path": "scripts/initramfs-diag/heartbeat-init.sh",
+      "source": "scripts/initramfs-diag/heartbeat-init.sh",
+      "bytes": 1616,
+      "sha256": "93d99f97b208e5691d41da7dc8a3d7f8e5b793961387f850329510b705023418"
+    },
+    {
+      "path": "scripts/initramfs-diag/load-policy.c",
+      "source": "scripts/initramfs-diag/load-policy.c",
+      "bytes": 1438,
+      "sha256": "1205c7ce9f31d8ec80a2be4e0c06505674ba18667bff9eb360ff535d83864d80"
+    },
+    {
+      "path": "configs/tissot-ack-resolved.config",
+      "source": "/home/kurision/development/kernel/ack-android16-6.12/out/.config",
+      "bytes": 231395,
+      "sha256": "5f8f311b4227d3ced1123c6d9e3511347ac1a367dd04ee59efe951099f90c738"
+    },
+    {
+      "path": "current-port-progress.md",
+      "source": "current-port-progress.md",
+      "bytes": 15778,
+      "sha256": "6dde46c0a2cda27210090e2a7ebd534f0014ccdc3579a8f6c5fbb17b3867cacb"
+    },
+    {
+      "path": "docs/project-mainline.md",
+      "source": "docs/project-mainline.md",
+      "bytes": 36224,
+      "sha256": "41b3f971d8a3e7f0bc43388a7857499c448224d99ce2276808b70f4c4efdb36c"
+    },
+    {
+      "path": "docs/ack-6.18-boot-investigation.md",
+      "source": "docs/ack-6.18-boot-investigation.md",
+      "bytes": 53067,
+      "sha256": "7df0eae334a88a98398fa03a33235d56ddd90c1d3d91b12ed19f0f8244000a43"
+    },
+    {
+      "path": "docs/handoff-ack-mainline.md",
+      "source": "docs/handoff-ack-mainline.md",
+      "bytes": 7870,
+      "sha256": "33093eee412eff208b89d7bd18343e232d793f9ccb4bce877af891094e73bdf6"
+    },
+    {
+      "path": "docs/port-work-resume.md",
+      "source": "publication handoff",
+      "bytes": 4683,
+      "sha256": "594ad90578409a237cd9c35cf3631e210f8e78d1e5969095ff5be6ee1510848d"
+    },
+    {
+      "path": "evidence/tissot-partitions.txt",
+      "source": "/home/kurision/development/kernel/tissot_backup_20261003/partitions.txt",
+      "bytes": 1587,
+      "sha256": "5606136a5e4e56f5bda9985e60c406aa7c111288d50dc966ea7e74658bae8568"
+    },
+    {
+      "path": "evidence/capture/init.target.rc",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/init.target.rc",
+      "bytes": 8663,
+      "sha256": "4bc9894318d5f2aa75e403fadd58457c968ed9f6ab8ad9ec4b1fbbe6b3adeb2e"
+    },
+    {
+      "path": "evidence/capture/init.qcom.rc",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/init.qcom.rc",
+      "bytes": 19446,
+      "sha256": "dad9b8fa23337b132b40a1bf614ac1be6541ca21686fe66823c60f51241a668a"
+    },
+    {
+      "path": "evidence/capture/ueventd.rc",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/ueventd.rc",
+      "bytes": 21177,
+      "sha256": "ff6cb10fe15b363d81282bc009efc7a3e6504fafc2afb91c2aa57698d5d01995"
+    },
+    {
+      "path": "evidence/capture/system-ueventd.rc",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/system-ueventd.rc",
+      "bytes": 3834,
+      "sha256": "7a26df7521ecba3b3fd66df438b4e5d1b5e8fa6fc5ea1a73c2c93eed803f985e"
+    },
+    {
+      "path": "evidence/capture/vendor-ueventd.rc",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/vendor-ueventd.rc",
+      "bytes": 21177,
+      "sha256": "ff6cb10fe15b363d81282bc009efc7a3e6504fafc2afb91c2aa57698d5d01995"
+    },
+    {
+      "path": "evidence/capture/fstab.qcom",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/fstab.qcom",
+      "bytes": 1468,
+      "sha256": "c71040bbe463fe2cb7235a08f38174065272ade1962a0e991faabdc37c2dcc86"
+    },
+    {
+      "path": "evidence/logs/ack-android-snapshot12-logdump.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-android-snapshot12-logdump.log",
+      "bytes": 120090,
+      "sha256": "63ff2aee636bd7b82eab1073ea84e108b54e342a4ff827b00e7ab83c77bd028d"
+    },
+    {
+      "path": "evidence/logs/ack-android-link11-logdump.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-android-link11-logdump.log",
+      "bytes": 148487,
+      "sha256": "f5a1b9520a562d0910afe154fd6ff628a5a9ffa65ef87ac33bc5e66433985892"
+    },
+    {
+      "path": "evidence/logs/ack-android-probe10-logdump.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-android-probe10-logdump.log",
+      "bytes": 114049,
+      "sha256": "b1f49c8c05e21393eff420880ced761b468909ffa25c7b0edd072600d6ce9e7f"
+    },
+    {
+      "path": "evidence/logs/ack-android-policy-capture-logdump.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-android-policy-capture-logdump.log",
+      "bytes": 119637,
+      "sha256": "d3099445302adde5b32779a622016b7a346c3cfeff88ce7283868140eebc4ec5"
+    },
+    {
+      "path": "evidence/logs/ack-diag4-logdump.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-diag4-logdump.log",
+      "bytes": 24713,
+      "sha256": "806af708b60bc050ea9354cd7172cda0b27187e6d62c784a37b4a5e02b0afde5"
+    },
+    {
+      "path": "evidence/serial/snapshot12-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/snapshot12-usb-part1.log",
+      "bytes": 1733,
+      "sha256": "cd4c960a466391e104b5806f1599beae04e4736ccf1105f20b291e50348a655d"
+    },
+    {
+      "path": "evidence/serial/link11-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/link11-usb-part1.log",
+      "bytes": 115073,
+      "sha256": "fc4f215273a8366b47ed5fd2eba57d8749872b86d6ce17a99ae8458a22ed14a5"
+    },
+    {
+      "path": "evidence/serial/bootdevice9-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/bootdevice9-usb-part1.log",
+      "bytes": 107769,
+      "sha256": "895e7c9a0589087d4f38edea089bdf53d1503fe7f679597663d285912c7c3804"
+    },
+    {
+      "path": "evidence/serial/bootdevice8-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/bootdevice8-usb-part1.log",
+      "bytes": 122110,
+      "sha256": "f28394b79158c2e0ef8671cc4a146d3eb37b31c73a167f96c0a208c34afe5305"
+    },
+    {
+      "path": "evidence/serial/bootdevice7-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/bootdevice7-usb-part1.log",
+      "bytes": 73,
+      "sha256": "18f947d24573bfa26a8c96566d08e67686c7af6672ac8a8c0a3a790bfa7281c9"
+    },
+    {
+      "path": "evidence/serial/bootdevice5-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/bootdevice5-usb-part1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/serial/bootdevice4-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/bootdevice4-usb-part1.log",
+      "bytes": 104,
+      "sha256": "05c8a2c3926ea230d06a5587142e215a9c40a4133b95d3958424687697af742a"
+    },
+    {
+      "path": "evidence/serial/bootdevice3-usb-part1.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/bootdevice3-usb-part1.log",
+      "bytes": 104,
+      "sha256": "05c8a2c3926ea230d06a5587142e215a9c40a4133b95d3958424687697af742a"
+    },
+    {
+      "path": "evidence/serial/bootdevice-usb-live.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/bootdevice-usb-live.log",
+      "bytes": 8192,
+      "sha256": "c84c00ca728e93fd7437a6e94cd9c8e4eb9f829efce80db516a2f5ce8c729dfc"
+    },
+    {
+      "path": "evidence/serial/android-usb-live.log",
+      "source": "/home/kurision/development/kernel/ack-boot-test/android-policy-capture/android-usb-live.log",
+      "bytes": 8192,
+      "sha256": "c84c00ca728e93fd7437a6e94cd9c8e4eb9f829efce80db516a2f5ce8c729dfc"
+    },
+    {
+      "path": "evidence/raw/ack-android-snapshot12-logdump.bin.gz",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-android-snapshot12-logdump.bin",
+      "bytes": 94884,
+      "sha256": "e6ccf4e82d4ea6c86fa5194eb9508be225c5bca59212495f6e532e4ed9cbda80",
+      "uncompressed_bytes": 67108864,
+      "uncompressed_sha256": "3295e0d5264e82ae524e97d96002f3edb065c80397b9d0428ecba891e56d0902"
+    },
+    {
+      "path": "evidence/raw/ack-android-link11-logdump.bin.gz",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-android-link11-logdump.bin",
+      "bytes": 94754,
+      "sha256": "0f8ca8f52132deea96fdd1e43c6214fa46486d1de4a8c9cfed6218e27fac37b7",
+      "uncompressed_bytes": 67108864,
+      "uncompressed_sha256": "4359c40c458b2c1bcb96c363eb7987786563483aa4cd5200b66aed6507d610a3"
+    },
+    {
+      "path": "evidence/raw/ack-android-probe10-logdump.bin.gz",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-android-probe10-logdump.bin",
+      "bytes": 94351,
+      "sha256": "f96aa6bb4eff46cccc0245e0f2225c2a32fc47c85290d99db7c6a4bb48a663e0",
+      "uncompressed_bytes": 67108864,
+      "uncompressed_sha256": "235d9af96c92b40c130d4986a203f75cd2c2f847e1ba2caa7d9f8841a146e4d3"
+    },
+    {
+      "path": "evidence/raw/ack-diag4-logdump.bin.gz",
+      "source": "/home/kurision/development/kernel/ack-boot-test/ack-diag4-logdump.bin",
+      "bytes": 75699,
+      "sha256": "edc6697e136f4b1d2e69fc2c36661dfc17670d8c7c671d2551b7e408e754bf0f",
+      "uncompressed_bytes": 67108864,
+      "uncompressed_sha256": "658288b8b46fe4b507dc1ee03a13688b3050b9e988fa8304a67320b8b346af16"
+    }
+  ]
+}
