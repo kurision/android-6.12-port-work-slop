@@ -58,16 +58,20 @@
 			no-map;
 		};
 
-		ramoops@9ff00000 {
+		/* ACK's original ramoops@9ff00000 is not reproduced: accessing that
+		 * address aborts the CPU on this phone. 0x86800000 is a 4 MiB System
+		 * RAM hole (iomem reports 86800000-86bfffff) between
+		 * reserved@86400000 and mpss@86c00000 that nothing else claims.
+		 */
+		ramoops@86800000 {
 			compatible = "ramoops";
-			reg = <0x0 0x9ff00000 0x0 0x00100000>;
+			reg = <0x0 0x86800000 0x0 0x00100000>;
 			record-size = <0x1000>;
 			console-size = <0x80000>;
 			ftrace-size = <0x1000>;
 			pmsg-size = <0x8000>;
 		};
 	};
-
 	vph_pwr: vph-pwr-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vph_pwr";
