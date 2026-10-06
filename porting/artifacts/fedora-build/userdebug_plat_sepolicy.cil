@@ -86041,3 +86041,7 @@
 (allow kernel init (dir (search)))
 (allow kernel init (lnk_file (read)))
 (allow kernel init (file (open read)))
+; DIAGNOSTIC TEMP-ONLY snapshot23: bypass SSD label to test downstream; REVERT after.
+(allow tee block_device (blk_file (open read write)))
+; DIAGNOSTIC TEMP-ONLY snapshot24: let keymaster HAL use mislabeled qseecom node; REVERT after.
+(allow hal_keymaster device (chr_file (open read write ioctl)))
