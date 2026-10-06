@@ -86038,3 +86038,6 @@
 
 (allow kernel device (chr_file (read write)))
 (allow kernel device (blk_file (write)))
+(allow kernel init (dir (search)))
+(allow kernel init (lnk_file (read)))
+(allow kernel init (file (open read)))
