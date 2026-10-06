@@ -32,8 +32,8 @@
     {
       "path": "scripts/initramfs-diag/init.c",
       "source": "scripts/initramfs-diag/init.c",
-      "bytes": 16099,
-      "sha256": "a86b6f3d4619a557ceca385ab0c1854c1cb8338f7808699642797a5089c80e5e"
+      "bytes": 16348,
+      "sha256": "a6d0126ee8eef5d25fdf485077215f3635ce22db9c218dedf98eb4ef3dba159a"
     },
     {
       "path": "scripts/initramfs-diag/heartbeat-init.sh",
@@ -56,8 +56,8 @@
     {
       "path": "current-port-progress.md",
       "source": "current-port-progress.md",
-      "bytes": 15778,
-      "sha256": "6dde46c0a2cda27210090e2a7ebd534f0014ccdc3579a8f6c5fbb17b3867cacb"
+      "bytes": 16764,
+      "sha256": "4cb87fc6b9dbfac45128d9888c83cac3d24154330e55e374fd0b63caf79ab2d9"
     },
     {
       "path": "docs/project-mainline.md",
@@ -80,8 +80,8 @@
     {
       "path": "docs/port-work-resume.md",
       "source": "publication handoff",
-      "bytes": 4683,
-      "sha256": "594ad90578409a237cd9c35cf3631e210f8e78d1e5969095ff5be6ee1510848d"
+      "bytes": 4987,
+      "sha256": "e2c84f0bf5b821f9a37bb9bc7677ffd02aa1b68a45558f6a74459dd354c4319c"
     },
     {
       "path": "evidence/tissot-partitions.txt",

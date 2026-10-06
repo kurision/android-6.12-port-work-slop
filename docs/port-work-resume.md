@@ -31,9 +31,13 @@ snapshots. Vendor mounts still skipped userdata, persist, dsp and modem_a;
 `vendor.qseecomd` still exited with 255. The phone was returned to recovery.
 No kernel build or partition flashing was performed in this diagnostic phase.
 
-Next proposed diagnostic change is **not implemented or approved**: retain an
-open procfs directory fd before Android switches root, then use `openat()` to
-access PID 1's mount namespace/root. The exact cause of ENOENT remains unverified.
+The procfs-fd correction is now approved and implemented: the observer opens
+procfs before its wait and uses `openat()` for PID 1's namespace/root. The fd
+is closed on success and failure. A host smoke proved both opens survive removal
+of the original procfs pathname; host `setns` then failed with EPERM. The corrected
+static AArch64 init compiled successfully, but it has **not been boot-tested on
+the phone**. Snapshot12 remains the latest on-device result. Android access
+permissions and the exact original ENOENT cause remain unverified.
 
 ## Evidence layout
 

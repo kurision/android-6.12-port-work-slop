@@ -276,7 +276,23 @@ Phone is in temporary recovery; the evidence-only system mount was unmounted.
   persist, dsp and modem_a. `vendor.qseecomd` continued exiting with 255.
 - Earlier v11 labeling/EAGAIN messages are not present in this current
   capture; do not carry them forward from stale partition tail records.
-- Next diagnostic candidate, not yet approved or proven: retain an open
-  procfs directory fd before init's root switch, then use `openat()` for
-  PID 1's namespace/root instead of resolving `/proc` from the observer's
-  old root. Exact ENOENT cause remains unverified.
+- Procfs-fd correction approved and implemented after this test: observer
+  opens `/proc` before its 75 s wait, retains the directory fd, and uses
+  `openat()` for `1/ns/mnt` and `1/root`. The fd is closed on success and
+  failure. This corrected source has not been boot-tested on the phone.
+
+### Procfs-fd correction verification
+
+- Host smoke exercised the actual observer against a procfs fixture whose
+  pathname was renamed immediately after opening its directory fd.
+  Absolute namespace lookup failed with ENOENT; the corrected observer
+  successfully opened the namespace and root through the retained fd,
+  then reported `step=setns failed errno=1` under host restrictions.
+  This proves descriptor-relative access survives pathname removal, not
+  that Android SELinux permits later `openat`, `setns` or chroot.
+- Static AArch64 diagnostic init compiled with NDK 29 clang,
+  `-Os -Wall -Wextra -Werror -DANDROID_CAPTURE`. Throwaway smoke artifacts
+  removed. No kernel build, new boot image or phone boot in this correction.
+- Snapshot12 remains the latest on-device evidence. The original ENOENT
+  cause is still unverified; another temporary boot is needed to determine
+  whether the correction reaches snapshots or a subsequent access denial.
