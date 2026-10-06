@@ -1,0 +1,83 @@
+00079000-0007917f : 79000.phy phy@79000
+000a4000-000a4fff : a4000.efuse efuse@a4000
+00400000-00459fff : 400000.interconnect interconnect@400000
+004a8000-004a8fff : 4a9000.thermal-sensor thermal-sensor@4a9000
+004a9000-004a9fff : 4a9000.thermal-sensor thermal-sensor@4a9000
+004ab000-004ab003 : 4ab000.restart restart@4ab000
+00500000-0051207f : 500000.interconnect interconnect@500000
+00580000-0059607f : 580000.interconnect interconnect@580000
+01000000-012fffff : 1000000.pinctrl pinctrl@1000000
+01800000-0187ffff : 1800000.clock-controller clock-controller@1800000
+01905000-01924fff : 1905000.hwlock hwlock@1905000
+019461d4-019461db : b018000.power-controller tcsr-mem-acc
+01a00000-01a00fff : 1a00000.display-subsystem mdss_phys
+01ab0000-01ab103f : 1a01000.display-controller vbif_phys
+01c48000-01c48fff : 1c48000.iommu-ctx iommu-ctx@0
+01c4a000-01c4afff : 1c4a000.iommu-ctx iommu-ctx@2000
+01d00000-01dfefff : 1d00000.venus venus@1d00000
+01e34000-01e34fff : 1e34000.iommu-ctx iommu-ctx@14000
+01e35000-01e35fff : 1e35000.iommu-ctx iommu-ctx@15000
+01e36000-01e36fff : 1e36000.iommu-ctx iommu-ctx@16000
+01e38000-01e38fff : 1e38000.iommu-ctx iommu-ctx@18000
+0200a000-0200c0ff : 200f000.spmi cnfg
+02400000-02bfffff : 200f000.spmi chnls
+02c00000-033fffff : 200f000.spmi obsrvr
+03800000-039fffff : 200f000.spmi intr
+04020000-0402003f : 4080000.remoteproc rmb
+04080000-040800ff : 4080000.remoteproc qdsp6
+0700c100-070f8800 : 7000000.usb usb@7000000
+07824000-078247ff : 7824900.mmc core
+07824900-07824dff : 7824900.mmc hc
+07864000-078647ff : 7864900.mmc core
+07864900-07864dff : 7864900.mmc hc
+07884000-078a2fff : 7884000.dma-controller dma-controller@7884000
+078af000-078af1ff : msm_serial
+078b6000-078b65ff : 78b6000.i2c i2c@78b6000
+078b7000-078b75ff : 78b7000.i2c i2c@78b7000
+07900000-07946fff : 7900000.ipa ipa@7900000
+07ac4000-07ae2fff : 7ac4000.dma-controller dma-controller@7ac4000
+07af6000-07af65ff : 7af6000.spi spi@7af6000
+0a21b000-0a21dfff : a204000.remoteproc pmu
+0b011000-0b01104f : b011000.mailbox mailbox@b011000
+0b011050-0b01105f : b011050.clock-controller cpu4_rcg_cbr
+0b111050-0b11105f : b011050.clock-controller cpu0_rcg_cbr
+0b111200-0b1112ff : b018000.power-controller apm
+0b116000-0b11604f : b011050.clock-controller cpu0_pll
+0b121000-0b121fff : arch_mem_timer
+0b1d1050-0b1d105f : b011050.clock-controller cci_rcg_cbr
+0c051000-0c051003 : c051000.sound-card mic-iomux
+0c051004-0c051007 : c051000.sound-card spkr-iomux
+0c052000-0c052003 : c051000.sound-card quin-iomux
+0c0f0000-0c0f03ff : c0f0000.codec codec@c0f0000
+10000000-849fffff : System RAM
+  10000000-115cffff : Kernel code
+  115d0000-117dffff : reserved
+  117e0000-11aeffff : Kernel data
+  12000000-12010fff : reserved
+  12200000-12bf6fff : reserved
+84a00000-867fffff : reserved
+86800000-86bfffff : System RAM
+86c00000-8eefffff : reserved
+8ef00000-8fffffff : System RAM
+90000000-905effff : reserved
+905f0000-913fffff : System RAM
+91400000-91afffff : reserved
+91b00000-91ffffff : System RAM
+92000000-920fffff : reserved
+92100000-92ffffff : System RAM
+93000000-931fffff : reserved
+93200000-94ffffff : System RAM
+95000000-95001fff : reserved
+95002000-f2cfffff : System RAM
+  9ff00000-9fffffff : reserved
+f2d00000-f2e7ffff : reserved
+f2e80000-ffffffff : System RAM
+  f90f0000-ff7fffff : reserved
+  ff83a000-ff845fff : reserved
+  ff846000-ff846fff : reserved
+  ff848000-ff84afff : reserved
+  ff84b000-ff84bfff : reserved
+  ff84c000-ff84cfff : reserved
+  ff84d000-ff85ffff : reserved
+  ff860000-ff8dafff : reserved
+  ff8db000-ffffffff : reserved

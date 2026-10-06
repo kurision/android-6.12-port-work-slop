@@ -1,0 +1,400 @@
+Oct 05 08:22:43 qcom-msm8953 dockerd[27513]: time="2026-10-05T08:22:43.291259418Z" level=info msg="Creating a containerd client" address=/run/containerd/containerd.sock timeout=1m0s
+Oct 05 08:22:43 qcom-msm8953 dockerd[27513]: time="2026-10-05T08:22:43.315631287Z" level=info msg="Loading containers: start."
+Oct 05 08:22:43 qcom-msm8953 dockerd[27513]: time="2026-10-05T08:22:43.315822954Z" level=info msg="NRI is disabled"
+Oct 05 08:22:43 qcom-msm8953 dockerd[27513]: time="2026-10-05T08:22:43.315864568Z" level=info msg="Starting daemon with containerd snapshotter integration enabled"
+Oct 05 08:22:48 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1338.
+Oct 05 08:22:48 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:22:48 qcom-msm8953 (ntainerd)[27543]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:22:48 qcom-msm8953 (ntainerd)[27543]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:22:48 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:22:48 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:22:48 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:22:53 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1339.
+Oct 05 08:22:53 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:22:53 qcom-msm8953 (ntainerd)[27552]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:22:53 qcom-msm8953 (ntainerd)[27552]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:22:53 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:22:53 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:22:53 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:22:58 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1340.
+Oct 05 08:22:58 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:22:58 qcom-msm8953 (ntainerd)[27563]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:22:58 qcom-msm8953 (ntainerd)[27563]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:22:58 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:22:58 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:22:58 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:04 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1341.
+Oct 05 08:23:04 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:04 qcom-msm8953 (ntainerd)[27572]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:04 qcom-msm8953 (ntainerd)[27572]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:04 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:04 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:04 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:09 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1342.
+Oct 05 08:23:09 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:09 qcom-msm8953 (ntainerd)[27581]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:09 qcom-msm8953 (ntainerd)[27581]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:09 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:09 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:09 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:14 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1343.
+Oct 05 08:23:14 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:14 qcom-msm8953 (ntainerd)[27591]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:14 qcom-msm8953 (ntainerd)[27591]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:14 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:14 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:14 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:19 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1344.
+Oct 05 08:23:19 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:19 qcom-msm8953 (ntainerd)[27600]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:19 qcom-msm8953 (ntainerd)[27600]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:19 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:19 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:19 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:25 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1345.
+Oct 05 08:23:25 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:25 qcom-msm8953 (ntainerd)[27609]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:25 qcom-msm8953 (ntainerd)[27609]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:25 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:25 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:25 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:30 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1346.
+Oct 05 08:23:30 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:30 qcom-msm8953 (ntainerd)[27617]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:30 qcom-msm8953 (ntainerd)[27617]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:30 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:30 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:30 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:35 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1347.
+Oct 05 08:23:35 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:35 qcom-msm8953 (ntainerd)[27626]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:35 qcom-msm8953 (ntainerd)[27626]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:35 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:35 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:35 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:40 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1348.
+Oct 05 08:23:40 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:40 qcom-msm8953 (ntainerd)[27635]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:40 qcom-msm8953 (ntainerd)[27635]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:40 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:40 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:40 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:43 qcom-msm8953 dockerd[27513]: time="2026-10-05T08:23:43.296449716Z" level=error msg="Failed to get event" error="rpc error: code = Unavailable desc = rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout\"" module=libcontainerd namespace=plugins.moby
+Oct 05 08:23:43 qcom-msm8953 dockerd[27513]: time="2026-10-05T08:23:43.296562633Z" level=info msg="Waiting for containerd to be ready to restart event processing" module=libcontainerd namespace=plugins.moby
+Oct 05 08:23:43 qcom-msm8953 dockerd[27513]: time="2026-10-05T08:23:43.321558357Z" level=info msg="Daemon shutdown complete" error="failed to start daemon: failed to get containerd plugins: Unavailable: connection error: desc = \"transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout\""
+Oct 05 08:23:43 qcom-msm8953 dockerd[27513]: failed to start daemon: failed to get containerd plugins: Unavailable: connection error: desc = "transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout"
+Oct 05 08:23:43 qcom-msm8953 systemd[1]: docker.service: Main process exited, code=exited, status=1/FAILURE
+Oct 05 08:23:43 qcom-msm8953 systemd[1]: docker.service: Failed with result 'exit-code'.
+Oct 05 08:23:43 qcom-msm8953 systemd[1]: Failed to start Docker Application Container Engine.
+Oct 05 08:23:43 qcom-msm8953 systemd[1]: docker.service: Consumed 1.158s CPU time, 32.4M memory peak.
+Oct 05 08:23:45 qcom-msm8953 systemd[1]: docker.service: Scheduled restart job, restart counter is at 112.
+Oct 05 08:23:45 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job immediately on client request, restart counter is at 1349.
+Oct 05 08:23:45 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:45 qcom-msm8953 (ntainerd)[27646]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:45 qcom-msm8953 (ntainerd)[27646]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:45 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:45 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:45 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:45 qcom-msm8953 systemd[1]: Starting Docker Application Container Engine...
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.756059717Z" level=info msg="Starting up"
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.757748884Z" level=info msg="OTEL tracing is not configured, using no-op tracer provider"
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.758478727Z" level=info msg="CDI directory does not exist, skipping" dir=/var/run/cdi
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.759242737Z" level=info msg="CDI directory does not exist, skipping" dir=/etc/cdi
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.786978044Z" level=info msg="Creating a containerd client" address=/run/containerd/containerd.sock timeout=1m0s
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.809051060Z" level=info msg="Loading containers: start."
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.809192727Z" level=info msg="NRI is disabled"
+Oct 05 08:23:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:23:45.809222779Z" level=info msg="Starting daemon with containerd snapshotter integration enabled"
+Oct 05 08:23:50 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1350.
+Oct 05 08:23:50 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:50 qcom-msm8953 (ntainerd)[27681]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:50 qcom-msm8953 (ntainerd)[27681]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:50 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:50 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:50 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:56 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1351.
+Oct 05 08:23:56 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:23:56 qcom-msm8953 (ntainerd)[27691]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:23:56 qcom-msm8953 (ntainerd)[27691]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:23:56 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:23:56 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:23:56 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27694]: gkr-pam: unable to locate daemon control file
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27694]: gkr-pam: stashed password to try later in open session
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27694]: Accepted password for user from 172.16.42.2 port 64063 ssh2
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27694]: pam_unix(sshd:session): session opened for user user(uid=10000) by (uid=0)
+Oct 05 08:23:57 qcom-msm8953 systemd-logind[1515]: New session c5 of user user.
+Oct 05 08:23:57 qcom-msm8953 systemd[1]: Started Session c5 of User user.
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27694]: gkr-pam: the password for the login keyring was invalid.
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27699]: Received disconnect from 172.16.42.2 port 64063:11: disconnected by user
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27699]: Disconnected from user user 172.16.42.2 port 64063
+Oct 05 08:23:57 qcom-msm8953 sshd-session.pam[27694]: pam_unix(sshd:session): session closed for user user
+Oct 05 08:23:57 qcom-msm8953 systemd[1]: session-c5.scope: Deactivated successfully.
+Oct 05 08:23:57 qcom-msm8953 systemd-logind[1515]: Removed session c5.
+Oct 05 08:24:01 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1352.
+Oct 05 08:24:01 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:01 qcom-msm8953 (ntainerd)[27813]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:01 qcom-msm8953 (ntainerd)[27813]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:01 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:01 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:01 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:06 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1353.
+Oct 05 08:24:06 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:06 qcom-msm8953 (ntainerd)[27823]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:06 qcom-msm8953 (ntainerd)[27823]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:06 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:06 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:06 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:11 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1354.
+Oct 05 08:24:11 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:11 qcom-msm8953 (ntainerd)[27832]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:11 qcom-msm8953 (ntainerd)[27832]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:11 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:11 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:11 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27836]: gkr-pam: unable to locate daemon control file
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27836]: gkr-pam: stashed password to try later in open session
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27836]: Accepted password for user from 172.16.42.2 port 64081 ssh2
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27836]: pam_unix(sshd:session): session opened for user user(uid=10000) by (uid=0)
+Oct 05 08:24:13 qcom-msm8953 systemd-logind[1515]: New session c6 of user user.
+Oct 05 08:24:13 qcom-msm8953 systemd[1]: Started Session c6 of User user.
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27836]: gkr-pam: the password for the login keyring was invalid.
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27841]: Received disconnect from 172.16.42.2 port 64081:11: disconnected by user
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27841]: Disconnected from user user 172.16.42.2 port 64081
+Oct 05 08:24:13 qcom-msm8953 sshd-session.pam[27836]: pam_unix(sshd:session): session closed for user user
+Oct 05 08:24:13 qcom-msm8953 systemd[1]: session-c6.scope: Deactivated successfully.
+Oct 05 08:24:13 qcom-msm8953 systemd-logind[1515]: Removed session c6.
+Oct 05 08:24:17 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1355.
+Oct 05 08:24:17 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:17 qcom-msm8953 (ntainerd)[27858]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:17 qcom-msm8953 (ntainerd)[27858]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:17 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:17 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:17 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:22 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1356.
+Oct 05 08:24:22 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:22 qcom-msm8953 (ntainerd)[27869]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:22 qcom-msm8953 (ntainerd)[27869]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:22 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:22 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:22 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:27 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1357.
+Oct 05 08:24:27 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:27 qcom-msm8953 (ntainerd)[27878]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:27 qcom-msm8953 (ntainerd)[27878]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:27 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:27 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:27 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27881]: gkr-pam: unable to locate daemon control file
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27881]: gkr-pam: stashed password to try later in open session
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27881]: Accepted password for user from 172.16.42.2 port 64098 ssh2
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27881]: pam_unix(sshd:session): session opened for user user(uid=10000) by (uid=0)
+Oct 05 08:24:28 qcom-msm8953 systemd-logind[1515]: New session c7 of user user.
+Oct 05 08:24:28 qcom-msm8953 systemd[1]: Started Session c7 of User user.
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27881]: gkr-pam: the password for the login keyring was invalid.
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27886]: Received disconnect from 172.16.42.2 port 64098:11: disconnected by user
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27886]: Disconnected from user user 172.16.42.2 port 64098
+Oct 05 08:24:28 qcom-msm8953 systemd[1]: session-c7.scope: Deactivated successfully.
+Oct 05 08:24:28 qcom-msm8953 sshd-session.pam[27881]: pam_unix(sshd:session): session closed for user user
+Oct 05 08:24:28 qcom-msm8953 systemd-logind[1515]: Removed session c7.
+Oct 05 08:24:32 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1358.
+Oct 05 08:24:32 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:32 qcom-msm8953 (ntainerd)[27934]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:32 qcom-msm8953 (ntainerd)[27934]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:32 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:32 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:32 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:38 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1359.
+Oct 05 08:24:38 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:38 qcom-msm8953 (ntainerd)[27944]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:38 qcom-msm8953 (ntainerd)[27944]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:38 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:38 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:38 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:43 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1360.
+Oct 05 08:24:43 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:43 qcom-msm8953 (ntainerd)[27949]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:43 qcom-msm8953 (ntainerd)[27949]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:43 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:43 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:43 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:24:45.791875557Z" level=error msg="Failed to get event" error="rpc error: code = Unavailable desc = rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout\"" module=libcontainerd namespace=plugins.moby
+Oct 05 08:24:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:24:45.791974359Z" level=info msg="Waiting for containerd to be ready to restart event processing" module=libcontainerd namespace=plugins.moby
+Oct 05 08:24:45 qcom-msm8953 dockerd[27649]: time="2026-10-05T08:24:45.814626178Z" level=info msg="Daemon shutdown complete" error="failed to start daemon: failed to get containerd plugins: Unavailable: connection error: desc = \"transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout\""
+Oct 05 08:24:45 qcom-msm8953 dockerd[27649]: failed to start daemon: failed to get containerd plugins: Unavailable: connection error: desc = "transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout"
+Oct 05 08:24:45 qcom-msm8953 systemd[1]: docker.service: Main process exited, code=exited, status=1/FAILURE
+Oct 05 08:24:45 qcom-msm8953 systemd[1]: docker.service: Failed with result 'exit-code'.
+Oct 05 08:24:45 qcom-msm8953 systemd[1]: Failed to start Docker Application Container Engine.
+Oct 05 08:24:45 qcom-msm8953 systemd[1]: docker.service: Consumed 1.231s CPU time, 31.9M memory peak.
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27958]: gkr-pam: unable to locate daemon control file
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27958]: gkr-pam: stashed password to try later in open session
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27958]: Accepted password for user from 172.16.42.2 port 64115 ssh2
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27958]: pam_unix(sshd:session): session opened for user user(uid=10000) by (uid=0)
+Oct 05 08:24:46 qcom-msm8953 systemd-logind[1515]: New session c8 of user user.
+Oct 05 08:24:46 qcom-msm8953 systemd[1]: Started Session c8 of User user.
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27958]: gkr-pam: the password for the login keyring was invalid.
+Oct 05 08:24:46 qcom-msm8953 [27965]: user ran command dd if=/sys/firmware/fdt of=/tmp/tissot.dtb bs=1024 as root from /home/user
+Oct 05 08:24:46 qcom-msm8953 [27966]: user ran command chmod 644 /tmp/tissot.dtb as root from /home/user
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27963]: Received disconnect from 172.16.42.2 port 64115:11: disconnected by user
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27963]: Disconnected from user user 172.16.42.2 port 64115
+Oct 05 08:24:46 qcom-msm8953 sshd-session.pam[27958]: pam_unix(sshd:session): session closed for user user
+Oct 05 08:24:46 qcom-msm8953 systemd[1]: session-c8.scope: Deactivated successfully.
+Oct 05 08:24:46 qcom-msm8953 systemd-logind[1515]: Removed session c8.
+Oct 05 08:24:48 qcom-msm8953 systemd[1]: docker.service: Scheduled restart job, restart counter is at 113.
+Oct 05 08:24:48 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job immediately on client request, restart counter is at 1361.
+Oct 05 08:24:48 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:48 qcom-msm8953 (ntainerd)[27974]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:48 qcom-msm8953 (ntainerd)[27974]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:48 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:48 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:48 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:48 qcom-msm8953 systemd[1]: Starting Docker Application Container Engine...
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.261629251Z" level=info msg="Starting up"
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.263601698Z" level=info msg="OTEL tracing is not configured, using no-op tracer provider"
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.265141959Z" level=info msg="CDI directory does not exist, skipping" dir=/etc/cdi
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.265242375Z" level=info msg="CDI directory does not exist, skipping" dir=/var/run/cdi
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.291088881Z" level=info msg="Creating a containerd client" address=/run/containerd/containerd.sock timeout=1m0s
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.314507001Z" level=info msg="Loading containers: start."
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.314688616Z" level=info msg="NRI is disabled"
+Oct 05 08:24:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:24:48.314729501Z" level=info msg="Starting daemon with containerd snapshotter integration enabled"
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28006]: gkr-pam: unable to locate daemon control file
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28006]: gkr-pam: stashed password to try later in open session
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28006]: Accepted password for user from 172.16.42.2 port 64124 ssh2
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28006]: pam_unix(sshd:session): session opened for user user(uid=10000) by (uid=0)
+Oct 05 08:24:51 qcom-msm8953 systemd-logind[1515]: New session c9 of user user.
+Oct 05 08:24:51 qcom-msm8953 systemd[1]: Started Session c9 of User user.
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28006]: gkr-pam: the password for the login keyring was invalid.
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28011]: Received disconnect from 172.16.42.2 port 64124:11: disconnected by user
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28011]: Disconnected from user user 172.16.42.2 port 64124
+Oct 05 08:24:51 qcom-msm8953 sshd-session.pam[28006]: pam_unix(sshd:session): session closed for user user
+Oct 05 08:24:51 qcom-msm8953 systemd[1]: session-c9.scope: Deactivated successfully.
+Oct 05 08:24:51 qcom-msm8953 systemd-logind[1515]: Removed session c9.
+Oct 05 08:24:53 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1362.
+Oct 05 08:24:53 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:53 qcom-msm8953 (ntainerd)[28015]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:53 qcom-msm8953 (ntainerd)[28015]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:53 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:53 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:53 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:24:58 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1363.
+Oct 05 08:24:58 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:24:58 qcom-msm8953 (ntainerd)[28024]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:24:58 qcom-msm8953 (ntainerd)[28024]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:24:58 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:24:58 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:24:58 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:03 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1364.
+Oct 05 08:25:03 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:03 qcom-msm8953 (ntainerd)[28033]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:03 qcom-msm8953 (ntainerd)[28033]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:03 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:03 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:03 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:09 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1365.
+Oct 05 08:25:09 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:09 qcom-msm8953 (ntainerd)[28045]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:09 qcom-msm8953 (ntainerd)[28045]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:09 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:09 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:09 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:14 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1366.
+Oct 05 08:25:14 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:14 qcom-msm8953 (ntainerd)[28052]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:14 qcom-msm8953 (ntainerd)[28052]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:14 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:14 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:14 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:19 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1367.
+Oct 05 08:25:19 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:19 qcom-msm8953 (ntainerd)[28059]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:19 qcom-msm8953 (ntainerd)[28059]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:19 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:19 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:19 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:24 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1368.
+Oct 05 08:25:24 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:24 qcom-msm8953 (ntainerd)[28068]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:24 qcom-msm8953 (ntainerd)[28068]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:24 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:24 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:24 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:30 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1369.
+Oct 05 08:25:30 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:30 qcom-msm8953 (ntainerd)[28078]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:30 qcom-msm8953 (ntainerd)[28078]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:30 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:30 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:30 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:35 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1370.
+Oct 05 08:25:35 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:35 qcom-msm8953 (ntainerd)[28087]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:35 qcom-msm8953 (ntainerd)[28087]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:35 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:35 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:35 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:40 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1371.
+Oct 05 08:25:40 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:40 qcom-msm8953 (ntainerd)[28097]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:40 qcom-msm8953 (ntainerd)[28097]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:40 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:40 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:40 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:45 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1372.
+Oct 05 08:25:45 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:45 qcom-msm8953 (ntainerd)[28106]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:45 qcom-msm8953 (ntainerd)[28106]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:45 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:45 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:45 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:25:48.296522836Z" level=error msg="Failed to get event" error="rpc error: code = Unavailable desc = rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout\"" module=libcontainerd namespace=plugins.moby
+Oct 05 08:25:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:25:48.296632055Z" level=info msg="Waiting for containerd to be ready to restart event processing" module=libcontainerd namespace=plugins.moby
+Oct 05 08:25:48 qcom-msm8953 dockerd[27977]: time="2026-10-05T08:25:48.320294915Z" level=info msg="Daemon shutdown complete" error="failed to start daemon: failed to get containerd plugins: Unavailable: connection error: desc = \"transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout\""
+Oct 05 08:25:48 qcom-msm8953 dockerd[27977]: failed to start daemon: failed to get containerd plugins: Unavailable: connection error: desc = "transport: Error while dialing: dial unix:///run/containerd/containerd.sock: timeout"
+Oct 05 08:25:48 qcom-msm8953 systemd[1]: docker.service: Main process exited, code=exited, status=1/FAILURE
+Oct 05 08:25:48 qcom-msm8953 systemd[1]: docker.service: Failed with result 'exit-code'.
+Oct 05 08:25:48 qcom-msm8953 systemd[1]: Failed to start Docker Application Container Engine.
+Oct 05 08:25:48 qcom-msm8953 systemd[1]: docker.service: Consumed 1.104s CPU time, 32.8M memory peak.
+Oct 05 08:25:50 qcom-msm8953 systemd[1]: docker.service: Scheduled restart job, restart counter is at 114.
+Oct 05 08:25:50 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job immediately on client request, restart counter is at 1373.
+Oct 05 08:25:50 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:50 qcom-msm8953 (ntainerd)[28113]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:50 qcom-msm8953 (ntainerd)[28113]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:50 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:50 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:50 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:25:50 qcom-msm8953 systemd[1]: Starting Docker Application Container Engine...
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.762262772Z" level=info msg="Starting up"
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.763984855Z" level=info msg="OTEL tracing is not configured, using no-op tracer provider"
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.764362199Z" level=info msg="CDI directory does not exist, skipping" dir=/etc/cdi
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.764430949Z" level=info msg="CDI directory does not exist, skipping" dir=/var/run/cdi
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.790202507Z" level=info msg="Creating a containerd client" address=/run/containerd/containerd.sock timeout=1m0s
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.813146097Z" level=info msg="Loading containers: start."
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.813403857Z" level=info msg="NRI is disabled"
+Oct 05 08:25:50 qcom-msm8953 dockerd[28116]: time="2026-10-05T08:25:50.813436878Z" level=info msg="Starting daemon with containerd snapshotter integration enabled"
+Oct 05 08:25:55 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1374.
+Oct 05 08:25:55 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:25:55 qcom-msm8953 (ntainerd)[28144]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:25:55 qcom-msm8953 (ntainerd)[28144]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:25:55 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:25:55 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:25:55 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:26:01 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1375.
+Oct 05 08:26:01 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:26:01 qcom-msm8953 (ntainerd)[28156]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:26:01 qcom-msm8953 (ntainerd)[28156]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:26:01 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:26:01 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:26:01 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:26:06 qcom-msm8953 systemd[1]: containerd.service: Scheduled restart job, restart counter is at 1376.
+Oct 05 08:26:06 qcom-msm8953 systemd[1]: Starting containerd container runtime...
+Oct 05 08:26:06 qcom-msm8953 (ntainerd)[28165]: containerd.service: Unable to locate executable '/usr/local/bin/containerd': No such file or directory
+Oct 05 08:26:06 qcom-msm8953 (ntainerd)[28165]: containerd.service: Failed at step EXEC spawning /usr/local/bin/containerd: No such file or directory
+Oct 05 08:26:06 qcom-msm8953 systemd[1]: containerd.service: Main process exited, code=exited, status=203/EXEC
+Oct 05 08:26:06 qcom-msm8953 systemd[1]: containerd.service: Failed with result 'exit-code'.
+Oct 05 08:26:06 qcom-msm8953 systemd[1]: Failed to start containerd container runtime.
+Oct 05 08:26:10 qcom-msm8953 sshd-session.pam[28173]: gkr-pam: unable to locate daemon control file
+Oct 05 08:26:10 qcom-msm8953 sshd-session.pam[28173]: gkr-pam: stashed password to try later in open session
+Oct 05 08:26:10 qcom-msm8953 sshd-session.pam[28173]: Accepted password for user from 172.16.42.2 port 64200 ssh2
+Oct 05 08:26:10 qcom-msm8953 sshd-session.pam[28173]: pam_unix(sshd:session): session opened for user user(uid=10000) by (uid=0)
+Oct 05 08:26:10 qcom-msm8953 systemd-logind[1515]: New session c10 of user user.
+Oct 05 08:26:10 qcom-msm8953 systemd[1]: Started Session c10 of User user.
+Oct 05 08:26:10 qcom-msm8953 sshd-session.pam[28173]: gkr-pam: the password for the login keyring was invalid.

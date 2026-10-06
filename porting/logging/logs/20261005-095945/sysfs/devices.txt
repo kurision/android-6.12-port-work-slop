@@ -1,0 +1,17 @@
+0-000c
+0-0053
+0-0068
+1-003a
+1-0045
+2-0038
+i2c-0
+i2c-1
+i2c-2
+
+card0
+card0-DSI-1
+renderD128
+version
+
+ 0 [xiaomitissot   ]: xiaomi-tissot - xiaomi-tissot
+                      xiaomi-tissot

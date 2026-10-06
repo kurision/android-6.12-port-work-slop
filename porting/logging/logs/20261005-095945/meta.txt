@@ -1,0 +1,13 @@
+collected: 2026-10-05T09:59:49Z
+uname: Linux qcom-msm8953 6.17.7-msm8953 #1-postmarketos-qcom-msm8953 SMP PREEMPT Mon Dec  8 00:32:03 UTC aarch64 Linux
+cmdline: quiet loglevel=2  pmos_boot_uuid=0ca6505a-27ac-4cf4-b302-c19075d41dd4 pmos_root_uuid=45e5fe8b-1ac1-4678-962a-6021db51eaa2 pmos_rootfsopts=defaults
+printk (console default min): 2	4	1	7
+consoles:
+  tty0                 -WU (EC  p  )    4:1
+  ramoops-1            -W- (E   p a)
+uptime: 17330.56 133158.35
+psstore module params:
+  backend = ramoops
+  compress = deflate
+  kmsg_bytes = 10240
+  update_ms = -1

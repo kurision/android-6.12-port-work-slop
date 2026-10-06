@@ -1,0 +1,109 @@
+Module                  Size  Used by
+overlay               176128  0
+rfcomm                 90112  16
+cpufreq_conservative    12288  0
+algif_hash             12288  1
+algif_skcipher         12288  1
+af_alg                 24576  6 algif_hash,algif_skcipher
+wcn36xx                98304  0
+mac80211             1069056  1 wcn36xx
+btqcomsmd              12288  0
+btqca                  28672  1 btqcomsmd
+libarc4                12288  1 mac80211
+bluetooth             835584  36 btqca,btqcomsmd,rfcomm
+cfg80211             1028096  2 wcn36xx,mac80211
+ecdh_generic           16384  2 bluetooth
+ecc                    36864  1 ecdh_generic
+rfkill                 32768  8 bluetooth,cfg80211
+wcnss_ctrl             16384  2 wcn36xx,btqcomsmd
+q6asm_dai              32768  1
+q6voice_dai            24576  1
+q6afe_dai              81920  1
+q6routing             393216  2 q6asm_dai
+q6voice                16384  1 q6voice_dai
+q6afe_clocks           12288  1
+q6adm                  16384  1 q6routing
+q6asm                  32768  1 q6asm_dai
+q6afe                  20480  4 q6voice,q6afe_dai,q6afe_clocks,q6adm
+snd_q6dsp_common       45056  4 q6asm,q6afe_dai,q6afe_clocks,q6adm
+q6cvs                  12288  0
+q6mvm                  12288  1 q6voice
+q6cvp                  12288  1 q6voice
+q6core                 12288  3 q6asm,q6afe,q6adm
+q6voice_common         16384  4 q6cvp,q6voice,q6mvm,q6cvs
+apr                    20480  8 q6asm,q6cvp,q6core,q6mvm,q6afe,q6cvs,q6voice_common,q6adm
+pdr_interface          20480  1 apr
+qcom_pdr_msg           16384  1 pdr_interface
+qrtr_smd               16384  0
+venus_dec              36864  0
+venus_enc              32768  0
+videobuf2_dma_contig    24576  2 venus_dec,venus_enc
+videobuf2_memops       16384  1 videobuf2_dma_contig
+ledtrig_pattern        12288  0
+snd_soc_apq8016_sbc    12288  3
+snd_soc_msm8916_digital    57344  1
+qcom_q6v5_pas          36864  0
+snd_soc_qcom_common    12288  1 snd_soc_apq8016_sbc
+leds_aw2013            12288  0
+qcom_wcnss_pil         24576  0
+venus_core            151552  2 venus_dec,venus_enc
+v4l2_mem2mem           40960  3 venus_dec,venus_core,venus_enc
+videobuf2_v4l2         32768  3 venus_dec,venus_enc,v4l2_mem2mem
+ipa2_lite              32768  0
+qcom_spmi_haptics      24576  0
+videobuf2_common       69632  7 videobuf2_dma_contig,venus_dec,videobuf2_v4l2,venus_core,venus_enc,v4l2_mem2mem,videobuf2_memops
+bmi160_i2c             12288  0
+bmi160_core            20480  1 bmi160_i2c
+qcom_q6v5_mss          40960  0
+ak8975                 24576  0
+snd_soc_msm8916_analog    49152  1
+videodev              319488  5 venus_dec,videobuf2_v4l2,venus_core,venus_enc,v4l2_mem2mem
+industrialio_triggered_buffer    12288  2 ak8975,bmi160_core
+qcom_pil_info          12288  3 qcom_wcnss_pil,qcom_q6v5_pas,qcom_q6v5_mss
+qcom_pon               12288  0
+kfifo_buf              12288  1 industrialio_triggered_buffer
+qcom_q6v5              12288  2 qcom_q6v5_pas,qcom_q6v5_mss
+qcom_spmi_vadc         28672  0
+rtc_pm8xxx             20480  1
+reboot_mode            12288  1 qcom_pon
+qcom_sysmon            24576  4 qcom_wcnss_pil,qcom_q6v5_pas,qcom_q6v5,qcom_q6v5_mss
+qrtr                   45056  45 qrtr_smd
+qcom_spmi_temp_alarm    20480  0
+mc                     73728  4 videodev,videobuf2_v4l2,videobuf2_common,v4l2_mem2mem
+qcom_vadc_common       16384  1 qcom_spmi_vadc
+qcom_common            16384  4 qcom_wcnss_pil,ipa2_lite,qcom_q6v5_pas,qcom_q6v5_mss
+qcom_memshare          20480  0
+rmtfs_mem              16384  2
+qmi_helpers            28672  5 ipa2_lite,qcom_sysmon,qcom_pdr_msg,pdr_interface,qcom_memshare
+socinfo                20480  0
+snd_soc_simple_amplifier    12288  1
+zram                   28672  1
+zsmalloc               24576  1 zram
+nft_reject_inet        12288  1
+nf_reject_ipv4         12288  1 nft_reject_inet
+nf_reject_ipv6         24576  1 nft_reject_inet
+nft_reject             12288  1 nft_reject_inet
+nft_ct                 20480  3
+nf_conntrack          139264  1 nft_ct
+nf_defrag_ipv6         24576  1 nf_conntrack
+nf_defrag_ipv4         12288  1 nf_conntrack
+uhid                   16384  0
+nf_tables             282624  118 nft_ct,nft_reject_inet,nft_reject
+fuse                  196608  3
+nfnetlink              20480  2 nf_tables
+ipv6                  557056  103 nf_reject_ipv6
+panel_mdss_otm1911_fhd    12288  0
+msm                  1138688  12
+ubwc_config            20480  1 msm
+drm_client_lib         12288  1 msm
+mdt_loader             12288  5 qcom_wcnss_pil,msm,qcom_q6v5_pas,qcom_q6v5_mss,venus_core
+drm_gpuvm              36864  1 msm
+drm_exec               12288  2 msm,drm_gpuvm
+gpu_sched              57344  1 msm
+edt_ft5x06             32768  0
+drm_display_helper    204800  1 msm
+cec                    49152  1 drm_display_helper
+drm_kms_helper        196608  4 msm,drm_display_helper,panel_mdss_otm1911_fhd,drm_client_lib
+drm                   651264  17 gpu_sched,drm_kms_helper,msm,drm_exec,drm_gpuvm,drm_display_helper,panel_mdss_otm1911_fhd,drm_client_lib
+drm_panel_orientation_quirks    12288  1 drm
+evdev                  20480  15

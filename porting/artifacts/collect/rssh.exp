@@ -1,0 +1,11 @@
+#!/usr/bin/expect -f
+# usage: rssh.exp 'shell command'
+set timeout 180
+set cmd [lindex $argv 0]
+spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o PreferredAuthentications=password -o PubkeyAuthentication=no user@172.16.42.1 $cmd
+expect {
+    -re "(?i)password:" { send "147147\r"; exp_continue }
+    eof
+}
+catch wait result
+exit [lindex $result 3]

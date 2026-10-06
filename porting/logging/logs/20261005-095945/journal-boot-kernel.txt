@@ -1,0 +1,709 @@
+Dec 08 22:56:48 qcom-msm8953 kernel: Booting Linux on physical CPU 0x0000000000 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: Linux version 6.17.7-msm8953 (pmos@build) (aarch64-alpine-linux-musl-gcc (Alpine 15.2.0) 15.2.0, GNU ld (GNU Binutils) 2.45.1) #1-postmarketos-qcom-msm8953 SMP PREEMPT Mon Dec  8 00:32:03 UTC
+Dec 08 22:56:48 qcom-msm8953 kernel: KASLR disabled due to lack of seed
+Dec 08 22:56:48 qcom-msm8953 kernel: Machine model: Xiaomi Mi A1
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000086300000..0x00000000863fffff (1024 KiB) nomap non-reusable smem@86300000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000086400000..0x00000000867fffff (4096 KiB) nomap non-reusable reserved@86400000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000086c00000..0x000000008d5fffff (108544 KiB) nomap non-reusable mpss@86c00000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x000000008d600000..0x000000008e7fffff (18432 KiB) nomap non-reusable adsp@8d600000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000090000000..0x0000000090000fff (4 KiB) nomap non-reusable dfps-data@90000000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000090001000..0x00000000905efbff (6075 KiB) nomap non-reusable cont-splash@90001000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000091400000..0x0000000091afffff (7168 KiB) nomap non-reusable venus@91400000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000092000000..0x00000000920fffff (1024 KiB) nomap non-reusable mba@92000000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000093000000..0x00000000931fffff (2048 KiB) nomap non-reusable gps@93000000
+Dec 08 22:56:48 qcom-msm8953 kernel: Reserved memory: created DMA memory pool at 0x0000000095000000, size 0 MiB
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: initialized node zap@95000000, compatible id shared-dma-pool
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000095000000..0x0000000095001fff (8 KiB) nomap non-reusable zap@95000000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x00000000f2d00000..0x00000000f2e7ffff (1536 KiB) nomap non-reusable rmtfs@f2d00000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x0000000084a00000..0x00000000862fffff (25600 KiB) nomap non-reusable qseecom@84a00000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x000000008e800000..0x000000008eefffff (7168 KiB) nomap non-reusable wcnss@8e800000
+Dec 08 22:56:48 qcom-msm8953 kernel: OF: reserved mem: 0x000000009ff00000..0x000000009fffffff (1024 KiB) map non-reusable ramoops@9ff00000
+Dec 08 22:56:48 qcom-msm8953 kernel: NUMA: Faking a node at [mem 0x0000000010000000-0x00000000ffffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel: NODE_DATA(0) allocated [mem 0xff85d740-0xff85fe7f]
+Dec 08 22:56:48 qcom-msm8953 kernel: Zone ranges:
+Dec 08 22:56:48 qcom-msm8953 kernel:   DMA      [mem 0x0000000010000000-0x00000000ffffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   DMA32    empty
+Dec 08 22:56:48 qcom-msm8953 kernel:   Normal   empty
+Dec 08 22:56:48 qcom-msm8953 kernel: Movable zone start for each node
+Dec 08 22:56:48 qcom-msm8953 kernel: Early memory node ranges
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000010000000-0x00000000849fffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000084a00000-0x00000000867fffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000086800000-0x0000000086bfffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000086c00000-0x000000008eefffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x000000008ef00000-0x000000008fffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000090000000-0x00000000905eefff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x00000000905f0000-0x00000000913fffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000091400000-0x0000000091afffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000091b00000-0x0000000091ffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000092000000-0x00000000920fffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000092100000-0x0000000092ffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000093000000-0x00000000931fffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000093200000-0x0000000094ffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000095000000-0x0000000095001fff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x0000000095002000-0x00000000f2cfffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x00000000f2d00000-0x00000000f2e7ffff]
+Dec 08 22:56:48 qcom-msm8953 kernel:   node   0: [mem 0x00000000f2e80000-0x00000000ffffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel: Initmem setup node 0 [mem 0x0000000010000000-0x00000000ffffffff]
+Dec 08 22:56:48 qcom-msm8953 kernel: On node 0, zone DMA: 1 pages in unavailable ranges
+Dec 08 22:56:48 qcom-msm8953 kernel: cma: Reserved 32 MiB at 0x00000000f9c00000
+Dec 08 22:56:48 qcom-msm8953 kernel: psci: probing for conduit method from DT.
+Dec 08 22:56:48 qcom-msm8953 kernel: psci: PSCIv1.0 detected in firmware.
+Dec 08 22:56:48 qcom-msm8953 kernel: psci: Using standard PSCI v0.2 function IDs
+Dec 08 22:56:48 qcom-msm8953 kernel: psci: MIGRATE_INFO_TYPE not supported.
+Dec 08 22:56:48 qcom-msm8953 kernel: psci: SMC Calling Convention v1.0
+Dec 08 22:56:48 qcom-msm8953 kernel: psci: OSI mode supported.
+Dec 08 22:56:48 qcom-msm8953 kernel: psci: [Firmware Bug]: failed to set PC mode: -1
+Dec 08 22:56:48 qcom-msm8953 kernel: percpu: Embedded 34 pages/cpu s99160 r8192 d31912 u139264
+Dec 08 22:56:48 qcom-msm8953 kernel: pcpu-alloc: s99160 r8192 d31912 u139264 alloc=34*4096
+Dec 08 22:56:48 qcom-msm8953 kernel: pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU0
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU features: detected: ARM erratum 845719
+Dec 08 22:56:48 qcom-msm8953 kernel: alternatives: applying boot alternatives
+Dec 08 22:56:48 qcom-msm8953 kernel: Kernel command line: quiet loglevel=2  pmos_boot_uuid=0ca6505a-27ac-4cf4-b302-c19075d41dd4 pmos_root_uuid=45e5fe8b-1ac1-4678-962a-6021db51eaa2 pmos_rootfsopts=defaults
+Dec 08 22:56:48 qcom-msm8953 kernel: Unknown kernel command line parameters "pmos_boot_uuid=0ca6505a-27ac-4cf4-b302-c19075d41dd4 pmos_root_uuid=45e5fe8b-1ac1-4678-962a-6021db51eaa2 pmos_rootfsopts=defaults", will be passed to user space.
+Dec 08 22:56:48 qcom-msm8953 kernel: printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+Dec 08 22:56:48 qcom-msm8953 kernel: Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: software IO TLB: SWIOTLB bounce buffer size adjusted to 3MB
+Dec 08 22:56:48 qcom-msm8953 kernel: software IO TLB: area num 8.
+Dec 08 22:56:48 qcom-msm8953 kernel: software IO TLB: SWIOTLB bounce buffer size roundup to 4MB
+Dec 08 22:56:48 qcom-msm8953 kernel: software IO TLB: mapped [mem 0x00000000f90f0000-0x00000000f94f0000] (4MB)
+Dec 08 22:56:48 qcom-msm8953 kernel: Fallback order for Node 0: 0 
+Dec 08 22:56:48 qcom-msm8953 kernel: Built 1 zonelists, mobility grouping on.  Total pages: 983039
+Dec 08 22:56:48 qcom-msm8953 kernel: Policy zone: DMA
+Dec 08 22:56:48 qcom-msm8953 kernel: mem auto-init: stack:off, heap alloc:off, heap free:off
+Dec 08 22:56:48 qcom-msm8953 kernel: SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+Dec 08 22:56:48 qcom-msm8953 kernel: ftrace: allocating 50061 entries in 196 pages
+Dec 08 22:56:48 qcom-msm8953 kernel: ftrace: allocated 196 pages with 3 groups
+Dec 08 22:56:48 qcom-msm8953 kernel: rcu: Preemptible hierarchical RCU implementation.
+Dec 08 22:56:48 qcom-msm8953 kernel: rcu:         RCU event tracing is enabled.
+Dec 08 22:56:48 qcom-msm8953 kernel:         Trampoline variant of Tasks RCU enabled.
+Dec 08 22:56:48 qcom-msm8953 kernel:         Rude variant of Tasks RCU enabled.
+Dec 08 22:56:48 qcom-msm8953 kernel:         Tracing variant of Tasks RCU enabled.
+Dec 08 22:56:48 qcom-msm8953 kernel: rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+Dec 08 22:56:48 qcom-msm8953 kernel: RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+Dec 08 22:56:48 qcom-msm8953 kernel: RCU Tasks Rude: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+Dec 08 22:56:48 qcom-msm8953 kernel: RCU Tasks Trace: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+Dec 08 22:56:48 qcom-msm8953 kernel: NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+Dec 08 22:56:48 qcom-msm8953 kernel: Root IRQ handler: gic_handle_irq
+Dec 08 22:56:48 qcom-msm8953 kernel: rcu: srcu_init: Setting srcu_struct sizes based on contention.
+Dec 08 22:56:48 qcom-msm8953 kernel: arch_timer: cp15 and mmio timer(s) running at 19.20MHz (virt/virt).
+Dec 08 22:56:48 qcom-msm8953 kernel: clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+Dec 08 22:56:48 qcom-msm8953 kernel: sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078ns
+Dec 08 22:56:48 qcom-msm8953 kernel: Console: colour dummy device 80x25
+Dec 08 22:56:48 qcom-msm8953 kernel: printk: legacy console [tty0] enabled
+Dec 08 22:56:48 qcom-msm8953 kernel: Calibrating delay loop (skipped), value calculated using timer frequency.. 38.40 BogoMIPS (lpj=76800)
+Dec 08 22:56:48 qcom-msm8953 kernel: pid_max: default: 32768 minimum: 301
+Dec 08 22:56:48 qcom-msm8953 kernel: LSM: initializing lsm=capability
+Dec 08 22:56:48 qcom-msm8953 kernel: Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: rcu: Hierarchical SRCU implementation.
+Dec 08 22:56:48 qcom-msm8953 kernel: rcu:         Max phase no-delay instances is 1000.
+Dec 08 22:56:48 qcom-msm8953 kernel: Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+Dec 08 22:56:48 qcom-msm8953 kernel: smp: Bringing up secondary CPUs ...
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU1
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU1: Booted secondary processor 0x0000000001 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU2
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU2: Booted secondary processor 0x0000000002 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU3
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU3: Booted secondary processor 0x0000000003 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU4
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU4: Booted secondary processor 0x0000000100 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU5
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU5: Booted secondary processor 0x0000000101 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU6
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU6: Booted secondary processor 0x0000000102 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: Detected VIPT I-cache on CPU7
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU7: Booted secondary processor 0x0000000103 [0x410fd034]
+Dec 08 22:56:48 qcom-msm8953 kernel: smp: Brought up 1 node, 8 CPUs
+Dec 08 22:56:48 qcom-msm8953 kernel: SMP: Total of 8 processors activated.
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU: All CPU(s) started at EL1
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU features: detected: 32-bit EL0 Support
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU features: detected: 32-bit EL1 Support
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU features: detected: CRC32 instructions
+Dec 08 22:56:48 qcom-msm8953 kernel: CPU features: detected: PMUv3
+Dec 08 22:56:48 qcom-msm8953 kernel: alternatives: applying system-wide alternatives
+Dec 08 22:56:48 qcom-msm8953 kernel: Memory: 3589364K/3932156K available (16384K kernel code, 2630K rwdata, 5820K rodata, 2112K init, 416K bss, 302328K reserved, 32768K cma-reserved)
+Dec 08 22:56:48 qcom-msm8953 kernel: devtmpfs: initialized
+Dec 08 22:56:48 qcom-msm8953 kernel: clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+Dec 08 22:56:48 qcom-msm8953 kernel: posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: futex hash table entries: 2048 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+Dec 08 22:56:48 qcom-msm8953 kernel: 25872 pages in range for non-PLT usage
+Dec 08 22:56:48 qcom-msm8953 kernel: 517392 pages in range for PLT usage
+Dec 08 22:56:48 qcom-msm8953 kernel: pinctrl core: initialized pinctrl subsystem
+Dec 08 22:56:48 qcom-msm8953 kernel: NET: Registered PF_NETLINK/PF_ROUTE protocol family
+Dec 08 22:56:48 qcom-msm8953 kernel: DMA: preallocated 512 KiB GFP_KERNEL pool for atomic allocations
+Dec 08 22:56:48 qcom-msm8953 kernel: DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+Dec 08 22:56:48 qcom-msm8953 kernel: DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+Dec 08 22:56:48 qcom-msm8953 kernel: audit: initializing netlink subsys (disabled)
+Dec 08 22:56:48 qcom-msm8953 kernel: audit: type=2000 audit(0.040:1): state=initialized audit_enabled=0 res=1
+Dec 08 22:56:48 qcom-msm8953 kernel: thermal_sys: Registered thermal governor 'bang_bang'
+Dec 08 22:56:48 qcom-msm8953 kernel: thermal_sys: Registered thermal governor 'step_wise'
+Dec 08 22:56:48 qcom-msm8953 kernel: thermal_sys: Registered thermal governor 'user_space'
+Dec 08 22:56:48 qcom-msm8953 kernel: thermal_sys: Registered thermal governor 'power_allocator'
+Dec 08 22:56:48 qcom-msm8953 kernel: cpuidle: using governor menu
+Dec 08 22:56:48 qcom-msm8953 kernel: hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+Dec 08 22:56:48 qcom-msm8953 kernel: ASID allocator initialised with 65536 entries
+Dec 08 22:56:48 qcom-msm8953 kernel: Serial: AMBA PL011 UART driver
+Dec 08 22:56:48 qcom-msm8953 kernel: pstore: Using crash dump compression: deflate
+Dec 08 22:56:48 qcom-msm8953 kernel: printk: legacy console [ramoops-1] enabled
+Dec 08 22:56:48 qcom-msm8953 kernel: pstore: Registered ramoops as persistent store backend
+Dec 08 22:56:48 qcom-msm8953 kernel: ramoops: using 0x100000@0x9ff00000, ecc: 0
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/clock-controller@1800000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/phy@1a94400
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/phy@1a94400: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/usb@7000000: Fixed dependency cycle(s) with /soc@0/spmi@200f000/pmic@2/smbchager@1000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/clock-controller@b011050: Fixed dependency cycle(s) with /soc@0/clock-controller@b011050
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/clock-controller@1800000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/phy@1a94400
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000: Fixed dependency cycle(s) with /soc@0/interconnect@500000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/phy@1a94400: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/usb@7000000: Fixed dependency cycle(s) with /soc@0/spmi@200f000/pmic@2/smbchager@1000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/clock-controller@b011050: Fixed dependency cycle(s) with /soc@0/clock-controller@b011050
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+Dec 08 22:56:48 qcom-msm8953 kernel: HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: neonx8   gen()  1475 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: neonx4   gen()  1463 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: neonx2   gen()  1394 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: neonx1   gen()  1205 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: int64x8  gen()   736 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: int64x4  gen()  1060 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: int64x2  gen()   960 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: int64x1  gen()   637 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: using algorithm neonx8 gen() 1475 MB/s
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: .... xor() 1101 MB/s, rmw enabled
+Dec 08 22:56:48 qcom-msm8953 kernel: raid6: using neon recovery algorithm
+Dec 08 22:56:48 qcom-msm8953 kernel: iommu: Default domain type: Translated
+Dec 08 22:56:48 qcom-msm8953 kernel: iommu: DMA domain TLB invalidation policy: strict mode
+Dec 08 22:56:48 qcom-msm8953 kernel: SCSI subsystem initialized
+Dec 08 22:56:48 qcom-msm8953 kernel: usbcore: registered new interface driver usbfs
+Dec 08 22:56:48 qcom-msm8953 kernel: usbcore: registered new interface driver hub
+Dec 08 22:56:48 qcom-msm8953 kernel: usbcore: registered new device driver usb
+Dec 08 22:56:48 qcom-msm8953 kernel: i2c-gpio i2c-sensors: using lines 526 (SDA) and 527 (SCL)
+Dec 08 22:56:48 qcom-msm8953 kernel: Advanced Linux Sound Architecture Driver Initialized.
+Dec 08 22:56:48 qcom-msm8953 kernel: clocksource: Switched to clocksource arch_sys_counter
+Dec 08 22:56:48 qcom-msm8953 kernel: VFS: Disk quotas dquot_6.6.0
+Dec 08 22:56:48 qcom-msm8953 kernel: VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+Dec 08 22:56:48 qcom-msm8953 kernel: NET: Registered PF_INET protocol family
+Dec 08 22:56:48 qcom-msm8953 kernel: IP idents hash table entries: 65536 (order: 7, 524288 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: tcp_listen_portaddr_hash hash table entries: 2048 (order: 3, 32768 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: TCP established hash table entries: 32768 (order: 6, 262144 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: TCP bind hash table entries: 32768 (order: 8, 1048576 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: TCP: Hash tables configured (established 32768 bind 32768)
+Dec 08 22:56:48 qcom-msm8953 kernel: UDP hash table entries: 2048 (order: 5, 131072 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: UDP-Lite hash table entries: 2048 (order: 5, 131072 bytes, linear)
+Dec 08 22:56:48 qcom-msm8953 kernel: NET: Registered PF_UNIX/PF_LOCAL protocol family
+Dec 08 22:56:48 qcom-msm8953 kernel: RPC: Registered named UNIX socket transport module.
+Dec 08 22:56:48 qcom-msm8953 kernel: RPC: Registered udp transport module.
+Dec 08 22:56:48 qcom-msm8953 kernel: RPC: Registered tcp transport module.
+Dec 08 22:56:48 qcom-msm8953 kernel: RPC: Registered tcp-with-tls transport module.
+Dec 08 22:56:48 qcom-msm8953 kernel: RPC: Registered tcp NFSv4.1 backchannel transport module.
+Dec 08 22:56:48 qcom-msm8953 kernel: Unpacking initramfs...
+Dec 08 22:56:48 qcom-msm8953 kernel: kvm [1]: HYP mode not available
+Dec 08 22:56:48 qcom-msm8953 kernel: Initialise system trusted keyrings
+Dec 08 22:56:48 qcom-msm8953 kernel: workingset: timestamp_bits=42 max_order=20 bucket_order=0
+Dec 08 22:56:48 qcom-msm8953 kernel: NFS: Registering the id_resolver key type
+Dec 08 22:56:48 qcom-msm8953 kernel: Key type id_resolver registered
+Dec 08 22:56:48 qcom-msm8953 kernel: Key type id_legacy registered
+Dec 08 22:56:48 qcom-msm8953 kernel: nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+Dec 08 22:56:48 qcom-msm8953 kernel: nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+Dec 08 22:56:48 qcom-msm8953 kernel: 9p: Installing v9fs 9p2000 file system support
+Dec 08 22:56:48 qcom-msm8953 kernel: xor: measuring software checksum speed
+Dec 08 22:56:48 qcom-msm8953 kernel:    8regs           :  1797 MB/sec
+Dec 08 22:56:48 qcom-msm8953 kernel:    32regs          :  1784 MB/sec
+Dec 08 22:56:48 qcom-msm8953 kernel:    arm64_neon      :  1567 MB/sec
+Dec 08 22:56:48 qcom-msm8953 kernel: xor: using function: 8regs (1797 MB/sec)
+Dec 08 22:56:48 qcom-msm8953 kernel: Key type asymmetric registered
+Dec 08 22:56:48 qcom-msm8953 kernel: Asymmetric key parser 'x509' registered
+Dec 08 22:56:48 qcom-msm8953 kernel: Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+Dec 08 22:56:48 qcom-msm8953 kernel: io scheduler mq-deadline registered
+Dec 08 22:56:48 qcom-msm8953 kernel: io scheduler kyber registered
+Dec 08 22:56:48 qcom-msm8953 kernel: ledtrig-cpu: registered to indicate activity on CPUs
+Dec 08 22:56:48 qcom-msm8953 kernel: Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_serial: driver initialized
+Dec 08 22:56:48 qcom-msm8953 kernel: loop: module loaded
+Dec 08 22:56:48 qcom-msm8953 kernel: spmi_pmic_arb 200f000.spmi: PMIC arbiter version v2 (0x20010000)
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/usb@7000000: Fixed dependency cycle(s) with /soc@0/spmi@200f000/pmic@2/smbchager@1000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+Dec 08 22:56:48 qcom-msm8953 kernel: usbcore: registered new interface driver usb-storage
+Dec 08 22:56:48 qcom-msm8953 kernel: i2c_dev: i2c /dev entries driver
+Dec 08 22:56:48 qcom-msm8953 kernel: device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+Dec 08 22:56:48 qcom-msm8953 kernel: sdhci: Secure Digital Host Controller Interface driver
+Dec 08 22:56:48 qcom-msm8953 kernel: sdhci: Copyright(c) Pierre Ossman
+Dec 08 22:56:48 qcom-msm8953 kernel: sdhci-pltfm: SDHCI platform and OF driver helper
+Dec 08 22:56:48 qcom-msm8953 kernel: hid: raw HID events driver (C) Jiri Kosina
+Dec 08 22:56:48 qcom-msm8953 kernel: usbcore: registered new interface driver usbhid
+Dec 08 22:56:48 qcom-msm8953 kernel: usbhid: USB HID core driver
+Dec 08 22:56:48 qcom-msm8953 kernel: hw perfevents: enabled with armv8_cortex_a53 PMU driver, 7 (0,8000003f) counters available
+Dec 08 22:56:48 qcom-msm8953 kernel: NET: Registered PF_PACKET protocol family
+Dec 08 22:56:48 qcom-msm8953 kernel: 9pnet: Installing 9P2000 support
+Dec 08 22:56:48 qcom-msm8953 kernel: Key type dns_resolver registered
+Dec 08 22:56:48 qcom-msm8953 kernel: Loading compiled-in X.509 certificates
+Dec 08 22:56:48 qcom-msm8953 kernel: Demotion targets for Node 0: null
+Dec 08 22:56:48 qcom-msm8953 kernel: Key type .fscrypt registered
+Dec 08 22:56:48 qcom-msm8953 kernel: Key type fscrypt-provisioning registered
+Dec 08 22:56:48 qcom-msm8953 kernel: Btrfs loaded, zoned=no, fsverity=no
+Dec 08 22:56:48 qcom-msm8953 kernel: qcom-smsm smsm: mbox_request_channel: can't parse "mboxes" property
+Dec 08 22:56:48 qcom-msm8953 kernel: qcom-smsm smsm: mbox_request_channel: can't parse "mboxes" property
+Dec 08 22:56:48 qcom-msm8953 kernel: qcom-smsm smsm: mbox_request_channel: can't parse "mboxes" property
+Dec 08 22:56:48 qcom-msm8953 kernel: qcom-cpr4pd b018000.power-controller: boot time voltage: 870000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: qcom-cpr4pd b018000.power-controller: speed_bin=2 fusing_revision=3
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: level= 6528 voltage=650000 uV step=13 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: level=10368 voltage=700000 uV step=18 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: level=16896 voltage=820000 uV step=41 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: level=20160 voltage=955000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: s1: Bringing 0uV into 863000-863000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: s3: Bringing 0uV into 984000-984000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: s4: Bringing 0uV into 1896000-1896000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l1: Bringing 0uV into 1000000-1000000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l2: Bringing 0uV into 975000-975000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l3: Bringing 0uV into 925000-925000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l5: Bringing 0uV into 1800000-1800000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l6: Bringing 0uV into 1800000-1800000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l7: Bringing 0uV into 1800000-1800000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l8: Bringing 0uV into 2900000-2900000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l9: Bringing 0uV into 3000000-3000000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l10: Bringing 0uV into 2850000-2850000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l11: Bringing 0uV into 2950000-2950000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l12: Bringing 0uV into 1800000-1800000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l13: Bringing 0uV into 3125000-3125000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l16: Bringing 0uV into 1800000-1800000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l17: Bringing 0uV into 2750000-2750000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l19: Bringing 0uV into 1200000-1200000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l22: Bringing 0uV into 2800000-2800000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: l23: Bringing 0uV into 975000-975000uV
+Dec 08 22:56:48 qcom-msm8953 kernel: Freeing initrd memory: 10200K
+Dec 08 22:56:48 qcom-msm8953 kernel: cpu cpu0: Failed to set OPP config
+Dec 08 22:56:48 qcom-msm8953 kernel: qcom_scm: convention: smc arm 64
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_serial 78af000.serial: msm_serial: detected port #0
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_serial 78af000.serial: uartclk = 7372798
+Dec 08 22:56:48 qcom-msm8953 kernel: 78af000.serial: ttyMSM0 at MMIO 0x78af000 (irq = 52, base_baud = 460799) is a MSM
+Dec 08 22:56:48 qcom-msm8953 kernel: qcom-iommu soc@0:iommu@1c48000: iommu sec: pgtable size: 135168
+Dec 08 22:56:48 qcom-msm8953 kernel: platform 1c00000.gpu: Adding to iommu group 0
+Dec 08 22:56:48 qcom-msm8953 kernel: platform 1d00000.venus: Adding to iommu group 1
+Dec 08 22:56:48 qcom-msm8953 kernel: platform 7900000.ipa: Adding to iommu group 2
+Dec 08 22:56:48 qcom-msm8953 kernel: spi_qup 7af6000.spi: IN:block:16, fifo:64, OUT:block:16, fifo:64
+Dec 08 22:56:48 qcom-msm8953 kernel: i2c_qup 78b6000.i2c: using default clock-frequency 100000
+Dec 08 22:56:48 qcom-msm8953 kernel: max98927 1-003a: MAX98927 revisionID: 0x42
+Dec 08 22:56:48 qcom-msm8953 kernel: i2c_qup 78b7000.i2c: using default clock-frequency 100000
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=652800 Voltage=650000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=844800 Voltage=675000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=1036800 Voltage=700000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=1228800 Voltage=735000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=1420800 Voltage=770000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=1612800 Voltage=805000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=1804800 Voltage=870000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: genpd_provider cpr_pd_pwr: Freq=2016000 Voltage=955000 uV
+Dec 08 22:56:48 qcom-msm8953 kernel: cpufreq: cpufreq_policy_online: CPU0: Running at unlisted initial frequency: 748800 kHz, changing to: 844800 kHz
+Dec 08 22:56:48 qcom-msm8953 kernel: cpu cpu0: EM: created perf domain
+Dec 08 22:56:48 qcom-msm8953 kernel: input: gpio-keys as /devices/platform/gpio-keys/input/input0
+Dec 08 22:56:48 qcom-msm8953 kernel: clk: Disabling unused clocks
+Dec 08 22:56:48 qcom-msm8953 kernel: sdhci_msm 7864900.mmc: Got CD GPIO
+Dec 08 22:56:48 qcom-msm8953 kernel: PM: genpd: Disabling unused power domains
+Dec 08 22:56:48 qcom-msm8953 kernel: ALSA device list:
+Dec 08 22:56:48 qcom-msm8953 kernel:   No soundcards found.
+Dec 08 22:56:48 qcom-msm8953 kernel: mmc1: SDHCI controller on 7864900.mmc [7864900.mmc] using ADMA 64-bit
+Dec 08 22:56:48 qcom-msm8953 kernel: mmc0: SDHCI controller on 7824900.mmc [7824900.mmc] using ADMA 64-bit
+Dec 08 22:56:48 qcom-msm8953 kernel: Freeing unused kernel memory: 2112K
+Dec 08 22:56:48 qcom-msm8953 kernel: Run /init as init process
+Dec 08 22:56:48 qcom-msm8953 kernel:   with arguments:
+Dec 08 22:56:48 qcom-msm8953 kernel:     /init
+Dec 08 22:56:48 qcom-msm8953 kernel:   with environment:
+Dec 08 22:56:48 qcom-msm8953 kernel:     HOME=/
+Dec 08 22:56:48 qcom-msm8953 kernel:     TERM=linux
+Dec 08 22:56:48 qcom-msm8953 kernel:     pmos_boot_uuid=0ca6505a-27ac-4cf4-b302-c19075d41dd4
+Dec 08 22:56:48 qcom-msm8953 kernel:     pmos_root_uuid=45e5fe8b-1ac1-4678-962a-6021db51eaa2
+Dec 08 22:56:48 qcom-msm8953 kernel:     pmos_rootfsopts=defaults
+Dec 08 22:56:48 qcom-msm8953 kernel: mmc1: new UHS-I speed SDR104 SDHC card at address 0001
+Dec 08 22:56:48 qcom-msm8953 kernel: mmcblk1: mmc1:0001 SD32G 29.1 GiB
+Dec 08 22:56:48 qcom-msm8953 unknown: syslogd started: BusyBox v1.37.0
+Dec 08 22:56:48 qcom-msm8953 kernel:  mmcblk1: p1 p2
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]:   ❬❬ PMOS STAGE 1 ❭❭
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: initramfs version: 3.8.9-r0
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]:   ❬❬ PMOS STAGE 2 ❭❭
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Starting systemd-udevd version 257.10
+Dec 08 22:56:48 qcom-msm8953 kernel: mmc0: new HS400 MMC card at address 0001
+Dec 08 22:56:48 qcom-msm8953 kernel: mmcblk0: mmc0:0001 HCG8a4 58.2 GiB
+Dec 08 22:56:48 qcom-msm8953 kernel:  mmcblk0: p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39 p40 p41 p42 p43 p44 p45 p46 p47 p48 p49 p50 p51
+Dec 08 22:56:48 qcom-msm8953 kernel: mmcblk0boot0: mmc0:0001 HCG8a4 4.00 MiB
+Dec 08 22:56:48 qcom-msm8953 kernel: mmcblk0boot1: mmc0:0001 HCG8a4 4.00 MiB
+Dec 08 22:56:48 qcom-msm8953 kernel: mmcblk0rpmb: mmc0:0001 HCG8a4 4.00 MiB, chardev (243:0)
+Dec 08 22:56:48 qcom-msm8953 kernel: gcc-msm8953 1800000.clock-controller: sync_state() pending due to e3000.rng
+Dec 08 22:56:48 qcom-msm8953 kernel: gcc-msm8953 1800000.clock-controller: sync_state() pending due to 90001000.framebuffer
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 500000.interconnect: sync_state() pending due to 1a00000.display-subsystem
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 400000.interconnect: sync_state() pending due to 1a00000.display-subsystem
+Dec 08 22:56:48 qcom-msm8953 kernel: gcc-msm8953 1800000.clock-controller: sync_state() pending due to 1a00000.display-subsystem
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 500000.interconnect: sync_state() pending due to 1c00000.gpu
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 400000.interconnect: sync_state() pending due to 1c00000.gpu
+Dec 08 22:56:48 qcom-msm8953 kernel: gcc-msm8953 1800000.clock-controller: sync_state() pending due to 1c00000.gpu
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 500000.interconnect: sync_state() pending due to 1d00000.venus
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 400000.interconnect: sync_state() pending due to 1d00000.venus
+Dec 08 22:56:48 qcom-msm8953 kernel: gcc-msm8953 1800000.clock-controller: sync_state() pending due to 1d00000.venus
+Dec 08 22:56:48 qcom-msm8953 kernel: gcc-msm8953 1800000.clock-controller: sync_state() pending due to 4080000.remoteproc
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 500000.interconnect: sync_state() pending due to 7900000.ipa
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 400000.interconnect: sync_state() pending due to 7900000.ipa
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 580000.interconnect: sync_state() pending due to 7900000.ipa
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 580000.interconnect:interconnect-snoc: sync_state() pending due to 1d00000.venus
+Dec 08 22:56:48 qcom-msm8953 kernel: qnoc-msm8953 580000.interconnect:interconnect-snoc: sync_state() pending due to 1a00000.display-subsystem
+Dec 08 22:56:48 qcom-msm8953 kernel: input: generic ft5x06 (3b) as /devices/platform/soc@0/78b7000.i2c/i2c-2/2-0038/input/input1
+Dec 08 22:56:48 qcom-msm8953 kernel: platform 1a01000.display-controller: Adding to iommu group 3
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+Dec 08 22:56:48 qcom-msm8953 kernel: /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_dpu 1a01000.display-controller: bound 1a94000.dsi (ops dsi_ops [msm])
+Dec 08 22:56:48 qcom-msm8953 kernel: adreno 1c00000.gpu: supply vdd not found, using dummy regulator
+Dec 08 22:56:48 qcom-msm8953 kernel: adreno 1c00000.gpu: supply vddcx not found, using dummy regulator
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_dpu 1a01000.display-controller: bound 1c00000.gpu (ops a3xx_ops [msm])
+Dec 08 22:56:48 qcom-msm8953 kernel: [drm:dpu_kms_hw_init:1173] dpu hardware revision:0x10100000
+Dec 08 22:56:48 qcom-msm8953 kernel: [drm] Initialized msm 1.13.0 for 1a01000.display-controller on minor 0
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_dpu 1a01000.display-controller: Direct firmware load for qcom/a530_pm4.fw failed with error -2
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_dpu 1a01000.display-controller: [drm:adreno_request_fw [msm]] *ERROR* failed to load a530_pm4.fw
+Dec 08 22:56:48 qcom-msm8953 kernel: Console: switching to colour frame buffer device 135x120
+Dec 08 22:56:48 qcom-msm8953 kernel: fb0: sys_imageblit: framebuffer is not in virtual address space.
+Dec 08 22:56:48 qcom-msm8953 kernel: msm_dpu 1a01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]:   Setting up USB gadget through configfs
+Dec 08 22:56:48 qcom-msm8953 kernel: configfs-gadget.g1 gadget.0: HOST MAC 0e:da:f9:a1:85:28
+Dec 08 22:56:48 qcom-msm8953 kernel: configfs-gadget.g1 gadget.0: MAC de:4f:92:51:cb:d1
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Trying to start server with parameters: Server IP addr: 172.16.42.1:67, client IP addr: 172.16.42.2, interface: usb0
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Setting framebuffer mode to: U:1080x1920p-0
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Trying to mount subpartitions for 10 seconds...
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Unable to resize root partition: failed to find qualifying partition
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Auto-repair and check 'ext' filesystem (/dev/mmcblk1p2)
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: pmOS_root: clean, 29503/281088 files, 474375/561920 blocks
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Resize 'ext4' root filesystem (/dev/mmcblk1p2)
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: resize2fs 1.47.3 (8-Jul-2025)
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: The filesystem is already 561920 (4k) blocks long.  Nothing to do!
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Mount root partition (/dev/mmcblk1p2) to /sysroot (read-write) with options defaults
+Dec 08 22:56:48 qcom-msm8953 kernel: EXT4-fs (mmcblk1p2): mounted filesystem 45e5fe8b-1ac1-4678-962a-6021db51eaa2 r/w with ordered data mode. Quota mode: none.
+Dec 08 22:56:48 qcom-msm8953 [pmOS-rd]: Switching root
+Dec 08 22:56:48 qcom-msm8953 unknown: syslogd exiting
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: System time advanced to built-in epoch: Mon 2025-12-08 22:56:46 GMT
+Dec 08 22:56:48 qcom-msm8953 kernel: NET: Registered PF_INET6 protocol family
+Dec 08 22:56:48 qcom-msm8953 kernel: Segment Routing with IPv6
+Dec 08 22:56:48 qcom-msm8953 kernel: In-situ OAM (IOAM) with IPv6
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: systemd 257.10 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN -IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE -TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF +XKBCOMMON -UTMP -SYSVINIT -LIBARCHIVE)
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Detected architecture arm64.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Detected first boot.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Hostname set to <qcom-msm8953>.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Initializing machine ID from random generator.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Failed to open libbpf, cgroup BPF features disabled: Not supported
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Populated /etc with preset unit settings.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: /usr/lib/systemd/system/q6voiced.service:12: Special user nobody configured, this is not safe!
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Queued start job for default target Graphical Interface.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Created slice Slice /system/getty.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Created slice Slice /system/modprobe.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Created slice User and Session Slice.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Set up automount Arbitrary Executable File Formats File System Automount Point.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Expecting device /dev/disk/by-uuid/0ca6505a-27ac-4cf4-b302-c19075d41dd4...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Local Encrypted Volumes.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Login Prompts.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Local Integrity Protected Volumes.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Path Units.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Remote Encrypted Volumes.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Remote File Systems.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Slice Units.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Reached target Local Verity Protected Volumes.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on Process Core Dump Socket.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on Credential Encryption/Decryption.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on Journal Socket (/dev/log).
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on Journal Sockets.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on DDI File System Mounter Socket.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on Namespace Resource Manager Socket.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on udev Control Socket.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Listening on udev Kernel Socket.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounting Huge Pages File System...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounting POSIX Message Queue File System...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounting Kernel Debug File System...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounting Kernel Trace File System...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Create List of Static Device Nodes...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load Kernel Module configfs...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load Kernel Module dm_mod...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load Kernel Module drm...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load Kernel Module efi_pstore...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load Kernel Module fuse...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load Kernel Module loop...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load firmware that is located on dedicated partitions of qcom devices...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting nftables static rule set...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Enable compressed swap in memory using zram...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Setting the system time according to an offset file...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Clear Stale Hibernate Storage Info was skipped because of an unmet condition check (ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67).
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Journal Service...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load Kernel Modules...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Remount Root and Kernel File Systems...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Wait Until Kernel Time Synchronized...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Load udev Rules from Credentials...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Coldplug All udev Devices...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounted POSIX Message Queue File System.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounted Huge Pages File System.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounted Kernel Debug File System.
+Dec 08 22:56:48 qcom-msm8953 kernel: random: crng init done
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounted Kernel Trace File System.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Finished Create List of Static Device Nodes.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: modprobe@configfs.service: Deactivated successfully.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Finished Load Kernel Module configfs.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounting Kernel Configuration File System...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: modprobe@dm_mod.service: Deactivated successfully.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Finished Load Kernel Module dm_mod.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: modprobe@drm.service: Deactivated successfully.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Finished Load Kernel Module drm.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Finished Load Kernel Module efi_pstore.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: modprobe@loop.service: Deactivated successfully.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Finished Load Kernel Module loop.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Repartition Root Disk was skipped because no trigger condition checks were met.
+Dec 08 22:56:48 qcom-msm8953 kernel: fuse: init (API version 7.44)
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: modprobe@fuse.service: Deactivated successfully.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Finished Load Kernel Module fuse.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Mounting FUSE Control File System...
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: swclock-offset-boot.service: Main process exited, code=exited, status=1/FAILURE
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: swclock-offset-boot.service: Failed with result 'exit-code'.
+Dec 08 22:56:48 qcom-msm8953 systemd[1]: Failed to start Setting the system time according to an offset file.
+Dec 08 22:56:48 qcom-msm8953 kernel: EXT4-fs (mmcblk0p13): mounted filesystem af32c008-2a39-7e5b-a5dc-201456d93103 ro with ordered data mode. Quota mode: none.
+Dec 08 22:56:48 qcom-msm8953 kernel: EXT4-fs (mmcblk1p2): re-mounted 45e5fe8b-1ac1-4678-962a-6021db51eaa2.
+Dec 08 22:56:48 qcom-msm8953 systemd-journald[390]: Collecting audit messages is disabled.
+Dec 08 22:56:48 qcom-msm8953 kernel: EXT4-fs (mmcblk0p27): mounted filesystem 57f8f4bc-abf4-655f-bf67-946fc0f9f25b ro with ordered data mode. Quota mode: none.
+Dec 08 22:56:48 qcom-msm8953 kernel: EXT4-fs (mmcblk0p51): VFS: Can't find ext4 filesystem
+Dec 08 22:56:48 qcom-msm8953 kernel: EXT4-fs (mmcblk0p51): VFS: Can't find ext4 filesystem
+Dec 08 22:56:48 qcom-msm8953 kernel: EXT2-fs (mmcblk0p51): error: can't find an ext2 filesystem on dev mmcblk0p51.
+Dec 08 22:56:48 qcom-msm8953 kernel: FAT-fs (mmcblk0p51): bogus number of reserved sectors
+Dec 08 22:56:48 qcom-msm8953 kernel: FAT-fs (mmcblk0p51): Can't find a valid FAT filesystem
+Dec 08 22:56:48 qcom-msm8953 kernel: F2FS-fs (mmcblk0p51): Magic Mismatch, valid(0xf2f52010) - read(0x0)
+Dec 08 22:56:48 qcom-msm8953 kernel: F2FS-fs (mmcblk0p51): Can't find valid F2FS filesystem in 1th superblock
+Dec 08 22:56:48 qcom-msm8953 kernel: F2FS-fs (mmcblk0p51): Magic Mismatch, valid(0xf2f52010) - read(0x0)
+Dec 08 22:56:48 qcom-msm8953 kernel: F2FS-fs (mmcblk0p51): Can't find valid F2FS filesystem in 2th superblock
+Dec 08 22:56:48 qcom-msm8953 kernel: zram: Added device: zram0
+Dec 08 22:56:48 qcom-msm8953 kernel: zram0: detected capacity change from 0 to 10926080
+Dec 08 22:56:48 qcom-msm8953 kernel: Adding 5463036k swap on /dev/zram0.  Priority:-2 extents:1 across:5463036k SS
+Dec 08 22:56:49 qcom-msm8953 systemd[1]: Started Journal Service.
+Dec 08 22:56:49 qcom-msm8953 systemd-journald[390]: Received client request to flush runtime journal.
+Dec 08 22:56:54 qcom-msm8953 kernel: mc: Linux media interface: v0.10
+Dec 08 22:56:54 qcom-msm8953 kernel: NET: Registered PF_QIPCRTR protocol family
+Dec 08 22:56:54 qcom-msm8953 kernel: rtc-pm8xxx 200f000.spmi:pmic@0:rtc@6000: registered as rtc0
+Dec 08 22:56:54 qcom-msm8953 kernel: videodev: Linux video capture interface: v2.00
+Dec 08 22:56:54 qcom-msm8953 kernel: input: pm8941_pwrkey as /devices/platform/soc@0/200f000.spmi/spmi-0/0-00/200f000.spmi:pmic@0:pon@800/200f000.spmi:pmic@0:pon@800:pwrkey/input/input2
+Dec 08 22:56:54 qcom-msm8953 kernel: ak8975 0-000c: mounting matrix not found: using identity...
+Dec 08 22:56:54 qcom-msm8953 kernel: input: pm8941_resin as /devices/platform/soc@0/200f000.spmi/spmi-0/0-00/200f000.spmi:pmic@0:pon@800/200f000.spmi:pmic@0:pon@800:resin/input/input3
+Dec 08 22:56:54 qcom-msm8953 kernel: input: spmi_haptics as /devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:haptics@c000/input/input4
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc0: 4080000.remoteproc is available
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom-wcnss-pil a204000.remoteproc: supply vddmx not found, using dummy regulator
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc1: a204000.remoteproc is available
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc1: powering up a204000.remoteproc
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc1: Booting fw image wcnss.mdt, size 7324
+Dec 08 22:56:54 qcom-msm8953 kernel: iio iio:device3: Not setting up IRQ trigger
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc2: adsp is available
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc2: powering up adsp
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc2: Booting fw image adsp.mdt, size 7516
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc2: remote processor adsp is now up
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:3
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:4
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:7
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:8
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:9
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:a
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:b
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: PMIC REV: 0         CODEC Version: 4
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget ADC1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget ADC1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX3 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX3 overwritten
+Dec 08 22:56:54 qcom-msm8953 kernel: simple-amplifier analog-amplifier: supply VCC not found, using dummy regulator
+Dec 08 22:56:54 qcom-msm8953 kernel: remoteproc remoteproc1: remote processor a204000.remoteproc is now up
+Dec 08 22:56:54 qcom-msm8953 kernel: input: xiaomi-tissot Headset Jack as /devices/platform/soc@0/c051000.sound-card/sound/card0/input5
+Dec 08 22:56:55 qcom-msm8953 kernel: qcom_wcnss_ctrl remoteproc1:smd-edge.WCNSS_CTRL.-1.-1: WCNSS Version 1.5 1.2
+Dec 08 22:56:58 qcom-msm8953 kernel: remoteproc remoteproc0: powering up 4080000.remoteproc
+Dec 08 22:56:58 qcom-msm8953 kernel: remoteproc remoteproc0: Booting fw image mba.mbn, size 233808
+Dec 08 22:56:58 qcom-msm8953 kernel: qcom-wcnss-pil a204000.remoteproc: unexpected response to sysmon event
+Dec 08 22:56:58 qcom-msm8953 kernel: qcom-q6v5-mss 4080000.remoteproc: MBA booted without debug policy, loading mpss
+Dec 08 22:57:00 qcom-msm8953 kernel: remoteproc remoteproc0: remote processor 4080000.remoteproc is now up
+Dec 08 22:57:00 qcom-msm8953 kernel: qcom_wcnss_ctrl remoteproc1:smd-edge.WCNSS_CTRL.-1.-1: expected cold boot completion
+Dec 08 22:57:00 qcom-msm8953 kernel: qcom-memshare memshare: Got a request from unknown client (id=1, proc=0)
+Dec 08 22:57:00 qcom-msm8953 kernel: cfg80211: Loading compiled-in X.509 certificates for regulatory database
+Dec 08 22:57:00 qcom-msm8953 kernel: Bluetooth: Core ver 2.22
+Dec 08 22:57:00 qcom-msm8953 kernel: NET: Registered PF_BLUETOOTH protocol family
+Dec 08 22:57:00 qcom-msm8953 kernel: Bluetooth: HCI device and connection manager initialized
+Dec 08 22:57:00 qcom-msm8953 kernel: Bluetooth: HCI socket layer initialized
+Dec 08 22:57:00 qcom-msm8953 kernel: Bluetooth: L2CAP socket layer initialized
+Dec 08 22:57:00 qcom-msm8953 kernel: Bluetooth: SCO socket layer initialized
+Dec 08 22:57:00 qcom-msm8953 kernel: Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+Dec 08 22:57:00 qcom-msm8953 kernel: Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+Dec 08 22:57:00 qcom-msm8953 kernel: wcn36xx: mac address: 02:00:28:19:f2:32
+Dec 08 22:57:00 qcom-msm8953 kernel: Bluetooth: MGMT ver 1.23
+Dec 08 22:57:00 qcom-msm8953 kernel: NET: Registered PF_ALG protocol family
+Dec 08 22:57:05 qcom-msm8953 kernel: wcn36xx: firmware WLAN version 'WCN v2.0 RadioPhy vIris_TSMC_4.0 with 48MHz XO' and CRM version 'CNSS-PR-4-0-3-169-212583-1'
+Dec 08 22:57:05 qcom-msm8953 kernel: wcn36xx: firmware API 1.5.1.2, 41 stations, 2 bssids
+Dec 08 22:57:11 qcom-msm8953 kernel: msm_dpu 1a01000.display-controller: [drm:adreno_request_fw [msm]] loaded qcom/a530_pm4.fw from new location
+Dec 08 22:57:11 qcom-msm8953 kernel: msm_dpu 1a01000.display-controller: [drm:adreno_request_fw [msm]] loaded qcom/a530_pfp.fw from new location
+Dec 08 22:57:11 qcom-msm8953 kernel: debugfs: 'pfp' already exists in '1a01000.display-controller'
+Dec 08 22:57:11 qcom-msm8953 kernel: debugfs: 'me' already exists in '1a01000.display-controller'
+Dec 08 22:57:11 qcom-msm8953 kernel: debugfs: 'meq' already exists in '1a01000.display-controller'
+Dec 08 22:57:11 qcom-msm8953 kernel: debugfs: 'roq' already exists in '1a01000.display-controller'
+Dec 08 22:57:11 qcom-msm8953 kernel: debugfs: 'reset' already exists in '1a01000.display-controller'
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:15 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:16 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+Dec 08 22:57:22 qcom-msm8953 kernel: Bluetooth: RFCOMM TTY layer initialized
+Dec 08 22:57:22 qcom-msm8953 kernel: Bluetooth: RFCOMM socket layer initialized
+Dec 08 22:57:22 qcom-msm8953 kernel: Bluetooth: RFCOMM ver 1.11
+Dec 08 22:57:25 qcom-msm8953 kernel: rfkill: input handler disabled
+Dec 08 22:57:27 qcom-msm8953 kernel: q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10bdb] not expecting rsp
+Dec 08 23:02:30 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Dec 08 23:02:30 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Dec 08 23:02:30 qcom-msm8953 kernel: wlan0: authenticated
+Dec 08 23:02:30 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Dec 08 23:02:30 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Dec 08 23:02:30 qcom-msm8953 kernel: wlan0: associated
+Dec 08 23:02:33 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 05:23:12 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 05:23:12 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 05:23:14 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 05:23:14 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 05:23:14 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 05:23:14 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 05:23:14 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 05:23:14 qcom-msm8953 kernel: wlan0: associated
+Oct 05 05:23:14 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 06:20:19 qcom-msm8953 kernel: EXT4-fs (mmcblk1p2): resizing filesystem from 561920 to 7508992 blocks
+Oct 05 06:20:20 qcom-msm8953 kernel: EXT4-fs (mmcblk1p2): resized filesystem to 7508992
+Oct 05 06:23:40 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 7=CLASS3_FRAME_FROM_NONASSOC_STA)
+Oct 05 06:23:41 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 06:23:41 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 06:23:41 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:23:41 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 06:23:41 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:23:41 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 06:23:41 qcom-msm8953 kernel: wlan0: associated
+Oct 05 06:23:41 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 06:29:19 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 06:29:19 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 06:29:19 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 06:29:19 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:29:19 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 06:29:19 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:29:19 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 06:29:19 qcom-msm8953 kernel: wlan0: associated
+Oct 05 06:29:20 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 06:41:21 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 06:41:21 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 06:41:23 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 06:41:23 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:41:23 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 06:41:23 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:41:23 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 06:41:23 qcom-msm8953 kernel: wlan0: associated
+Oct 05 06:41:23 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 06:47:22 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 06:47:22 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 06:47:25 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 06:47:25 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:47:25 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 06:47:25 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:47:25 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 06:47:25 qcom-msm8953 kernel: wlan0: associated
+Oct 05 06:47:25 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 06:59:25 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 06:59:25 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 06:59:34 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 06:59:34 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:59:34 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 06:59:34 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 06:59:34 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 06:59:34 qcom-msm8953 kernel: wlan0: associated
+Oct 05 06:59:34 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 07:25:20 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 07:25:20 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 07:25:22 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 07:25:22 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 07:25:22 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 07:25:22 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 07:25:22 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 07:25:22 qcom-msm8953 kernel: wlan0: associated
+Oct 05 07:25:22 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 07:49:21 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 07:49:21 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 07:49:37 qcom-msm8953 kernel: IPv6: ipv6_create_tempaddr: regeneration time exceeded - disabled temporary address support
+Oct 05 07:49:41 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 07:49:41 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 07:49:41 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 07:49:41 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 07:49:41 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 07:49:41 qcom-msm8953 kernel: wlan0: associated
+Oct 05 07:49:41 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 08:07:23 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 08:07:23 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 08:07:25 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 08:07:25 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 08:07:25 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 08:07:25 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 08:07:25 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 08:07:25 qcom-msm8953 kernel: wlan0: associated
+Oct 05 08:07:25 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 08:30:16 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 08:30:18 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 08:30:18 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 08:30:18 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 08:30:18 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 08:30:18 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 08:30:18 qcom-msm8953 kernel: wlan0: associated
+Oct 05 08:30:18 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+Oct 05 08:48:19 qcom-msm8953 kernel: wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+Oct 05 08:48:19 qcom-msm8953 kernel: wcn36xx: ERROR SMD_EVENT (312) not supported
+Oct 05 08:48:21 qcom-msm8953 kernel: wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+Oct 05 08:48:21 qcom-msm8953 kernel: wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+Oct 05 08:48:21 qcom-msm8953 kernel: wlan0: authenticated
+Oct 05 08:48:21 qcom-msm8953 kernel: wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+Oct 05 08:48:21 qcom-msm8953 kernel: wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+Oct 05 08:48:21 qcom-msm8953 kernel: wlan0: associated
+Oct 05 08:48:22 qcom-msm8953 kernel: wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b

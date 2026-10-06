@@ -1,0 +1,709 @@
+[Mon Oct  5 05:10:58 2026] Booting Linux on physical CPU 0x0000000000 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] Linux version 6.17.7-msm8953 (pmos@build) (aarch64-alpine-linux-musl-gcc (Alpine 15.2.0) 15.2.0, GNU ld (GNU Binutils) 2.45.1) #1-postmarketos-qcom-msm8953 SMP PREEMPT Mon Dec  8 00:32:03 UTC
+[Mon Oct  5 05:10:58 2026] KASLR disabled due to lack of seed
+[Mon Oct  5 05:10:58 2026] Machine model: Xiaomi Mi A1
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000086300000..0x00000000863fffff (1024 KiB) nomap non-reusable smem@86300000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000086400000..0x00000000867fffff (4096 KiB) nomap non-reusable reserved@86400000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000086c00000..0x000000008d5fffff (108544 KiB) nomap non-reusable mpss@86c00000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x000000008d600000..0x000000008e7fffff (18432 KiB) nomap non-reusable adsp@8d600000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000090000000..0x0000000090000fff (4 KiB) nomap non-reusable dfps-data@90000000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000090001000..0x00000000905efbff (6075 KiB) nomap non-reusable cont-splash@90001000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000091400000..0x0000000091afffff (7168 KiB) nomap non-reusable venus@91400000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000092000000..0x00000000920fffff (1024 KiB) nomap non-reusable mba@92000000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000093000000..0x00000000931fffff (2048 KiB) nomap non-reusable gps@93000000
+[Mon Oct  5 05:10:58 2026] Reserved memory: created DMA memory pool at 0x0000000095000000, size 0 MiB
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: initialized node zap@95000000, compatible id shared-dma-pool
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000095000000..0x0000000095001fff (8 KiB) nomap non-reusable zap@95000000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x00000000f2d00000..0x00000000f2e7ffff (1536 KiB) nomap non-reusable rmtfs@f2d00000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x0000000084a00000..0x00000000862fffff (25600 KiB) nomap non-reusable qseecom@84a00000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x000000008e800000..0x000000008eefffff (7168 KiB) nomap non-reusable wcnss@8e800000
+[Mon Oct  5 05:10:58 2026] OF: reserved mem: 0x000000009ff00000..0x000000009fffffff (1024 KiB) map non-reusable ramoops@9ff00000
+[Mon Oct  5 05:10:58 2026] NUMA: Faking a node at [mem 0x0000000010000000-0x00000000ffffffff]
+[Mon Oct  5 05:10:58 2026] NODE_DATA(0) allocated [mem 0xff85d740-0xff85fe7f]
+[Mon Oct  5 05:10:58 2026] Zone ranges:
+[Mon Oct  5 05:10:58 2026]   DMA      [mem 0x0000000010000000-0x00000000ffffffff]
+[Mon Oct  5 05:10:58 2026]   DMA32    empty
+[Mon Oct  5 05:10:58 2026]   Normal   empty
+[Mon Oct  5 05:10:58 2026] Movable zone start for each node
+[Mon Oct  5 05:10:58 2026] Early memory node ranges
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000010000000-0x00000000849fffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000084a00000-0x00000000867fffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000086800000-0x0000000086bfffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000086c00000-0x000000008eefffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x000000008ef00000-0x000000008fffffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000090000000-0x00000000905eefff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x00000000905f0000-0x00000000913fffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000091400000-0x0000000091afffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000091b00000-0x0000000091ffffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000092000000-0x00000000920fffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000092100000-0x0000000092ffffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000093000000-0x00000000931fffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000093200000-0x0000000094ffffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000095000000-0x0000000095001fff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x0000000095002000-0x00000000f2cfffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x00000000f2d00000-0x00000000f2e7ffff]
+[Mon Oct  5 05:10:58 2026]   node   0: [mem 0x00000000f2e80000-0x00000000ffffffff]
+[Mon Oct  5 05:10:58 2026] Initmem setup node 0 [mem 0x0000000010000000-0x00000000ffffffff]
+[Mon Oct  5 05:10:58 2026] On node 0, zone DMA: 1 pages in unavailable ranges
+[Mon Oct  5 05:10:58 2026] cma: Reserved 32 MiB at 0x00000000f9c00000
+[Mon Oct  5 05:10:58 2026] psci: probing for conduit method from DT.
+[Mon Oct  5 05:10:58 2026] psci: PSCIv1.0 detected in firmware.
+[Mon Oct  5 05:10:58 2026] psci: Using standard PSCI v0.2 function IDs
+[Mon Oct  5 05:10:58 2026] psci: MIGRATE_INFO_TYPE not supported.
+[Mon Oct  5 05:10:58 2026] psci: SMC Calling Convention v1.0
+[Mon Oct  5 05:10:58 2026] psci: OSI mode supported.
+[Mon Oct  5 05:10:58 2026] psci: [Firmware Bug]: failed to set PC mode: -1
+[Mon Oct  5 05:10:58 2026] percpu: Embedded 34 pages/cpu s99160 r8192 d31912 u139264
+[Mon Oct  5 05:10:58 2026] pcpu-alloc: s99160 r8192 d31912 u139264 alloc=34*4096
+[Mon Oct  5 05:10:58 2026] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU0
+[Mon Oct  5 05:10:58 2026] CPU features: detected: ARM erratum 845719
+[Mon Oct  5 05:10:58 2026] alternatives: applying boot alternatives
+[Mon Oct  5 05:10:58 2026] Kernel command line: quiet loglevel=2  pmos_boot_uuid=0ca6505a-27ac-4cf4-b302-c19075d41dd4 pmos_root_uuid=45e5fe8b-1ac1-4678-962a-6021db51eaa2 pmos_rootfsopts=defaults
+[Mon Oct  5 05:10:58 2026] Unknown kernel command line parameters "pmos_boot_uuid=0ca6505a-27ac-4cf4-b302-c19075d41dd4 pmos_root_uuid=45e5fe8b-1ac1-4678-962a-6021db51eaa2 pmos_rootfsopts=defaults", will be passed to user space.
+[Mon Oct  5 05:10:58 2026] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[Mon Oct  5 05:10:58 2026] Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[Mon Oct  5 05:10:58 2026] Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[Mon Oct  5 05:10:58 2026] software IO TLB: SWIOTLB bounce buffer size adjusted to 3MB
+[Mon Oct  5 05:10:58 2026] software IO TLB: area num 8.
+[Mon Oct  5 05:10:58 2026] software IO TLB: SWIOTLB bounce buffer size roundup to 4MB
+[Mon Oct  5 05:10:58 2026] software IO TLB: mapped [mem 0x00000000f90f0000-0x00000000f94f0000] (4MB)
+[Mon Oct  5 05:10:58 2026] Fallback order for Node 0: 0 
+[Mon Oct  5 05:10:58 2026] Built 1 zonelists, mobility grouping on.  Total pages: 983039
+[Mon Oct  5 05:10:58 2026] Policy zone: DMA
+[Mon Oct  5 05:10:58 2026] mem auto-init: stack:off, heap alloc:off, heap free:off
+[Mon Oct  5 05:10:58 2026] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[Mon Oct  5 05:10:58 2026] ftrace: allocating 50061 entries in 196 pages
+[Mon Oct  5 05:10:58 2026] ftrace: allocated 196 pages with 3 groups
+[Mon Oct  5 05:10:58 2026] rcu: Preemptible hierarchical RCU implementation.
+[Mon Oct  5 05:10:58 2026] rcu: 	RCU event tracing is enabled.
+[Mon Oct  5 05:10:58 2026] 	Trampoline variant of Tasks RCU enabled.
+[Mon Oct  5 05:10:58 2026] 	Rude variant of Tasks RCU enabled.
+[Mon Oct  5 05:10:58 2026] 	Tracing variant of Tasks RCU enabled.
+[Mon Oct  5 05:10:58 2026] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[Mon Oct  5 05:10:58 2026] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[Mon Oct  5 05:10:58 2026] RCU Tasks Rude: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[Mon Oct  5 05:10:58 2026] RCU Tasks Trace: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[Mon Oct  5 05:10:58 2026] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[Mon Oct  5 05:10:58 2026] Root IRQ handler: gic_handle_irq
+[Mon Oct  5 05:10:58 2026] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[Mon Oct  5 05:10:58 2026] arch_timer: cp15 and mmio timer(s) running at 19.20MHz (virt/virt).
+[Mon Oct  5 05:10:58 2026] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+[Mon Oct  5 05:10:58 2026] sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078ns
+[Mon Oct  5 05:10:58 2026] Console: colour dummy device 80x25
+[Mon Oct  5 05:10:58 2026] printk: legacy console [tty0] enabled
+[Mon Oct  5 05:10:58 2026] Calibrating delay loop (skipped), value calculated using timer frequency.. 38.40 BogoMIPS (lpj=76800)
+[Mon Oct  5 05:10:58 2026] pid_max: default: 32768 minimum: 301
+[Mon Oct  5 05:10:58 2026] LSM: initializing lsm=capability
+[Mon Oct  5 05:10:58 2026] Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[Mon Oct  5 05:10:58 2026] Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[Mon Oct  5 05:10:58 2026] rcu: Hierarchical SRCU implementation.
+[Mon Oct  5 05:10:58 2026] rcu: 	Max phase no-delay instances is 1000.
+[Mon Oct  5 05:10:58 2026] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[Mon Oct  5 05:10:58 2026] smp: Bringing up secondary CPUs ...
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU1
+[Mon Oct  5 05:10:58 2026] CPU1: Booted secondary processor 0x0000000001 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU2
+[Mon Oct  5 05:10:58 2026] CPU2: Booted secondary processor 0x0000000002 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU3
+[Mon Oct  5 05:10:58 2026] CPU3: Booted secondary processor 0x0000000003 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU4
+[Mon Oct  5 05:10:58 2026] CPU4: Booted secondary processor 0x0000000100 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU5
+[Mon Oct  5 05:10:58 2026] CPU5: Booted secondary processor 0x0000000101 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU6
+[Mon Oct  5 05:10:58 2026] CPU6: Booted secondary processor 0x0000000102 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] Detected VIPT I-cache on CPU7
+[Mon Oct  5 05:10:58 2026] CPU7: Booted secondary processor 0x0000000103 [0x410fd034]
+[Mon Oct  5 05:10:58 2026] smp: Brought up 1 node, 8 CPUs
+[Mon Oct  5 05:10:58 2026] SMP: Total of 8 processors activated.
+[Mon Oct  5 05:10:58 2026] CPU: All CPU(s) started at EL1
+[Mon Oct  5 05:10:58 2026] CPU features: detected: 32-bit EL0 Support
+[Mon Oct  5 05:10:58 2026] CPU features: detected: 32-bit EL1 Support
+[Mon Oct  5 05:10:58 2026] CPU features: detected: CRC32 instructions
+[Mon Oct  5 05:10:58 2026] CPU features: detected: PMUv3
+[Mon Oct  5 05:10:58 2026] alternatives: applying system-wide alternatives
+[Mon Oct  5 05:10:58 2026] Memory: 3589364K/3932156K available (16384K kernel code, 2630K rwdata, 5820K rodata, 2112K init, 416K bss, 302328K reserved, 32768K cma-reserved)
+[Mon Oct  5 05:10:58 2026] devtmpfs: initialized
+[Mon Oct  5 05:10:58 2026] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[Mon Oct  5 05:10:58 2026] posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[Mon Oct  5 05:10:58 2026] futex hash table entries: 2048 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[Mon Oct  5 05:10:58 2026] 25872 pages in range for non-PLT usage
+[Mon Oct  5 05:10:58 2026] 517392 pages in range for PLT usage
+[Mon Oct  5 05:10:58 2026] pinctrl core: initialized pinctrl subsystem
+[Mon Oct  5 05:10:58 2026] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[Mon Oct  5 05:10:58 2026] DMA: preallocated 512 KiB GFP_KERNEL pool for atomic allocations
+[Mon Oct  5 05:10:58 2026] DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[Mon Oct  5 05:10:58 2026] DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[Mon Oct  5 05:10:58 2026] audit: initializing netlink subsys (disabled)
+[Mon Oct  5 05:10:58 2026] audit: type=2000 audit(0.040:1): state=initialized audit_enabled=0 res=1
+[Mon Oct  5 05:10:58 2026] thermal_sys: Registered thermal governor 'bang_bang'
+[Mon Oct  5 05:10:58 2026] thermal_sys: Registered thermal governor 'step_wise'
+[Mon Oct  5 05:10:58 2026] thermal_sys: Registered thermal governor 'user_space'
+[Mon Oct  5 05:10:58 2026] thermal_sys: Registered thermal governor 'power_allocator'
+[Mon Oct  5 05:10:58 2026] cpuidle: using governor menu
+[Mon Oct  5 05:10:58 2026] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[Mon Oct  5 05:10:58 2026] ASID allocator initialised with 65536 entries
+[Mon Oct  5 05:10:58 2026] Serial: AMBA PL011 UART driver
+[Mon Oct  5 05:10:58 2026] pstore: Using crash dump compression: deflate
+[Mon Oct  5 05:10:58 2026] printk: legacy console [ramoops-1] enabled
+[Mon Oct  5 05:10:58 2026] pstore: Registered ramoops as persistent store backend
+[Mon Oct  5 05:10:58 2026] ramoops: using 0x100000@0x9ff00000, ecc: 0
+[Mon Oct  5 05:10:58 2026] /soc@0/clock-controller@1800000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/phy@1a94400
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/phy@1a94400: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+[Mon Oct  5 05:10:58 2026] /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+[Mon Oct  5 05:10:58 2026] /soc@0/usb@7000000: Fixed dependency cycle(s) with /soc@0/spmi@200f000/pmic@2/smbchager@1000
+[Mon Oct  5 05:10:58 2026] /soc@0/clock-controller@b011050: Fixed dependency cycle(s) with /soc@0/clock-controller@b011050
+[Mon Oct  5 05:10:58 2026] /soc@0/clock-controller@1800000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/phy@1a94400
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000: Fixed dependency cycle(s) with /soc@0/interconnect@500000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:10:58 2026] /soc@0/display-subsystem@1a00000/phy@1a94400: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+[Mon Oct  5 05:10:58 2026] /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+[Mon Oct  5 05:10:58 2026] /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+[Mon Oct  5 05:10:58 2026] /soc@0/usb@7000000: Fixed dependency cycle(s) with /soc@0/spmi@200f000/pmic@2/smbchager@1000
+[Mon Oct  5 05:10:58 2026] /soc@0/clock-controller@b011050: Fixed dependency cycle(s) with /soc@0/clock-controller@b011050
+[Mon Oct  5 05:10:58 2026] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[Mon Oct  5 05:10:58 2026] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[Mon Oct  5 05:10:58 2026] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[Mon Oct  5 05:10:58 2026] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[Mon Oct  5 05:10:58 2026] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[Mon Oct  5 05:10:58 2026] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[Mon Oct  5 05:10:58 2026] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[Mon Oct  5 05:10:58 2026] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[Mon Oct  5 05:10:58 2026] raid6: neonx8   gen()  1475 MB/s
+[Mon Oct  5 05:10:58 2026] raid6: neonx4   gen()  1463 MB/s
+[Mon Oct  5 05:10:58 2026] raid6: neonx2   gen()  1394 MB/s
+[Mon Oct  5 05:10:59 2026] raid6: neonx1   gen()  1205 MB/s
+[Mon Oct  5 05:10:59 2026] raid6: int64x8  gen()   736 MB/s
+[Mon Oct  5 05:10:59 2026] raid6: int64x4  gen()  1060 MB/s
+[Mon Oct  5 05:10:59 2026] raid6: int64x2  gen()   960 MB/s
+[Mon Oct  5 05:10:59 2026] raid6: int64x1  gen()   637 MB/s
+[Mon Oct  5 05:10:59 2026] raid6: using algorithm neonx8 gen() 1475 MB/s
+[Mon Oct  5 05:10:59 2026] raid6: .... xor() 1101 MB/s, rmw enabled
+[Mon Oct  5 05:10:59 2026] raid6: using neon recovery algorithm
+[Mon Oct  5 05:10:59 2026] iommu: Default domain type: Translated
+[Mon Oct  5 05:10:59 2026] iommu: DMA domain TLB invalidation policy: strict mode
+[Mon Oct  5 05:10:59 2026] SCSI subsystem initialized
+[Mon Oct  5 05:10:59 2026] usbcore: registered new interface driver usbfs
+[Mon Oct  5 05:10:59 2026] usbcore: registered new interface driver hub
+[Mon Oct  5 05:10:59 2026] usbcore: registered new device driver usb
+[Mon Oct  5 05:10:59 2026] i2c-gpio i2c-sensors: using lines 526 (SDA) and 527 (SCL)
+[Mon Oct  5 05:10:59 2026] Advanced Linux Sound Architecture Driver Initialized.
+[Mon Oct  5 05:10:59 2026] clocksource: Switched to clocksource arch_sys_counter
+[Mon Oct  5 05:10:59 2026] VFS: Disk quotas dquot_6.6.0
+[Mon Oct  5 05:10:59 2026] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[Mon Oct  5 05:10:59 2026] NET: Registered PF_INET protocol family
+[Mon Oct  5 05:10:59 2026] IP idents hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[Mon Oct  5 05:10:59 2026] tcp_listen_portaddr_hash hash table entries: 2048 (order: 3, 32768 bytes, linear)
+[Mon Oct  5 05:10:59 2026] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[Mon Oct  5 05:10:59 2026] TCP established hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[Mon Oct  5 05:10:59 2026] TCP bind hash table entries: 32768 (order: 8, 1048576 bytes, linear)
+[Mon Oct  5 05:10:59 2026] TCP: Hash tables configured (established 32768 bind 32768)
+[Mon Oct  5 05:10:59 2026] UDP hash table entries: 2048 (order: 5, 131072 bytes, linear)
+[Mon Oct  5 05:10:59 2026] UDP-Lite hash table entries: 2048 (order: 5, 131072 bytes, linear)
+[Mon Oct  5 05:10:59 2026] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[Mon Oct  5 05:10:59 2026] RPC: Registered named UNIX socket transport module.
+[Mon Oct  5 05:10:59 2026] RPC: Registered udp transport module.
+[Mon Oct  5 05:10:59 2026] RPC: Registered tcp transport module.
+[Mon Oct  5 05:10:59 2026] RPC: Registered tcp-with-tls transport module.
+[Mon Oct  5 05:10:59 2026] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[Mon Oct  5 05:10:59 2026] Unpacking initramfs...
+[Mon Oct  5 05:10:59 2026] kvm [1]: HYP mode not available
+[Mon Oct  5 05:10:59 2026] Initialise system trusted keyrings
+[Mon Oct  5 05:10:59 2026] workingset: timestamp_bits=42 max_order=20 bucket_order=0
+[Mon Oct  5 05:10:59 2026] NFS: Registering the id_resolver key type
+[Mon Oct  5 05:10:59 2026] Key type id_resolver registered
+[Mon Oct  5 05:10:59 2026] Key type id_legacy registered
+[Mon Oct  5 05:10:59 2026] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[Mon Oct  5 05:10:59 2026] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[Mon Oct  5 05:10:59 2026] 9p: Installing v9fs 9p2000 file system support
+[Mon Oct  5 05:10:59 2026] xor: measuring software checksum speed
+[Mon Oct  5 05:10:59 2026]    8regs           :  1797 MB/sec
+[Mon Oct  5 05:10:59 2026]    32regs          :  1784 MB/sec
+[Mon Oct  5 05:10:59 2026]    arm64_neon      :  1567 MB/sec
+[Mon Oct  5 05:10:59 2026] xor: using function: 8regs (1797 MB/sec)
+[Mon Oct  5 05:10:59 2026] Key type asymmetric registered
+[Mon Oct  5 05:10:59 2026] Asymmetric key parser 'x509' registered
+[Mon Oct  5 05:10:59 2026] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+[Mon Oct  5 05:10:59 2026] io scheduler mq-deadline registered
+[Mon Oct  5 05:10:59 2026] io scheduler kyber registered
+[Mon Oct  5 05:10:59 2026] ledtrig-cpu: registered to indicate activity on CPUs
+[Mon Oct  5 05:10:59 2026] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[Mon Oct  5 05:10:59 2026] msm_serial: driver initialized
+[Mon Oct  5 05:10:59 2026] loop: module loaded
+[Mon Oct  5 05:10:59 2026] spmi_pmic_arb 200f000.spmi: PMIC arbiter version v2 (0x20010000)
+[Mon Oct  5 05:10:59 2026] /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+[Mon Oct  5 05:10:59 2026] /soc@0/usb@7000000: Fixed dependency cycle(s) with /soc@0/spmi@200f000/pmic@2/smbchager@1000
+[Mon Oct  5 05:10:59 2026] /soc@0/spmi@200f000/pmic@2/smbchager@1000: Fixed dependency cycle(s) with /soc@0/usb@7000000
+[Mon Oct  5 05:10:59 2026] usbcore: registered new interface driver usb-storage
+[Mon Oct  5 05:10:59 2026] i2c_dev: i2c /dev entries driver
+[Mon Oct  5 05:10:59 2026] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[Mon Oct  5 05:10:59 2026] sdhci: Secure Digital Host Controller Interface driver
+[Mon Oct  5 05:10:59 2026] sdhci: Copyright(c) Pierre Ossman
+[Mon Oct  5 05:10:59 2026] sdhci-pltfm: SDHCI platform and OF driver helper
+[Mon Oct  5 05:10:59 2026] hid: raw HID events driver (C) Jiri Kosina
+[Mon Oct  5 05:10:59 2026] usbcore: registered new interface driver usbhid
+[Mon Oct  5 05:10:59 2026] usbhid: USB HID core driver
+[Mon Oct  5 05:10:59 2026] hw perfevents: enabled with armv8_cortex_a53 PMU driver, 7 (0,8000003f) counters available
+[Mon Oct  5 05:10:59 2026] NET: Registered PF_PACKET protocol family
+[Mon Oct  5 05:10:59 2026] 9pnet: Installing 9P2000 support
+[Mon Oct  5 05:10:59 2026] Key type dns_resolver registered
+[Mon Oct  5 05:10:59 2026] Loading compiled-in X.509 certificates
+[Mon Oct  5 05:10:59 2026] Demotion targets for Node 0: null
+[Mon Oct  5 05:10:59 2026] Key type .fscrypt registered
+[Mon Oct  5 05:10:59 2026] Key type fscrypt-provisioning registered
+[Mon Oct  5 05:10:59 2026] Btrfs loaded, zoned=no, fsverity=no
+[Mon Oct  5 05:10:59 2026] qcom-smsm smsm: mbox_request_channel: can't parse "mboxes" property
+[Mon Oct  5 05:10:59 2026] qcom-smsm smsm: mbox_request_channel: can't parse "mboxes" property
+[Mon Oct  5 05:10:59 2026] qcom-smsm smsm: mbox_request_channel: can't parse "mboxes" property
+[Mon Oct  5 05:10:59 2026] qcom-cpr4pd b018000.power-controller: boot time voltage: 870000 uV
+[Mon Oct  5 05:10:59 2026] qcom-cpr4pd b018000.power-controller: speed_bin=2 fusing_revision=3
+[Mon Oct  5 05:10:59 2026] genpd_provider cpr_pd_pwr: level= 6528 voltage=650000 uV step=13 uV
+[Mon Oct  5 05:10:59 2026] genpd_provider cpr_pd_pwr: level=10368 voltage=700000 uV step=18 uV
+[Mon Oct  5 05:10:59 2026] genpd_provider cpr_pd_pwr: level=16896 voltage=820000 uV step=41 uV
+[Mon Oct  5 05:10:59 2026] genpd_provider cpr_pd_pwr: level=20160 voltage=955000 uV
+[Mon Oct  5 05:10:59 2026] s1: Bringing 0uV into 863000-863000uV
+[Mon Oct  5 05:10:59 2026] s3: Bringing 0uV into 984000-984000uV
+[Mon Oct  5 05:10:59 2026] s4: Bringing 0uV into 1896000-1896000uV
+[Mon Oct  5 05:10:59 2026] l1: Bringing 0uV into 1000000-1000000uV
+[Mon Oct  5 05:10:59 2026] l2: Bringing 0uV into 975000-975000uV
+[Mon Oct  5 05:10:59 2026] l3: Bringing 0uV into 925000-925000uV
+[Mon Oct  5 05:10:59 2026] l5: Bringing 0uV into 1800000-1800000uV
+[Mon Oct  5 05:10:59 2026] l6: Bringing 0uV into 1800000-1800000uV
+[Mon Oct  5 05:10:59 2026] l7: Bringing 0uV into 1800000-1800000uV
+[Mon Oct  5 05:10:59 2026] l8: Bringing 0uV into 2900000-2900000uV
+[Mon Oct  5 05:10:59 2026] l9: Bringing 0uV into 3000000-3000000uV
+[Mon Oct  5 05:10:59 2026] l10: Bringing 0uV into 2850000-2850000uV
+[Mon Oct  5 05:10:59 2026] l11: Bringing 0uV into 2950000-2950000uV
+[Mon Oct  5 05:10:59 2026] l12: Bringing 0uV into 1800000-1800000uV
+[Mon Oct  5 05:10:59 2026] l13: Bringing 0uV into 3125000-3125000uV
+[Mon Oct  5 05:10:59 2026] l16: Bringing 0uV into 1800000-1800000uV
+[Mon Oct  5 05:10:59 2026] l17: Bringing 0uV into 2750000-2750000uV
+[Mon Oct  5 05:10:59 2026] l19: Bringing 0uV into 1200000-1200000uV
+[Mon Oct  5 05:10:59 2026] l22: Bringing 0uV into 2800000-2800000uV
+[Mon Oct  5 05:10:59 2026] l23: Bringing 0uV into 975000-975000uV
+[Mon Oct  5 05:11:00 2026] Freeing initrd memory: 10200K
+[Mon Oct  5 05:11:00 2026] cpu cpu0: Failed to set OPP config
+[Mon Oct  5 05:11:00 2026] qcom_scm: convention: smc arm 64
+[Mon Oct  5 05:11:00 2026] msm_serial 78af000.serial: msm_serial: detected port #0
+[Mon Oct  5 05:11:00 2026] msm_serial 78af000.serial: uartclk = 7372798
+[Mon Oct  5 05:11:00 2026] 78af000.serial: ttyMSM0 at MMIO 0x78af000 (irq = 52, base_baud = 460799) is a MSM
+[Mon Oct  5 05:11:00 2026] qcom-iommu soc@0:iommu@1c48000: iommu sec: pgtable size: 135168
+[Mon Oct  5 05:11:00 2026] platform 1c00000.gpu: Adding to iommu group 0
+[Mon Oct  5 05:11:00 2026] platform 1d00000.venus: Adding to iommu group 1
+[Mon Oct  5 05:11:00 2026] platform 7900000.ipa: Adding to iommu group 2
+[Mon Oct  5 05:11:00 2026] spi_qup 7af6000.spi: IN:block:16, fifo:64, OUT:block:16, fifo:64
+[Mon Oct  5 05:11:00 2026] i2c_qup 78b6000.i2c: using default clock-frequency 100000
+[Mon Oct  5 05:11:00 2026] max98927 1-003a: MAX98927 revisionID: 0x42
+[Mon Oct  5 05:11:00 2026] i2c_qup 78b7000.i2c: using default clock-frequency 100000
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=652800 Voltage=650000 uV
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=844800 Voltage=675000 uV
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=1036800 Voltage=700000 uV
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=1228800 Voltage=735000 uV
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=1420800 Voltage=770000 uV
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=1612800 Voltage=805000 uV
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=1804800 Voltage=870000 uV
+[Mon Oct  5 05:11:00 2026] genpd_provider cpr_pd_pwr: Freq=2016000 Voltage=955000 uV
+[Mon Oct  5 05:11:00 2026] cpufreq: cpufreq_policy_online: CPU0: Running at unlisted initial frequency: 748800 kHz, changing to: 844800 kHz
+[Mon Oct  5 05:11:00 2026] cpu cpu0: EM: created perf domain
+[Mon Oct  5 05:11:00 2026] input: gpio-keys as /devices/platform/gpio-keys/input/input0
+[Mon Oct  5 05:11:00 2026] clk: Disabling unused clocks
+[Mon Oct  5 05:11:00 2026] sdhci_msm 7864900.mmc: Got CD GPIO
+[Mon Oct  5 05:11:00 2026] PM: genpd: Disabling unused power domains
+[Mon Oct  5 05:11:00 2026] ALSA device list:
+[Mon Oct  5 05:11:00 2026]   No soundcards found.
+[Mon Oct  5 05:11:00 2026] mmc1: SDHCI controller on 7864900.mmc [7864900.mmc] using ADMA 64-bit
+[Mon Oct  5 05:11:00 2026] mmc0: SDHCI controller on 7824900.mmc [7824900.mmc] using ADMA 64-bit
+[Mon Oct  5 05:11:00 2026] Freeing unused kernel memory: 2112K
+[Mon Oct  5 05:11:00 2026] Run /init as init process
+[Mon Oct  5 05:11:00 2026]   with arguments:
+[Mon Oct  5 05:11:00 2026]     /init
+[Mon Oct  5 05:11:00 2026]   with environment:
+[Mon Oct  5 05:11:00 2026]     HOME=/
+[Mon Oct  5 05:11:00 2026]     TERM=linux
+[Mon Oct  5 05:11:00 2026]     pmos_boot_uuid=0ca6505a-27ac-4cf4-b302-c19075d41dd4
+[Mon Oct  5 05:11:00 2026]     pmos_root_uuid=45e5fe8b-1ac1-4678-962a-6021db51eaa2
+[Mon Oct  5 05:11:00 2026]     pmos_rootfsopts=defaults
+[Mon Oct  5 05:11:01 2026] mmc1: new UHS-I speed SDR104 SDHC card at address 0001
+[Mon Oct  5 05:11:01 2026] mmcblk1: mmc1:0001 SD32G 29.1 GiB
+[Mon Oct  5 05:11:01 2026] syslogd started: BusyBox v1.37.0
+[Mon Oct  5 05:11:01 2026]  mmcblk1: p1 p2
+[Mon Oct  5 05:11:01 2026] [pmOS-rd]:   ❬❬ PMOS STAGE 1 ❭❭
+[Mon Oct  5 05:11:01 2026] [pmOS-rd]: initramfs version: 3.8.9-r0
+[Mon Oct  5 05:11:01 2026] [pmOS-rd]:   ❬❬ PMOS STAGE 2 ❭❭
+[Mon Oct  5 05:11:01 2026] [pmOS-rd]: Starting systemd-udevd version 257.10
+[Mon Oct  5 05:11:01 2026] mmc0: new HS400 MMC card at address 0001
+[Mon Oct  5 05:11:01 2026] mmcblk0: mmc0:0001 HCG8a4 58.2 GiB
+[Mon Oct  5 05:11:01 2026]  mmcblk0: p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39 p40 p41 p42 p43 p44 p45 p46 p47 p48 p49 p50 p51
+[Mon Oct  5 05:11:01 2026] mmcblk0boot0: mmc0:0001 HCG8a4 4.00 MiB
+[Mon Oct  5 05:11:02 2026] mmcblk0boot1: mmc0:0001 HCG8a4 4.00 MiB
+[Mon Oct  5 05:11:03 2026] mmcblk0rpmb: mmc0:0001 HCG8a4 4.00 MiB, chardev (243:0)
+[Mon Oct  5 05:11:17 2026] gcc-msm8953 1800000.clock-controller: sync_state() pending due to e3000.rng
+[Mon Oct  5 05:11:17 2026] gcc-msm8953 1800000.clock-controller: sync_state() pending due to 90001000.framebuffer
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 500000.interconnect: sync_state() pending due to 1a00000.display-subsystem
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 400000.interconnect: sync_state() pending due to 1a00000.display-subsystem
+[Mon Oct  5 05:11:17 2026] gcc-msm8953 1800000.clock-controller: sync_state() pending due to 1a00000.display-subsystem
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 500000.interconnect: sync_state() pending due to 1c00000.gpu
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 400000.interconnect: sync_state() pending due to 1c00000.gpu
+[Mon Oct  5 05:11:17 2026] gcc-msm8953 1800000.clock-controller: sync_state() pending due to 1c00000.gpu
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 500000.interconnect: sync_state() pending due to 1d00000.venus
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 400000.interconnect: sync_state() pending due to 1d00000.venus
+[Mon Oct  5 05:11:17 2026] gcc-msm8953 1800000.clock-controller: sync_state() pending due to 1d00000.venus
+[Mon Oct  5 05:11:17 2026] gcc-msm8953 1800000.clock-controller: sync_state() pending due to 4080000.remoteproc
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 500000.interconnect: sync_state() pending due to 7900000.ipa
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 400000.interconnect: sync_state() pending due to 7900000.ipa
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 580000.interconnect: sync_state() pending due to 7900000.ipa
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 580000.interconnect:interconnect-snoc: sync_state() pending due to 1d00000.venus
+[Mon Oct  5 05:11:17 2026] qnoc-msm8953 580000.interconnect:interconnect-snoc: sync_state() pending due to 1a00000.display-subsystem
+[Mon Oct  5 05:11:22 2026] input: generic ft5x06 (3b) as /devices/platform/soc@0/78b7000.i2c/i2c-2/2-0038/input/input1
+[Mon Oct  5 05:11:23 2026] platform 1a01000.display-controller: Adding to iommu group 3
+[Mon Oct  5 05:11:23 2026] /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:11:23 2026] /soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:11:23 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+[Mon Oct  5 05:11:23 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+[Mon Oct  5 05:11:23 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:11:23 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+[Mon Oct  5 05:11:23 2026] /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+[Mon Oct  5 05:11:23 2026] msm_dpu 1a01000.display-controller: bound 1a94000.dsi (ops dsi_ops [msm])
+[Mon Oct  5 05:11:23 2026] adreno 1c00000.gpu: supply vdd not found, using dummy regulator
+[Mon Oct  5 05:11:23 2026] adreno 1c00000.gpu: supply vddcx not found, using dummy regulator
+[Mon Oct  5 05:11:23 2026] msm_dpu 1a01000.display-controller: bound 1c00000.gpu (ops a3xx_ops [msm])
+[Mon Oct  5 05:11:23 2026] [drm:dpu_kms_hw_init:1173] dpu hardware revision:0x10100000
+[Mon Oct  5 05:11:23 2026] [drm] Initialized msm 1.13.0 for 1a01000.display-controller on minor 0
+[Mon Oct  5 05:11:23 2026] msm_dpu 1a01000.display-controller: Direct firmware load for qcom/a530_pm4.fw failed with error -2
+[Mon Oct  5 05:11:23 2026] msm_dpu 1a01000.display-controller: [drm:adreno_request_fw [msm]] *ERROR* failed to load a530_pm4.fw
+[Mon Oct  5 05:11:23 2026] Console: switching to colour frame buffer device 135x120
+[Mon Oct  5 05:11:23 2026] fb0: sys_imageblit: framebuffer is not in virtual address space.
+[Mon Oct  5 05:11:23 2026] msm_dpu 1a01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+[Mon Oct  5 05:11:23 2026] [pmOS-rd]:   Setting up USB gadget through configfs
+[Mon Oct  5 05:11:23 2026] configfs-gadget.g1 gadget.0: HOST MAC 0e:da:f9:a1:85:28
+[Mon Oct  5 05:11:23 2026] configfs-gadget.g1 gadget.0: MAC de:4f:92:51:cb:d1
+[Mon Oct  5 05:11:23 2026] [pmOS-rd]: Trying to start server with parameters: Server IP addr: 172.16.42.1:67, client IP addr: 172.16.42.2, interface: usb0
+[Mon Oct  5 05:11:23 2026] [pmOS-rd]: Setting framebuffer mode to: U:1080x1920p-0
+[Mon Oct  5 05:11:24 2026] [pmOS-rd]: Trying to mount subpartitions for 10 seconds...
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: Unable to resize root partition: failed to find qualifying partition
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: Auto-repair and check 'ext' filesystem (/dev/mmcblk1p2)
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: pmOS_root: clean, 29503/281088 files, 474375/561920 blocks
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: Resize 'ext4' root filesystem (/dev/mmcblk1p2)
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: resize2fs 1.47.3 (8-Jul-2025)
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: The filesystem is already 561920 (4k) blocks long.  Nothing to do!
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: Mount root partition (/dev/mmcblk1p2) to /sysroot (read-write) with options defaults
+[Mon Oct  5 05:11:25 2026] EXT4-fs (mmcblk1p2): mounted filesystem 45e5fe8b-1ac1-4678-962a-6021db51eaa2 r/w with ordered data mode. Quota mode: none.
+[Mon Oct  5 05:11:25 2026] [pmOS-rd]: Switching root
+[Mon Oct  5 05:11:25 2026] syslogd exiting
+[Mon Oct  5 05:11:26 2026] systemd[1]: System time advanced to built-in epoch: Mon 2025-12-08 22:56:46 GMT
+[Mon Oct  5 05:11:26 2026] NET: Registered PF_INET6 protocol family
+[Mon Oct  5 05:11:26 2026] Segment Routing with IPv6
+[Mon Oct  5 05:11:26 2026] In-situ OAM (IOAM) with IPv6
+[Mon Oct  5 05:11:26 2026] systemd[1]: systemd 257.10 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN -IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE -TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF +XKBCOMMON -UTMP -SYSVINIT -LIBARCHIVE)
+[Mon Oct  5 05:11:26 2026] systemd[1]: Detected architecture arm64.
+[Mon Oct  5 05:11:26 2026] systemd[1]: Detected first boot.
+[Mon Oct  5 05:11:26 2026] systemd[1]: Hostname set to <qcom-msm8953>.
+[Mon Oct  5 05:11:26 2026] systemd[1]: Initializing machine ID from random generator.
+[Mon Oct  5 05:11:26 2026] systemd[1]: Failed to open libbpf, cgroup BPF features disabled: Not supported
+[Mon Oct  5 05:11:27 2026] systemd[1]: Populated /etc with preset unit settings.
+[Mon Oct  5 05:11:27 2026] systemd[1]: /usr/lib/systemd/system/q6voiced.service:12: Special user nobody configured, this is not safe!
+[Mon Oct  5 05:11:27 2026] systemd[1]: Queued start job for default target Graphical Interface.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Created slice Slice /system/getty.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Created slice Slice /system/modprobe.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Created slice User and Session Slice.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Set up automount Arbitrary Executable File Formats File System Automount Point.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Expecting device /dev/disk/by-uuid/0ca6505a-27ac-4cf4-b302-c19075d41dd4...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Local Encrypted Volumes.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Login Prompts.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Local Integrity Protected Volumes.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Path Units.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Remote Encrypted Volumes.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Remote File Systems.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Slice Units.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Reached target Local Verity Protected Volumes.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on Process Core Dump Socket.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on Credential Encryption/Decryption.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on Journal Socket (/dev/log).
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on Journal Sockets.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on DDI File System Mounter Socket.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on Namespace Resource Manager Socket.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on udev Control Socket.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Listening on udev Kernel Socket.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounting Huge Pages File System...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounting POSIX Message Queue File System...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounting Kernel Debug File System...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounting Kernel Trace File System...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Create List of Static Device Nodes...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load Kernel Module configfs...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load Kernel Module dm_mod...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load Kernel Module drm...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load Kernel Module efi_pstore...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load Kernel Module fuse...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load Kernel Module loop...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load firmware that is located on dedicated partitions of qcom devices...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting nftables static rule set...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Enable compressed swap in memory using zram...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Setting the system time according to an offset file...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Clear Stale Hibernate Storage Info was skipped because of an unmet condition check (ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67).
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Journal Service...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load Kernel Modules...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Remount Root and Kernel File Systems...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Wait Until Kernel Time Synchronized...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Load udev Rules from Credentials...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Coldplug All udev Devices...
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounted POSIX Message Queue File System.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounted Huge Pages File System.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounted Kernel Debug File System.
+[Mon Oct  5 05:11:28 2026] random: crng init done
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounted Kernel Trace File System.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Finished Create List of Static Device Nodes.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[Mon Oct  5 05:11:28 2026] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Finished Load Kernel Module configfs.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounting Kernel Configuration File System...
+[Mon Oct  5 05:11:28 2026] systemd[1]: modprobe@dm_mod.service: Deactivated successfully.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Finished Load Kernel Module dm_mod.
+[Mon Oct  5 05:11:28 2026] systemd[1]: modprobe@drm.service: Deactivated successfully.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Finished Load Kernel Module drm.
+[Mon Oct  5 05:11:28 2026] systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Finished Load Kernel Module efi_pstore.
+[Mon Oct  5 05:11:28 2026] systemd[1]: modprobe@loop.service: Deactivated successfully.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Finished Load Kernel Module loop.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Repartition Root Disk was skipped because no trigger condition checks were met.
+[Mon Oct  5 05:11:28 2026] fuse: init (API version 7.44)
+[Mon Oct  5 05:11:28 2026] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Finished Load Kernel Module fuse.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Mounting FUSE Control File System...
+[Mon Oct  5 05:11:28 2026] systemd[1]: swclock-offset-boot.service: Main process exited, code=exited, status=1/FAILURE
+[Mon Oct  5 05:11:28 2026] systemd[1]: swclock-offset-boot.service: Failed with result 'exit-code'.
+[Mon Oct  5 05:11:28 2026] systemd[1]: Failed to start Setting the system time according to an offset file.
+[Mon Oct  5 05:11:28 2026] EXT4-fs (mmcblk0p13): mounted filesystem af32c008-2a39-7e5b-a5dc-201456d93103 ro with ordered data mode. Quota mode: none.
+[Mon Oct  5 05:11:28 2026] EXT4-fs (mmcblk1p2): re-mounted 45e5fe8b-1ac1-4678-962a-6021db51eaa2.
+[Mon Oct  5 05:11:28 2026] systemd-journald[390]: Collecting audit messages is disabled.
+[Mon Oct  5 05:11:28 2026] EXT4-fs (mmcblk0p27): mounted filesystem 57f8f4bc-abf4-655f-bf67-946fc0f9f25b ro with ordered data mode. Quota mode: none.
+[Mon Oct  5 05:11:28 2026] EXT4-fs (mmcblk0p51): VFS: Can't find ext4 filesystem
+[Mon Oct  5 05:11:28 2026] EXT4-fs (mmcblk0p51): VFS: Can't find ext4 filesystem
+[Mon Oct  5 05:11:28 2026] EXT2-fs (mmcblk0p51): error: can't find an ext2 filesystem on dev mmcblk0p51.
+[Mon Oct  5 05:11:28 2026] FAT-fs (mmcblk0p51): bogus number of reserved sectors
+[Mon Oct  5 05:11:28 2026] FAT-fs (mmcblk0p51): Can't find a valid FAT filesystem
+[Mon Oct  5 05:11:28 2026] F2FS-fs (mmcblk0p51): Magic Mismatch, valid(0xf2f52010) - read(0x0)
+[Mon Oct  5 05:11:28 2026] F2FS-fs (mmcblk0p51): Can't find valid F2FS filesystem in 1th superblock
+[Mon Oct  5 05:11:28 2026] F2FS-fs (mmcblk0p51): Magic Mismatch, valid(0xf2f52010) - read(0x0)
+[Mon Oct  5 05:11:28 2026] F2FS-fs (mmcblk0p51): Can't find valid F2FS filesystem in 2th superblock
+[Mon Oct  5 05:11:28 2026] zram: Added device: zram0
+[Mon Oct  5 05:11:28 2026] zram0: detected capacity change from 0 to 10926080
+[Mon Oct  5 05:11:28 2026] Adding 5463036k swap on /dev/zram0.  Priority:-2 extents:1 across:5463036k SS
+[Mon Oct  5 05:11:29 2026] systemd[1]: Started Journal Service.
+[Mon Oct  5 05:11:29 2026] systemd-journald[390]: Received client request to flush runtime journal.
+[Mon Oct  5 05:11:34 2026] mc: Linux media interface: v0.10
+[Mon Oct  5 05:11:34 2026] NET: Registered PF_QIPCRTR protocol family
+[Mon Oct  5 05:11:34 2026] rtc-pm8xxx 200f000.spmi:pmic@0:rtc@6000: registered as rtc0
+[Mon Oct  5 05:11:34 2026] videodev: Linux video capture interface: v2.00
+[Mon Oct  5 05:11:34 2026] input: pm8941_pwrkey as /devices/platform/soc@0/200f000.spmi/spmi-0/0-00/200f000.spmi:pmic@0:pon@800/200f000.spmi:pmic@0:pon@800:pwrkey/input/input2
+[Mon Oct  5 05:11:34 2026] ak8975 0-000c: mounting matrix not found: using identity...
+[Mon Oct  5 05:11:34 2026] input: pm8941_resin as /devices/platform/soc@0/200f000.spmi/spmi-0/0-00/200f000.spmi:pmic@0:pon@800/200f000.spmi:pmic@0:pon@800:resin/input/input3
+[Mon Oct  5 05:11:34 2026] input: spmi_haptics as /devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:haptics@c000/input/input4
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc0: 4080000.remoteproc is available
+[Mon Oct  5 05:11:34 2026] qcom-wcnss-pil a204000.remoteproc: supply vddmx not found, using dummy regulator
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc1: a204000.remoteproc is available
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc1: powering up a204000.remoteproc
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc1: Booting fw image wcnss.mdt, size 7324
+[Mon Oct  5 05:11:34 2026] iio iio:device3: Not setting up IRQ trigger
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc2: adsp is available
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc2: powering up adsp
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc2: Booting fw image adsp.mdt, size 7516
+[Mon Oct  5 05:11:34 2026] remoteproc remoteproc2: remote processor adsp is now up
+[Mon Oct  5 05:11:34 2026] qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:3
+[Mon Oct  5 05:11:34 2026] qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:4
+[Mon Oct  5 05:11:34 2026] qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:7
+[Mon Oct  5 05:11:34 2026] qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:8
+[Mon Oct  5 05:11:34 2026] qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:9
+[Mon Oct  5 05:11:34 2026] qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:a
+[Mon Oct  5 05:11:34 2026] qcom,apr remoteproc2:smd-edge.apr_audio_svc.-1.-1: Adding APR/GPR dev: aprsvc:service:4:b
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: PMIC REV: 0	 CODEC Version: 4
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget ADC1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget ADC1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: sink widget PDM_RX1 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX3 overwritten
+[Mon Oct  5 05:11:35 2026] qcom,pm8916-wcd-spmi-codec 200f000.spmi:pmic@1:audio-codec@f000: ASoC: source widget PDM_RX3 overwritten
+[Mon Oct  5 05:11:35 2026] simple-amplifier analog-amplifier: supply VCC not found, using dummy regulator
+[Mon Oct  5 05:11:35 2026] remoteproc remoteproc1: remote processor a204000.remoteproc is now up
+[Mon Oct  5 05:11:35 2026] input: xiaomi-tissot Headset Jack as /devices/platform/soc@0/c051000.sound-card/sound/card0/input5
+[Mon Oct  5 05:11:35 2026] qcom_wcnss_ctrl remoteproc1:smd-edge.WCNSS_CTRL.-1.-1: WCNSS Version 1.5 1.2
+[Mon Oct  5 05:11:38 2026] remoteproc remoteproc0: powering up 4080000.remoteproc
+[Mon Oct  5 05:11:38 2026] remoteproc remoteproc0: Booting fw image mba.mbn, size 233808
+[Mon Oct  5 05:11:38 2026] qcom-wcnss-pil a204000.remoteproc: unexpected response to sysmon event
+[Mon Oct  5 05:11:38 2026] qcom-q6v5-mss 4080000.remoteproc: MBA booted without debug policy, loading mpss
+[Mon Oct  5 05:11:40 2026] remoteproc remoteproc0: remote processor 4080000.remoteproc is now up
+[Mon Oct  5 05:11:40 2026] qcom_wcnss_ctrl remoteproc1:smd-edge.WCNSS_CTRL.-1.-1: expected cold boot completion
+[Mon Oct  5 05:11:40 2026] qcom-memshare memshare: Got a request from unknown client (id=1, proc=0)
+[Mon Oct  5 05:11:40 2026] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[Mon Oct  5 05:11:40 2026] Bluetooth: Core ver 2.22
+[Mon Oct  5 05:11:40 2026] NET: Registered PF_BLUETOOTH protocol family
+[Mon Oct  5 05:11:40 2026] Bluetooth: HCI device and connection manager initialized
+[Mon Oct  5 05:11:40 2026] Bluetooth: HCI socket layer initialized
+[Mon Oct  5 05:11:40 2026] Bluetooth: L2CAP socket layer initialized
+[Mon Oct  5 05:11:40 2026] Bluetooth: SCO socket layer initialized
+[Mon Oct  5 05:11:40 2026] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[Mon Oct  5 05:11:40 2026] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[Mon Oct  5 05:11:40 2026] wcn36xx: mac address: 02:00:28:19:f2:32
+[Mon Oct  5 05:11:40 2026] Bluetooth: MGMT ver 1.23
+[Mon Oct  5 05:11:40 2026] NET: Registered PF_ALG protocol family
+[Mon Oct  5 05:11:45 2026] wcn36xx: firmware WLAN version 'WCN v2.0 RadioPhy vIris_TSMC_4.0 with 48MHz XO' and CRM version 'CNSS-PR-4-0-3-169-212583-1'
+[Mon Oct  5 05:11:45 2026] wcn36xx: firmware API 1.5.1.2, 41 stations, 2 bssids
+[Mon Oct  5 05:11:51 2026] msm_dpu 1a01000.display-controller: [drm:adreno_request_fw [msm]] loaded qcom/a530_pm4.fw from new location
+[Mon Oct  5 05:11:51 2026] msm_dpu 1a01000.display-controller: [drm:adreno_request_fw [msm]] loaded qcom/a530_pfp.fw from new location
+[Mon Oct  5 05:11:51 2026] debugfs: 'pfp' already exists in '1a01000.display-controller'
+[Mon Oct  5 05:11:51 2026] debugfs: 'me' already exists in '1a01000.display-controller'
+[Mon Oct  5 05:11:51 2026] debugfs: 'meq' already exists in '1a01000.display-controller'
+[Mon Oct  5 05:11:51 2026] debugfs: 'roq' already exists in '1a01000.display-controller'
+[Mon Oct  5 05:11:51 2026] debugfs: 'reset' already exists in '1a01000.display-controller'
+[Mon Oct  5 05:11:55 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:55 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:55 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:55 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:11:56 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10dac] not expecting rsp
+[Mon Oct  5 05:12:02 2026] Bluetooth: RFCOMM TTY layer initialized
+[Mon Oct  5 05:12:02 2026] Bluetooth: RFCOMM socket layer initialized
+[Mon Oct  5 05:12:02 2026] Bluetooth: RFCOMM ver 1.11
+[Mon Oct  5 05:12:05 2026] rfkill: input handler disabled
+[Mon Oct  5 05:12:07 2026] q6asm-dai c200000.remoteproc:smd-edge:apr:service@7:dais: command[0x10bdb] not expecting rsp
+[Mon Oct  5 05:17:10 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 05:17:10 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 05:17:10 2026] wlan0: authenticated
+[Mon Oct  5 05:17:10 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 05:17:10 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 05:17:10 2026] wlan0: associated
+[Mon Oct  5 05:17:13 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 05:23:12 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 05:23:12 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 05:23:14 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 05:23:14 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 05:23:14 2026] wlan0: authenticated
+[Mon Oct  5 05:23:14 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 05:23:14 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 05:23:14 2026] wlan0: associated
+[Mon Oct  5 05:23:15 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 06:20:19 2026] EXT4-fs (mmcblk1p2): resizing filesystem from 561920 to 7508992 blocks
+[Mon Oct  5 06:20:20 2026] EXT4-fs (mmcblk1p2): resized filesystem to 7508992
+[Mon Oct  5 06:23:40 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 7=CLASS3_FRAME_FROM_NONASSOC_STA)
+[Mon Oct  5 06:23:41 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 06:23:41 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 06:23:41 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:23:41 2026] wlan0: authenticated
+[Mon Oct  5 06:23:41 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:23:41 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 06:23:41 2026] wlan0: associated
+[Mon Oct  5 06:23:41 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 06:29:19 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 06:29:19 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 06:29:19 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 06:29:19 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:29:19 2026] wlan0: authenticated
+[Mon Oct  5 06:29:19 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:29:19 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 06:29:19 2026] wlan0: associated
+[Mon Oct  5 06:29:20 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 06:41:21 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 06:41:21 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 06:41:23 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 06:41:23 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:41:23 2026] wlan0: authenticated
+[Mon Oct  5 06:41:23 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:41:23 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 06:41:23 2026] wlan0: associated
+[Mon Oct  5 06:41:23 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 06:47:22 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 06:47:22 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 06:47:25 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 06:47:25 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:47:25 2026] wlan0: authenticated
+[Mon Oct  5 06:47:25 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:47:25 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 06:47:25 2026] wlan0: associated
+[Mon Oct  5 06:47:25 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 06:59:25 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 06:59:25 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 06:59:34 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 06:59:34 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:59:34 2026] wlan0: authenticated
+[Mon Oct  5 06:59:34 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 06:59:34 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 06:59:34 2026] wlan0: associated
+[Mon Oct  5 06:59:34 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 07:25:20 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 07:25:20 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 07:25:22 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 07:25:22 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 07:25:22 2026] wlan0: authenticated
+[Mon Oct  5 07:25:22 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 07:25:22 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 07:25:22 2026] wlan0: associated
+[Mon Oct  5 07:25:22 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 07:49:21 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 07:49:21 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 07:49:37 2026] IPv6: ipv6_create_tempaddr: regeneration time exceeded - disabled temporary address support
+[Mon Oct  5 07:49:41 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 07:49:41 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 07:49:41 2026] wlan0: authenticated
+[Mon Oct  5 07:49:41 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 07:49:41 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 07:49:41 2026] wlan0: associated
+[Mon Oct  5 07:49:41 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 08:07:23 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 08:07:23 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 08:07:25 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 08:07:25 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 08:07:25 2026] wlan0: authenticated
+[Mon Oct  5 08:07:25 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 08:07:25 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 08:07:25 2026] wlan0: associated
+[Mon Oct  5 08:07:25 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 08:30:16 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 08:30:18 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 08:30:18 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 08:30:18 2026] wlan0: authenticated
+[Mon Oct  5 08:30:18 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 08:30:18 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 08:30:18 2026] wlan0: associated
+[Mon Oct  5 08:30:18 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b
+[Mon Oct  5 08:48:19 2026] wlan0: deauthenticated from de:d4:57:30:0a:4b (Reason: 2=PREV_AUTH_NOT_VALID)
+[Mon Oct  5 08:48:19 2026] wcn36xx: ERROR SMD_EVENT (312) not supported
+[Mon Oct  5 08:48:21 2026] wlan0: authenticate with de:d4:57:30:0a:4b (local address=86:8d:c9:f4:31:db)
+[Mon Oct  5 08:48:21 2026] wlan0: send auth to de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 08:48:21 2026] wlan0: authenticated
+[Mon Oct  5 08:48:21 2026] wlan0: associate with de:d4:57:30:0a:4b (try 1/3)
+[Mon Oct  5 08:48:21 2026] wlan0: RX AssocResp from de:d4:57:30:0a:4b (capab=0x11 status=0 aid=1)
+[Mon Oct  5 08:48:21 2026] wlan0: associated
+[Mon Oct  5 08:48:22 2026] wlan0: Limiting TX power to 0 (-128 - 0) dBm as advertised by de:d4:57:30:0a:4b

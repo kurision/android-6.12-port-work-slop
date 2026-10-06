@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2026, Xiaomi Mi A1 (tissot) port to android-mainline.
+ * Values transcribed from the device's own CAF device tree
+ * (see artifacts/tissot-live.dts, /proc/fdt of the running device).
+ *
+ * Purpose: android-mainline's msm8953-xiaomi-tissot.dts does
+ * `#include "pmi8950.dtsi"` and overrides `&pmi8950_wled`, but no such file
+ * exists upstream, so the board file cannot even be preprocessed.
+ *
+ * Upstream coverage of these two nodes: none. There is no Qualcomm WLED
+ * driver in drivers/leds and no drivers/haptics directory at all, so this
+ * file makes the tree build, not the backlight/haptics work.
+ */
+
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/spmi/spmi.h>
+
+&spmi_bus {
+	pmi8950: pmic@3 {
+		compatible = "qcom,pmi8950", "qcom,spmi-pmic";
+		reg = <3 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pmi8950_haptics: haptics@c000 {
+			compatible = "qcom,pmi8950-haptics", "qcom,spmi-haptics";
+			reg = <0xc000>;
+			interrupts = <3 0xc000 0 IRQ_TYPE_EDGE_RISING>,
+				     <3 0xc000 1 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "short", "play";
+			qcom,play-mode = <0>;
+			qcom,actuator-type = <1>;
+			qcom,brake-pattern = <3 3 0 0>;
+			qcom,wave-play-rate-us = <5263>;
+			qcom,wave-shape = <1>;
+			status = "okay";
+		};
+
+		/* DSI panel rails on tissot: lab -> vsp, ibb -> vsn.
+		 * Upstream qcom-labibb-regulator.c matches "qcom,pmi8998-lab-ibb". */
+		pmi8950_labibb: labibb {
+			compatible = "qcom,pmi8950-lab-ibb", "qcom,pmi8998-lab-ibb";
+
+			pmi8950_ibb: ibb {
+				interrupts = <3 0xdc 2 IRQ_TYPE_EDGE_RISING>,
+					     <3 0xdc 0 IRQ_TYPE_EDGE_RISING>;
+				interrupt-names = "sc-err", "ocp";
+				qcom,discharge-resistor-kohms = <32>;
+			};
+
+			pmi8950_lab: lab {
+				interrupts = <3 0xde 1 IRQ_TYPE_EDGE_RISING>,
+					     <3 0xde 0 IRQ_TYPE_EDGE_RISING>;
+				interrupt-names = "sc-err", "ocp";
+				qcom,soft-start-us = <800>;
+			};
+		};
+
+		pmi8950_wled: leds@d800 {
+			compatible = "qcom,pmi8950-wled";
+			reg = <0xd800 0xd900>;
+			interrupts = <3 0xd800 1 IRQ_TYPE_LEVEL_HIGH>,
+				     <3 0xd800 2 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "ovp", "short";
+			label = "backlight";
+			/* Board file overrides num-strings/external-pfet/cabc
+			 * and enables this node. */
+			qcom,current-limit-microamp = <20000>;
+			qcom,ovp-millivolt = <29500>;
+			status = "disabled";
+		};
+	};
+};
