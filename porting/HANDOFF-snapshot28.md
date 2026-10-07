@@ -249,3 +249,32 @@
   likely be SELinux-denied; and kmsg alone can verify the ION fix
   (keymaster stays alive, keystore publishes, exec 5 exits 0). Revisit only
   if keymaster still crashes with ION present.
+
+## Snapshot30 image packaged (ION kernel)
+- VM artifacts landed in the repo checkout
+  `porting/artifacts/snapshot30/` (not `snapshot30-build/`): Image.gz
+  16,938,520 bytes SHA256
+  `7d375229a60b308b6df814ece10f67dcf7f112df45b77f4da475e7d9c34f13f4`,
+  same 40,462-byte L6-fixed DTB, kernel.config and build-info
+  (source 56aed9bb8, `out`, 6.12.93-4k-g56aed9bb8b8d).
+- Transfer defect: the VM's `Image.gz-dtb` is byte-identical to `Image.gz`
+  (DTB never appended), so its SHA256SUMS entry for it FAILED. Five of six
+  entries verify; gzip integrity passes. Concatenation was performed locally
+  instead: 16,978,982 bytes SHA256
+  `212f01e7191dbf3318fe13ac63edc4ff1f02dd8695667c11b338cf6e70d3e1c1`.
+- Embedded IKCONFIG matches transferred kernel.config byte-for-byte:
+  ION/ION_LEGACY/ION_SYSTEM_HEAP/ION_CMA_HEAP all y, plus QSEECOM, SCM,
+  4K pages, touchscreen, VFAT/F2FS/EXT4. DTB resolves iovcc-supply to L6.
+- Ready image (parent workspace):
+  `../porting/artifacts/boot-ack-snapshot30-ion-qsee-compat-tail-sd-screen.img`
+  35,964,928 bytes, SHA256
+  `26385cfb3cd72e6c7cfc635c4aa9344a6318c70881905010ab3e0842a2f118e0`.
+  Re-read verified: exact new kernel+DTB, snapshot28 ramdisk unchanged
+  (SHA256 `380088e3...2312bffe`, 664 newc entries, one ARM64 ELF init),
+  header delta only kernel size + regenerated SHA1, zero tail.
+- Packaged only: no snapshot30 boot yet. Next run uses the fixed
+  `usb-boot-capture.py` (pyserial now installed, fail-fast). Required
+  outcomes: /dev/ion present, keymaster stays alive, keystore publishes,
+  enablefilecrypto exits 0, init_user0, zygote. Snapshot29's SD stream is
+  already safe on Mac as snapshot29-sd.log; the next run truncates and
+  reuses the card file.
