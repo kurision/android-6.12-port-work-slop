@@ -496,3 +496,11 @@
 - Packaged only, not booted. Watch for: `qseecom: SMC spill buffers use
   the shared carveout`, then `qcom_scm: spilled 7 args to carveout ...`,
   then keymaster surviving its first transaction.
+
+## Snapshot32 on-device logs recovered
+- SD `snapshot32-sd.log` (117,333 bytes, ends 0.04s before USB at exec5
+  spawn; private ro mount), logdump `snapshot32-logdump.bin` (SHA256
+  `33b7c987...d633f851`, prefix == SD). pid 338 started, never exited, in
+  all channels. Spill-to-carveout confirmed working; death persists at the
+  FBE transaction. Next: listener-roundtrip pr_info tracing (proposed,
+  awaiting approval).
