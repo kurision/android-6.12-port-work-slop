@@ -385,3 +385,30 @@
   one `pr_info` on the >4-arg spill path logging smc_id/arglen/x5-phys;
   the wedge is confirmed if a spilled SEND_DATA is the last qseecom SMC.
   AWAITING USER CONFIRMATION before any source edit (repo rule).
+
+## Snapshot31 implemented: ION carveout binding (awaiting VM build)
+- Verified before implementing (not taken on trust): stock live DT has
+  `qseecom_region@0` (16 MiB), `qseecom_ta_region` (8 MiB),
+  `other_ext_region@0` (0x84a00000); stock `qcom,ion` binds heaps
+  @27/@19/@25; heap@27 carries a `memory-region` property.
+- Smoking gun in our own log: s30r3 prints `ION heap qsecom created`
+  with NO address, which the driver prints exactly when base/size are
+  zero (no `memory-region` -> early return). Heap 27 existed but had no
+  dedicated memory, so keymaster's 40KB landed in generic CMA and the
+  first TA transaction died on TZ XPU rejection. `msm_ion_of.c`
+  (present, compiled under CONFIG_ION) implements the memory-region lane.
+- Changes in `msm8953-xiaomi-tissot.dts`: restored both shared pools at
+  stock sizes; heap@1b(27,DMA)->qseecom region, heap@13(19,DMA)->TA
+  region, heap@19(25,SYSTEM); renamed our `qseecom@84a00000` to
+  `other_ext_region` (kept no-map AND kept 0x1900000: stock's 0x1e00000
+  would overlap smem@86300000/ramoops@86800000 in our layout).
+  DT compiles; all phandle bindings verified in the compiled DTB.
+  Corrected two plan details: the XPU range `0xff000000-...` is
+  illustrative, not a verified fact; the expected boot marker is the
+  driver's actual format `ION heap qsecom created at <addr>`.
+- Dropped nothing else from the plan; driver section needed no port
+  (msm_ion_of.c already in tree and compiled).
+- VM: same section-1 flow as snapshot30 (existing OUT dir, olddefconfig,
+  guard, rebuild kernel+DTB), stage to `~/snapshot31-build`, scp all six
+  files. Decisive boot marker: `ION heap qsecom created at <addr>`
+  followed by keymaster surviving its first transaction.
