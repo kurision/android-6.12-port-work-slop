@@ -428,3 +428,23 @@
 - Packaged only, not booted. Decisive marker stays: `ION heap qsecom
   created at <addr>` (with address this time), then keymaster surviving
   its first transaction, keystore publish, enablefilecrypto exit 0.
+
+## Snapshot31 boot: carveout bound, death unchanged -> spill path is next
+- USB 1,175 lines / 126,664 bytes to t=94.7s (`snapshot31-usb.log`).
+  Pools created as designed: `qseecom_region@0` at 0xff000000 (16 MiB),
+  `qseecom_ta_region` at 0xfe800000 (8 MiB); rename to other_ext_region
+  clean (25 MiB, no overlap). `ION heap qsecom/qsecom_ta/system created`
+  (no addresses: expected, size field stays 0 by design).
+- Code-verified (not log-provable): `ion_cma_heap_create` uses
+  `dev_get_cma_area(priv-dev)`, bound by `of_dma_configure` to the
+  memory-region pool. s30's heap silently fell back to default system CMA
+  (no "cma not backed" either); s31's heap is carveout-backed by the same
+  chain. The "created at <addr>" marker from the plan never fires by
+  design; binding verified in-tree + DTB instead.
+- Outcome: keymaster pid 335 started 93.5s, cutoff 94.7s, zero QSEE errors,
+  phone off USB. IDENTICAL death with heap backing fixed.
+- Disambiguation complete: heap backing does not decide it. The remaining
+  TZ-unshared path is the SMC >4-arg SPILL buffer (audit #1, still tzmem
+  in s31) and secondarily sb phys (#2). The reserved-window spill+tzbuf
+  fix designed earlier is now the forced next change. AWAITING USER
+  CONFIRMATION before source edits (repo rule).
