@@ -483,3 +483,16 @@
   Decisive markers: `qseecom: SMC spill buffers use the shared carveout`
   then `qcom_scm: spilled 7 args to carveout ...` then keymaster surviving
   its first transaction.
+
+## Snapshot32 image packaged (spill-fix kernel)
+- VM artifacts in repo checkout `porting/artifacts/snapshot32/`: all six
+  SHA256SUMS entries verify, concatenation correct. Source 15218cbd4,
+  6.12.93-4k-g15218cbd4976. Spill probe + carveout strings confirmed IN the
+  binary; DTB carveout attach confirmed (device region == pool, 0x79).
+- Ready image (parent workspace):
+  `../porting/artifacts/boot-ack-snapshot32-spill-carveout-tail-sd-screen.img`
+  35,964,928 bytes, SHA256
+  `9b04908c...47915fd`. Re-read verified against the validated base.
+- Packaged only, not booted. Watch for: `qseecom: SMC spill buffers use
+  the shared carveout`, then `qcom_scm: spilled 7 args to carveout ...`,
+  then keymaster surviving its first transaction.
