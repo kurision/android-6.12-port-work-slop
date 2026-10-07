@@ -278,3 +278,26 @@
   enablefilecrypto exits 0, init_user0, zygote. Snapshot29's SD stream is
   already safe on Mac as snapshot29-sd.log; the next run truncates and
   reuses the card file.
+
+## Snapshot30 boot: inconclusive, cutoff moved earlier (68s)
+- Booted via fixed `usb-boot-capture.py` (pyserial present): `fastboot boot`
+  OKAY, reader opened the gadget, captured 1,087 lines / 113,744 bytes, then
+  `read failed: Device not configured`. Log: `porting/artifacts/snapshot30-usb.log`.
+- Recovered from the booted ROM with root (no recovery needed this time):
+  SD stream as `porting/artifacts/snapshot30-sd.log` (114,583 bytes, private
+  ro vfat mount, mount stayed private); logdump partition as
+  `porting/artifacts/snapshot30-logdump.bin` (SHA256
+  `9a859482...707f2efc`, same 79-byte exec-out excess as s29).
+- Both on-device channels stop at the same place as USB (t=68.3s): real
+  cutoff, not USB flake. Listeners registered in 367 ms, zero SCM errors;
+  boot reached `exec 5 enablefilecrypto` launch ~2x faster than s29, then
+  silence 0.04 s later during a keystore2 manifest lookup. No vdc line for
+  pid 347, no keymaster start, no ION evidence either way (ION is silent in
+  kmsg; /dev/ion presence unobservable here).
+- Early kernel boot is line-identical to s29 (reserved regions, CMA at
+  0xfaa00000, 983040 pages): ION did not disturb memory layout. The 2x
+  userspace speedup is unexplained variance, not a kernel change.
+- Boot-reason history shows only `bootloader` entries: no init-requested
+  recovery reboot. Mechanism still unknown; single sample, re-run needed
+  before concluding ION regressed anything (more likely run-to-run variance
+  of the same FBE-launch killer seen in s28).
