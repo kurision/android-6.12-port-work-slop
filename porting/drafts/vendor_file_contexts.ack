@@ -948,4 +948,4 @@
 
 # Staging in /dev/block participates in init recursive restorecon.
 /dev/block/ack-protected-fstab\.qcom u:object_r:vendor_configs_file:s0
-/dev/block/ack-vendor-file-contexts u:object_r:vendor_configs_file:s0
+/dev/block/ack-vendor-file-contexts u:object_r:file_contexts_file:s0

@@ -86045,3 +86045,7 @@
 (allow tee block_device (blk_file (open read write)))
 ; DIAGNOSTIC TEMP-ONLY snapshot24: let keymaster HAL use mislabeled qseecom node; REVERT after.
 (allow hal_keymaster device (chr_file (open read write ioctl)))
+; Diagnostic bind overlays: init labels the staging inodes before ueventd starts.
+(allow init tmpfs (file (relabelfrom)))
+(allow init vendor_configs_file (file (relabelto)))
+(allow init file_contexts_file (file (relabelto)))
