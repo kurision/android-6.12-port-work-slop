@@ -330,3 +330,23 @@
   cutoffs land 1-2s after keymaster start is requested) better than any
   Linux-side cause, but still unproven. s29's 326s death mid-retry-loop
   remains the out-of-pattern sample.
+
+## Snapshot30 run 3: keymaster execs (ION works), death during first transaction
+- USB captured 1,118 lines / 117,722 bytes to t=96.9s (`snapshot30-run3-usb.log`
+  + `.status`); SD `snapshot30-run3-sd.log` (115,856 bytes, ends 0.5s earlier)
+  is the length authority (partition prefix matches exactly);
+  `snapshot30-run3-logdump.bin` SHA256 `a78dc2b6...ec08e`.
+- `vendor.keymaster-3-0 ... has pid 331` at 95.8s: first exec under the new
+  kernel, no instant status-1 death. ION fix VERIFIED in action (s29's 0.4s
+  instant exits are gone).
+- At 96.8-96.9s hwservicemanager routes keystore2's `IKeymasterDevice`
+  request to live pid 331 (keymaster already running 1.1s), then all
+  channels stop. No exit line, no publication confirm, no shutdown.
+- Correlation now 5/5 deaths within seconds of keymaster activity
+  (s28 +7s, s29 +1s, s30r1 +1s, s30r2 +2s, s30r3 +1s; three runs had exactly
+  one start each, so this is not restart-loop base rate). Userspace was
+  healthy at each cutoff (init forking, Binder flowing). The wedge is in
+  the first TA-load/secure transaction, below everything Linux logs.
+- Next: the TA image itself. Identify what `QSEECom_start_app` loads for
+  keymaster on this device and verify that image is reachable/valid under
+  the new kernel's storage/firmware view. No kernel-option guessing.
