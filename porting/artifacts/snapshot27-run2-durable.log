@@ -1,0 +1,1510 @@
+DIAG: Android capture ready; handing PID 1 to Android init
+DIAG: Android init exec succeeded
+6,0,0,-,caller=T0;Booting Linux on physical CPU 0x0000000000 [0x410fd034]
+5,1,0,-,caller=T0;Linux version 6.12.93-4k-g05a6f7b2c2c5-dirty (kurision@omarchy) (Android (13989888, +pgo, +bolt, +lto, +mlgo, based on r563880c) clang version 21.0.0 (https://android.googlesource.com/toolchain/llvm-project 5e96669f06077099aa41290cdb4c5e6fa0f59349), LLD 21.0.0 (/mnt/disks/build-disk/src/googleplex-android/llvm-r563880-release/out/llvm-project/llvm 5e96669f06077099aa41290cdb4c5e6fa0f59349)) #5 SMP PREEMPT Tue Oct  6 23:40:38 +0545 2026
+4,2,0,-,caller=T0;KASLR disabled due to lack of seed
+6,3,0,-,caller=T0;Machine model: Xiaomi Mi A1
+4,4,0,-,caller=T0;KVM is not available. Ignoring kvm-arm.mode
+6,5,0,-,caller=T0;printk: debug: ignoring loglevel setting.
+6,6,0,-,caller=T0;Enabling dynamic shadow call stack
+6,7,0,-,caller=T0;efi: UEFI not found.
+4,8,0,-,caller=T0;[Firmware Bug]: Kernel image misaligned at boot, please fix your bootloader!
+6,9,0,-,caller=T0;Reserved memory: created DMA memory pool at 0x0000000081800000, size 8 KiB
+6,10,0,-,caller=T0;OF: reserved mem: initialized node zap@81800000, compatible id shared-dma-pool
+6,11,0,-,caller=T0;OF: reserved mem: 0x0000000081800000..0x0000000081801fff (8 KiB) nomap non-reusable zap@81800000
+6,12,0,-,caller=T0;OF: reserved mem: 0x0000000086300000..0x00000000863fffff (1024 KiB) nomap non-reusable smem@86300000
+6,13,0,-,caller=T0;OF: reserved mem: 0x0000000086400000..0x00000000867fffff (4096 KiB) nomap non-reusable reserved@86400000
+6,14,0,-,caller=T0;OF: reserved mem: 0x0000000086c00000..0x000000008d5fffff (108544 KiB) nomap non-reusable mpss@86c00000
+6,15,0,-,caller=T0;OF: reserved mem: 0x000000008d600000..0x000000008e7fffff (18432 KiB) nomap non-reusable adsp@8d600000
+6,16,0,-,caller=T0;OF: reserved mem: 0x0000000090000000..0x0000000090000fff (4 KiB) nomap non-reusable dfps-data@90000000
+6,17,0,-,caller=T0;OF: reserved mem: 0x0000000090001000..0x00000000913fffff (20476 KiB) nomap non-reusable cont-splash@90001000
+6,18,0,-,caller=T0;OF: reserved mem: 0x0000000091400000..0x0000000091afffff (7168 KiB) nomap non-reusable venus@91400000
+6,19,0,-,caller=T0;OF: reserved mem: 0x0000000092000000..0x00000000920fffff (1024 KiB) nomap non-reusable mba@92000000
+6,20,0,-,caller=T0;OF: reserved mem: 0x00000000f2d00000..0x00000000f2e7ffff (1536 KiB) nomap non-reusable rmtfs@f2d00000
+6,21,0,-,caller=T0;OF: reserved mem: 0x0000000084a00000..0x00000000862fffff (25600 KiB) nomap non-reusable qseecom@84a00000
+6,22,0,-,caller=T0;OF: reserved mem: 0x000000008e800000..0x000000008eefffff (7168 KiB) nomap non-reusable wcnss@8e800000
+6,23,0,-,caller=T0;OF: reserved mem: 0x0000000086800000..0x00000000868fffff (1024 KiB) map non-reusable ramoops@86800000
+6,24,0,-,caller=T0;Zone ranges:
+6,25,0,-,caller=T0;  DMA32    [mem 0x0000000010000000-0x00000000ffffffff]
+6,26,0,-,caller=T0;  Normal   empty
+6,27,0,-,caller=T0;Movable zone start for each node
+6,28,0,-,caller=T0;Early memory node ranges
+6,29,0,-,caller=T0;  node   0: [mem 0x0000000010000000-0x00000000817fffff]
+6,30,0,-,caller=T0;  node   0: [mem 0x0000000081800000-0x0000000081801fff]
+6,31,0,-,caller=T0;  node   0: [mem 0x0000000081802000-0x00000000849fffff]
+6,32,0,-,caller=T0;  node   0: [mem 0x0000000084a00000-0x00000000867fffff]
+6,33,0,-,caller=T0;  node   0: [mem 0x0000000086800000-0x0000000086bfffff]
+6,34,0,-,caller=T0;  node   0: [mem 0x0000000086c00000-0x000000008eefffff]
+6,35,0,-,caller=T0;  node   0: [mem 0x000000008ef00000-0x000000008fffffff]
+6,36,0,-,caller=T0;  node   0: [mem 0x0000000090000000-0x0000000091afffff]
+6,37,0,-,caller=T0;  node   0: [mem 0x0000000091b00000-0x0000000091ffffff]
+6,38,0,-,caller=T0;  node   0: [mem 0x0000000092000000-0x00000000920fffff]
+6,39,0,-,caller=T0;  node   0: [mem 0x0000000092100000-0x00000000f2cfffff]
+6,40,0,-,caller=T0;  node   0: [mem 0x00000000f2d00000-0x00000000f2e7ffff]
+6,41,0,-,caller=T0;  node   0: [mem 0x00000000f2e80000-0x00000000ffffffff]
+6,42,0,-,caller=T0;Initmem setup node 0 [mem 0x0000000010000000-0x00000000ffffffff]
+6,43,0,-,caller=T0;cma: Reserved 16 MiB at 0x00000000faa00000 on node -1
+6,44,0,-,caller=T0;psci: probing for conduit method from DT.
+6,45,0,-,caller=T0;psci: PSCIv1.0 detected in firmware.
+6,46,0,-,caller=T0;psci: Using standard PSCI v0.2 function IDs
+6,47,0,-,caller=T0;psci: MIGRATE_INFO_TYPE not supported.
+6,48,0,-,caller=T0;psci: SMC Calling Convention v1.0
+6,49,0,-,caller=T0;psci: OSI mode supported.
+6,50,0,-,caller=T0;psci: [Firmware Bug]: failed to set PC mode: -1
+3,51,0,-,caller=T0;'bootconfig' found on command line, but no bootconfig found
+6,52,0,-,caller=T0;percpu: Embedded 82 pages/cpu s174104 r131072 d30696 u335872
+7,53,0,-,caller=T0;pcpu-alloc: s174104 r131072 d30696 u335872 alloc=82*4096
+7,54,0,-,caller=T0;pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+6,55,0,-,caller=T0;Detected VIPT I-cache on CPU0
+6,56,0,-,caller=T0;CPU features: detected: ARM erratum 845719
+6,57,0,-,caller=T0;alternatives: applying boot alternatives
+5,58,0,-,caller=T0;Kernel command line: console=ttynull stack_depot_disable=on cgroup_disable=pressure kasan.stacktrace=off kvm-arm.mode=protected bootconfig androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 loop.max_part=7 androidboot.boot_devices=soc@0/7824900.mmc buildvariant=user ignore_loglevel printk.time=1 oops=panic panic=10 androidboot.force_normal_boot=1 rcupdate.rcu_cpu_stall_timeout=10 softlockup_panic=1 hung_task_panic=1 printk.devkmsg=on androidboot.bootdevice=../.. console=tty0 loglevel=8 androidboot.emmc=true androidboot.verifiedbootstate=orange androidboot.veritymode=enforcing androidboot.keymaster=1 androidboot.serialno=2819f2320604 androidboot.secureboot=1 androidboot.bootloader=MSM8953_TISSOT2.0_20200810200428 androidboot.baseband=msm mdss_mdp.panel=1:dsi:0:qcom,mdss_dsi_otm1911_fhd_video:1:none:cfg:single_dsi androidboot.slot_suffix=_a skip_initramfs rootwait ro init=/init root=/dev/dm-0 dm="system none ro,0 1 android-verity /dev/mmcblk0p25"
+6,59,0,-,caller=T0;cgroup: Disabling pressure control group feature
+5,60,0,-,caller=T0;Unknown kernel command line parameters "buildvariant=user dm=system none ro,0 1 android-verity /dev/mmcblk0p25", will be passed to user space.
+6,61,0,-,caller=T0;printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+6,62,0,-,caller=T0;Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+6,63,0,-,caller=T0;Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+6,64,0,-,caller=T0;Built 1 zonelists, mobility grouping on.  Total pages: 983040
+6,65,0,-,caller=T0;mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+6,66,0,-,caller=T0;stackdepot: disabled
+6,67,0,-,caller=T0;software IO TLB: SWIOTLB bounce buffer size adjusted to 3MB
+6,68,0,-,caller=T0;software IO TLB: area num 8.
+6,69,0,-,caller=T0;software IO TLB: SWIOTLB bounce buffer size roundup to 4MB
+6,70,0,-,caller=T0;software IO TLB: mapped [mem 0x00000000f9d70000-0x00000000fa170000] (4MB)
+6,71,0,-,caller=T0;SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+6,72,0,-,caller=T0;rcu: Preemptible hierarchical RCU implementation.
+6,73,0,-,caller=T0;rcu: \x09RCU event tracing is enabled.
+6,74,0,-,caller=T0;rcu: \x09RCU restricting CPUs from NR_CPUS=32 to nr_cpu_ids=8.
+6,75,0,-,caller=T0;rcu: \x09RCU priority boosting: priority 1 delay 500 ms.
+6,76,0,-,caller=T0;\x09RCU CPU stall warnings timeout set to 10 (rcu_cpu_stall_timeout).
+6,77,0,-,caller=T0;\x09Trampoline variant of Tasks RCU enabled.
+6,78,0,-,caller=T0;\x09Tracing variant of Tasks RCU enabled.
+6,79,0,-,caller=T0;rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+6,80,0,-,caller=T0;rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
+6,81,0,-,caller=T0;RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+6,82,0,-,caller=T0;RCU Tasks Trace: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+6,83,0,-,caller=T0;NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+6,84,0,-,caller=T0;Root IRQ handler: gic_handle_irq
+6,85,0,-,caller=T0;rcu: \x09Offload RCU callbacks from CPUs: 0-7.
+6,86,0,-,caller=T0;rcu: srcu_init: Setting srcu_struct sizes based on contention.
+6,87,0,-,caller=T0;arch_timer: cp15 and mmio timer(s) running at 19.20MHz (virt/virt).
+6,88,0,-,caller=T0;clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+6,89,1,-,caller=T0;sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078ns
+6,90,692,-,caller=T0;kfence: initialized - using 524288 bytes for 63 objects at 0x(____ptrval____)-0x(____ptrval____)
+6,91,1193,-,caller=T0;Console: colour dummy device 80x25
+6,92,1211,-,caller=T0;printk: legacy console [tty0] enabled
+6,93,3020,-,caller=T0;Calibrating delay loop (skipped), value calculated using timer frequency.. 38.40 BogoMIPS (lpj=76800)
+6,94,3065,-,caller=T0;pid_max: default: 32768 minimum: 301
+6,95,7264,-,caller=T0;LSM: initializing lsm=capability,landlock,safesetid,selinux,bpf
+6,96,9254,-,caller=T0;landlock: Up and running.
+6,97,9293,-,caller=T0;SELinux:  Initializing.
+6,98,18184,-,caller=T0;LSM support for eBPF active
+6,99,19507,-,caller=T0;Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+6,100,19557,-,caller=T0;Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+6,101,28385,-,caller=T1;rcu: Hierarchical SRCU implementation.
+6,102,28438,-,caller=T1;rcu: \x09Max phase no-delay instances is 1000.
+6,103,29378,-,caller=T1;Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+6,104,30532,-,caller=T1;dyndbg: Ignore empty _ddebug table in a CONFIG_DYNAMIC_DEBUG_CORE build
+6,105,33438,-,caller=T1;EFI services will not be available.
+6,106,34641,-,caller=T1;smp: Bringing up secondary CPUs ...
+6,107,36000,-,caller=T0;Detected VIPT I-cache on CPU1
+6,108,36145,-,caller=T0;CPU1: Booted secondary processor 0x0000000001 [0x410fd034]
+6,109,37887,-,caller=T0;Detected VIPT I-cache on CPU2
+6,110,38009,-,caller=T0;CPU2: Booted secondary processor 0x0000000002 [0x410fd034]
+6,111,39444,-,caller=T0;Detected VIPT I-cache on CPU3
+6,112,39554,-,caller=T0;CPU3: Booted secondary processor 0x0000000003 [0x410fd034]
+6,113,43546,-,caller=T0;Detected VIPT I-cache on CPU4
+6,114,46665,-,caller=T0;CPU4: Booted secondary processor 0x0000000100 [0x410fd034]
+6,115,58064,-,caller=T0;Detected VIPT I-cache on CPU5
+6,116,61154,-,caller=T0;CPU5: Booted secondary processor 0x0000000101 [0x410fd034]
+6,117,72764,-,caller=T0;Detected VIPT I-cache on CPU6
+6,118,75916,-,caller=T0;CPU6: Booted secondary processor 0x0000000102 [0x410fd034]
+6,119,86727,-,caller=T0;Detected VIPT I-cache on CPU7
+6,120,89971,-,caller=T0;CPU7: Booted secondary processor 0x0000000103 [0x410fd034]
+6,121,96769,-,caller=T1;smp: Brought up 1 node, 8 CPUs
+6,122,97193,-,caller=T1;SMP: Total of 8 processors activated.
+6,123,97217,-,caller=T1;CPU: All CPU(s) started at EL1
+6,124,97338,-,caller=T1;CPU features: detected: 32-bit EL0 Support
+6,125,97365,-,caller=T1;CPU features: detected: 32-bit EL1 Support
+6,126,97407,-,caller=T1;CPU features: detected: CRC32 instructions
+6,127,99388,-,caller=T1;alternatives: applying system-wide alternatives
+6,128,106639,-,caller=T1;CPU features: emulated: Privileged Access Never (PAN) using TTBR0_EL1 switching
+6,129,111399,-,caller=T1;Memory: 3566984K/3932160K available (20224K kernel code, 2722K rwdata, 15612K rodata, 4864K init, 680K bss, 340808K reserved, 16384K cma-reserved)
+6,130,132321,-,caller=T1;devtmpfs: initialized
+6,131,160131,-,caller=T1;clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+6,132,160698,-,caller=T1;futex hash table entries: 2048 (order: 5, 131072 bytes, linear)
+6,133,163263,-,caller=T1;21696 pages in range for non-PLT usage
+6,134,163331,-,caller=T1;513216 pages in range for PLT usage
+6,135,166629,-,caller=T1;pinctrl core: initialized pinctrl subsystem
+6,136,188739,-,caller=T1;NET: Registered PF_NETLINK/PF_ROUTE protocol family
+6,137,202711,-,caller=T1;DMA: preallocated 512 KiB GFP_KERNEL pool for atomic allocations
+6,138,205126,-,caller=T1;DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+6,139,206940,-,caller=T1;audit: initializing netlink subsys (disabled)
+5,140,210817,-,caller=T81;audit: type=2000 audit(0.200:1): state=initialized audit_enabled=0 res=1
+6,141,381252,-,caller=T1;thermal_sys: Registered thermal governor 'bang_bang'
+6,142,381365,-,caller=T1;thermal_sys: Registered thermal governor 'step_wise'
+6,143,381504,-,caller=T1;thermal_sys: Registered thermal governor 'user_space'
+6,144,381530,-,caller=T1;thermal_sys: Registered thermal governor 'power_allocator'
+6,145,382032,-,caller=T1;cpuidle: using governor menu
+6,146,384302,-,caller=T1;hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+6,147,388046,-,caller=T1;ASID allocator initialised with 65536 entries
+6,148,391664,-,caller=T1;Serial: AMBA PL011 UART driver
+6,149,397249,-,caller=T1;pstore: Using crash dump compression: deflate
+6,150,397322,-,caller=T1;printk: legacy console [ramoops-1] enabled
+6,151,407333,-,caller=T1;pstore: Registered ramoops as persistent store backend
+6,152,407372,-,caller=T1;ramoops: using 0x100000@0x86800000, ecc: 0
+6,153,419210,-,caller=T1;/soc@0/clock-controller@1800000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/phy@1a94400
+6,154,419498,-,caller=T1;/soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+6,155,419600,-,caller=T1;/soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+6,156,419678,-,caller=T1;/soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+6,157,419824,-,caller=T1;/soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+6,158,419907,-,caller=T1;/soc@0/display-subsystem@1a00000/phy@1a94400: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+6,159,428809,-,caller=T1;/soc@0/clock-controller@1800000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/phy@1a94400
+6,160,431436,-,caller=T1;/soc@0/display-subsystem@1a00000: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+6,161,431758,-,caller=T1;/soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+6,162,431859,-,caller=T1;/soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+6,163,431943,-,caller=T1;/soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+6,164,432090,-,caller=T1;/soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+6,165,432174,-,caller=T1;/soc@0/display-subsystem@1a00000/phy@1a94400: Fixed dependency cycle(s) with /soc@0/clock-controller@1800000
+6,166,474797,-,caller=T1;iommu: Default domain type: Translated
+6,167,475019,-,caller=T1;iommu: DMA domain TLB invalidation policy: strict mode
+5,168,496415,-,caller=T1;SCSI subsystem initialized
+6,169,497145,-,caller=T1;usbcore: registered new interface driver usbfs
+6,170,497254,-,caller=T1;usbcore: registered new interface driver hub
+6,171,497391,-,caller=T1;usbcore: registered new device driver usb
+6,172,498014,-,caller=T1;mc: Linux media interface: v0.10
+6,173,498207,-,caller=T1;videodev: Linux video capture interface: v2.00
+6,174,498471,-,caller=T1;EDAC MC: Ver: 3.0.0
+6,175,501433,-,caller=T1;scmi_core: SCMI protocol bus registered
+6,176,506001,-,caller=T1;ION heap qsecom created
+6,177,509962,-,caller=T1;Advanced Linux Sound Architecture Driver Initialized.
+6,178,517679,-,caller=T1;clocksource: Switched to clocksource arch_sys_counter
+5,179,524704,-,caller=T1;VFS: Disk quotas dquot_6.6.0
+6,180,525180,-,caller=T1;VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+6,181,548974,-,caller=T1;NET: Registered PF_INET protocol family
+6,182,551021,-,caller=T1;IP idents hash table entries: 65536 (order: 7, 524288 bytes, linear)
+6,183,823522,-,caller=T1;tcp_listen_portaddr_hash hash table entries: 2048 (order: 3, 32768 bytes, linear)
+6,184,830113,-,caller=T1;Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+6,185,856406,-,caller=T1;TCP established hash table entries: 32768 (order: 6, 262144 bytes, linear)
+6,186,882291,-,caller=T1;TCP bind hash table entries: 32768 (order: 8, 1048576 bytes, linear)
+6,187,930575,-,caller=T1;TCP: Hash tables configured (established 32768 bind 32768)
+6,188,938733,-,caller=T1;UDP hash table entries: 2048 (order: 4, 65536 bytes, linear)
+6,189,946452,-,caller=T1;UDP-Lite hash table entries: 2048 (order: 4, 65536 bytes, linear)
+6,190,999943,-,caller=T1;NET: Registered PF_UNIX/PF_LOCAL protocol family
+6,191,1007861,-,caller=T1;NET: Registered PF_XDP protocol family
+6,192,1009459,-,caller=T1;PCI: CLS 0 bytes, default 64
+6,193,1035327,-,caller=T1;kvm [1]: HYP mode not available
+6,194,1039158,-,caller=T78;Trying to unpack rootfs image as initramfs...
+5,195,1693291,-,caller=T1;Initialise system trusted keyrings
+6,196,1698129,-,caller=T1;workingset: timestamp_bits=46 max_order=20 bucket_order=0
+6,197,1713673,-,caller=T1;fuse: init (API version 7.41)
+5,198,1814262,-,caller=T1;Key type asymmetric registered
+5,199,1814424,-,caller=T1;Asymmetric key parser 'x509' registered
+6,200,1814988,-,caller=T1;Block layer SCSI generic (bsg) driver version 0.4 loaded (major 240)
+6,201,1815167,-,caller=T1;io scheduler mq-deadline registered
+6,202,1815205,-,caller=T1;io scheduler kyber registered
+6,203,1815623,-,caller=T1;io scheduler bfq registered
+6,204,1837310,-,caller=T1;msm_serial: driver initialized
+6,205,1838842,-,caller=T1;printk: legacy console [ttynull0] enabled
+6,206,1918984,-,caller=T1;brd: module loaded
+6,207,1955179,-,caller=T1;loop: module loaded
+6,208,1957072,-,caller=T1;QSEECOM: qseecom_init_control: qseecom.qsee_version = 0x1001000
+4,209,1957197,-,caller=T1;QSEECOM: qseecom_parse_dt: qsee reentrancy support phase is not defined, setting to default 0
+4,210,1957265,-,caller=T1;QSEECOM: qseecom_retrieve_ce_data: Device does not support PFE
+4,211,1959910,-,caller=T1;QSEECOM: qseecom_register_heap_shmbridge: Could not get heap 19 info: No shmbridge created
+4,212,1960646,-,caller=T1;QSEECOM: qseecom_register_heap_shmbridge: Could not get heap 26 info: No shmbridge created
+6,213,1969111,-,caller=T1;spmi_pmic_arb 200f000.spmi: PMIC arbiter version v2 (0x20010000)
+ SUBSYSTEM=platform
+ DEVICE=+platform:200f000.spmi
+6,214,1987592,-,caller=T1;wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+6,215,1987771,-,caller=T1;wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+6,216,1992193,-,caller=T1;tun: Universal TUN/TAP device driver, 1.6
+6,217,1995157,-,caller=T1;VFIO - User Level meta-driver version: 0.3
+6,218,1998532,-,caller=T1;usbcore: registered new interface driver uas
+6,219,1998729,-,caller=T1;usbcore: registered new interface driver usb-storage
+6,220,1999362,-,caller=T1;file system registered
+6,221,1999960,-,caller=T1;usbcore: registered new interface driver xpad
+6,222,2004022,-,caller=T1;rtc-pm8xxx 200f000.spmi:pmic@0:rtc@6000: registered as rtc0
+ SUBSYSTEM=platform
+ DEVICE=+platform:200f000.spmi:pmic@0:rtc@6000
+6,223,2004257,-,caller=T1;rtc-pm8xxx 200f000.spmi:pmic@0:rtc@6000: setting system clock to 1970-01-02T10:06:55 UTC (122815)
+ SUBSYSTEM=platform
+ DEVICE=+platform:200f000.spmi:pmic@0:rtc@6000
+6,224,2004982,-,caller=T1;gspca_main: v2.14.0 registered
+6,225,2005217,-,caller=T1;usbcore: registered new interface driver uvcvideo
+6,226,2010263,-,caller=T1;input: pm8941_pwrkey as /devices/platform/soc@0/200f000.spmi/spmi-0/0-00/200f000.spmi:pmic@0:pon@800/200f000.spmi:pmic@0:pon@800:pwrkey/input/input0
+6,227,2015419,-,caller=T1;input: pm8941_resin as /devices/platform/soc@0/200f000.spmi/spmi-0/0-00/200f000.spmi:pmic@0:pon@800/200f000.spmi:pmic@0:pon@800:resin/input/input1
+6,228,2018663,-,caller=T1;device-mapper: uevent: version 1.0.3
+6,229,2020265,-,caller=T1;device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@lists.linux.dev
+6,230,2024094,-,caller=T1;sdhci: Secure Digital Host Controller Interface driver
+6,231,2024206,-,caller=T1;sdhci: Copyright(c) Pierre Ossman
+6,232,2024238,-,caller=T1;sdhci-pltfm: SDHCI platform and OF driver helper
+6,233,2026468,-,caller=T1;hid: raw HID events driver (C) Jiri Kosina
+6,234,2030660,-,caller=T1;usbcore: registered new interface driver usbhid
+6,235,2030735,-,caller=T1;usbhid: USB HID core driver
+3,236,2039529,-,caller=T1;qcom-spmi-vadc 200f000.spmi:pmic@2:adc@3100: Please define VDD channel
+ SUBSYSTEM=platform
+ DEVICE=+platform:200f000.spmi:pmic@2:adc@3100
+6,237,2049324,-,caller=T1;hw perfevents: enabled with armv8_cortex_a53 PMU driver, 7 (0,8000003f) counters available
+6,238,2056325,-,caller=T1;usbcore: registered new interface driver snd-usb-audio
+6,239,2058327,-,caller=T1;GACT probability on
+6,240,2058454,-,caller=T1;Mirror/redirect action on
+6,241,2058533,-,caller=T1;netem: version 1.3
+6,242,2058845,-,caller=T1;u32 classifier
+6,243,2058873,-,caller=T1;    input device check on
+6,244,2058900,-,caller=T1;    Actions configured
+6,245,2066178,-,caller=T1;xt_time: kernel timezone is -0000
+6,246,2066559,-,caller=T1;ipip: IPv4 and MPLS over IPv4 tunneling driver
+6,247,2067941,-,caller=T1;gre: GRE over IPv4 demultiplexor driver
+6,248,2067983,-,caller=T1;ip_gre: GRE over IPv4 tunneling driver
+6,249,2071209,-,caller=T1;IPv4 over IPsec tunneling driver
+6,250,2072384,-,caller=T1;Initializing XFRM netlink socket
+6,251,2072542,-,caller=T1;IPsec XFRM device driver
+6,252,2074047,-,caller=T1;NET: Registered PF_INET6 protocol family
+6,253,2081110,-,caller=T1;Segment Routing with IPv6
+6,254,2081360,-,caller=T1;In-situ OAM (IOAM) with IPv6
+6,255,2082063,-,caller=T1;mip6: Mobile IPv6
+6,256,2084251,-,caller=T1;sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+6,257,2086569,-,caller=T1;ip6_gre: GRE over IPv6 tunneling driver
+6,258,2087914,-,caller=T1;NET: Registered PF_PACKET protocol family
+6,259,2087988,-,caller=T1;NET: Registered PF_KEY protocol family
+6,260,2089399,-,caller=T1;NET: Registered PF_VSOCK protocol family
+6,261,2116974,-,caller=T1;sched_proxy_exec: disabled
+6,262,2120642,-,caller=T1;registered taskstats version 1
+5,263,2122557,-,caller=T1;Loading compiled-in X.509 certificates
+5,264,2127461,-,caller=T1;Loaded X.509 cert 'Build time autogenerated kernel key: 03d82db317d0a493b524aab6f36bb2a18f86e23e'
+6,265,2158944,-,caller=T1;page_owner is disabled
+5,266,2159930,-,caller=T1;Key type .fscrypt registered
+5,267,2159973,-,caller=T1;Key type fscrypt-provisioning registered
+6,268,2295700,-,caller=T84;s1: Bringing 0uV into 870000-870000uV
+6,269,2296816,-,caller=T84;s3: Bringing 0uV into 1224000-1224000uV
+6,270,2297250,-,caller=T84;s4: Bringing 0uV into 1900000-1900000uV
+6,271,2297900,-,caller=T84;l1: Bringing 0uV into 1000000-1000000uV
+6,272,2298457,-,caller=T84;l2: Bringing 0uV into 1200000-1200000uV
+6,273,2298900,-,caller=T84;l3: Bringing 0uV into 925000-925000uV
+6,274,2299408,-,caller=T84;l5: Bringing 0uV into 1800000-1800000uV
+6,275,2299918,-,caller=T84;l6: Bringing 0uV into 1800000-1800000uV
+6,276,2300385,-,caller=T84;l7: Bringing 0uV into 1800000-1800000uV
+6,277,2300902,-,caller=T84;l8: Bringing 0uV into 2900000-2900000uV
+6,278,2301340,-,caller=T84;l9: Bringing 0uV into 3300000-3300000uV
+6,279,2301852,-,caller=T84;l10: Bringing 0uV into 2850000-2850000uV
+6,280,2302415,-,caller=T84;l11: Bringing 0uV into 2950000-2950000uV
+6,281,2302836,-,caller=T84;l12: Bringing 0uV into 1800000-1800000uV
+6,282,2303344,-,caller=T84;l13: Bringing 0uV into 3125000-3125000uV
+6,283,2303807,-,caller=T84;l16: Bringing 0uV into 1800000-1800000uV
+6,284,2304282,-,caller=T84;l17: Bringing 0uV into 2750000-2750000uV
+6,285,2304840,-,caller=T84;l19: Bringing 0uV into 1200000-1200000uV
+6,286,2305258,-,caller=T84;l22: Bringing 0uV into 2800000-2800000uV
+6,287,2305931,-,caller=T84;l23: Bringing 0uV into 1200000-1200000uV
+6,288,3546381,-,caller=T77;qcom_scm: convention: smc arm 64
+6,289,3652831,-,caller=T78;Freeing initrd memory: 17728K
+6,290,3863766,-,caller=T77;msm_serial 78af000.serial: msm_serial: detected port #0
+ SUBSYSTEM=platform
+ DEVICE=+platform:78af000.serial
+6,291,3864445,-,caller=T77;msm_serial 78af000.serial: uartclk = 7372798
+ SUBSYSTEM=platform
+ DEVICE=+platform:78af000.serial
+6,292,3866380,-,caller=T77;78af000.serial: ttyMSM0 at MMIO 0x78af000 (irq = 30, base_baud = 460799) is a MSM
+6,293,3871308,-,caller=T77;qcom-iommu soc@0:iommu@1c48000: iommu sec: pgtable size: 135168
+ SUBSYSTEM=platform
+ DEVICE=+platform:soc@0:iommu@1c48000
+6,294,3918805,-,caller=T77;/soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+6,295,3921780,-,caller=T77;/soc@0/display-subsystem@1a00000/display-controller@1a01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+6,296,3922307,-,caller=T77;/soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+6,297,3922381,-,caller=T77;/soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/display-controller@1a01000
+6,298,3922904,-,caller=T77;/soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+4,299,3928352,-,caller=T77;------------[ cut here ]------------
+4,300,3928496,-,caller=T77;dsi0n1_postdiv_clk: Zero divisor and CLK_DIVIDER_ALLOW_ZERO not set
+4,301,3928885,-,caller=T77;WARNING: CPU: 0 PID: 77 at drivers/clk/clk-divider.c:141 divider_recalc_rate+0xc8/0xd4
+4,302,3928981,-,caller=T77;Modules linked in:
+4,303,3929041,-,caller=T77;CPU: 0 UID: 0 PID: 77 Comm: kworker/u33:0 Not tainted 6.12.93-4k-g05a6f7b2c2c5-dirty #5 ae851062da66a5a27dc021cdce66ce624c32a9fa
+4,304,3929107,-,caller=T77;Hardware name: Xiaomi Mi A1 (DT)
+4,305,3929144,-,caller=T77;Workqueue: events_unbound deferred_probe_work_func
+4,306,3929215,-,caller=T77;pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+4,307,3929259,-,caller=T77;pc : divider_recalc_rate+0xc8/0xd4
+4,308,3929294,-,caller=T77;lr : divider_recalc_rate+0xc4/0xd4
+4,309,3929331,-,caller=T77;sp : ffffffc082e33520
+4,310,3929359,-,caller=T77;x29: ffffffc082e33530 x28: ffffff8015f3e000 x27: ffffff80175a1c00
+4,311,3929417,-,caller=T77;x26: ffffff8015e2db00 x25: ffffff8014a5bcc0 x24: ffffffc082b88000
+4,312,3929472,-,caller=T77;x23: 0000000000000000 x22: ffffffc0839f5400 x21: 0000000000000000
+4,313,3929526,-,caller=T77;x20: 0000000000000004 x19: ffffff8015e2db00 x18: ffffffc082e05000
+4,314,3929590,-,caller=T77;x17: 0000000022b7e063 x16: 0000000022b7e063 x15: 0000000000000003
+4,315,3929657,-,caller=T77;x14: ffffffc0828b5320 x13: 0000000000000003 x12: 0000000000000003
+4,316,3929720,-,caller=T77;x11: 00000000ffffefff x10: c0000000ffffefff x9 : 09f7d7c0182d0f00
+4,317,3929777,-,caller=T77;x8 : 09f7d7c0182d0f00 x7 : 205b5d3639343832 x6 : 392e33202020205b
+4,318,3929831,-,caller=T77;x5 : ffffffc082b40d78 x4 : ffffffc082e330af x3 : 0000000000000000
+4,319,3929884,-,caller=T77;x2 : 0000000000000000 x1 : 0000000000000000 x0 : 0000000000000043
+4,320,3929940,-,caller=T77;Call trace:
+4,321,3929968,-,caller=T77; divider_recalc_rate+0xc8/0xd4
+4,322,3930006,-,caller=T77; dsi_pll_14nm_postdiv_recalc_rate+0x84/0xa0
+4,323,3930057,-,caller=T77; __clk_register+0x8b0/0xdec
+4,324,3930107,-,caller=T77; devm_clk_hw_register+0x78/0xc4
+4,325,3930147,-,caller=T77; dsi_pll_14nm_init+0x1dc/0x3a0
+4,326,3930184,-,caller=T77; dsi_phy_driver_probe+0x328/0x388
+4,327,3930222,-,caller=T77; platform_probe+0xa0/0xe0
+4,328,3930260,-,caller=T77; really_probe+0x180/0x354
+4,329,3930297,-,caller=T77; __driver_probe_device+0x98/0xd4
+4,330,3930336,-,caller=T77; driver_probe_device+0x3c/0x218
+4,331,3930376,-,caller=T77; __device_attach_driver+0x154/0x190
+4,332,3930414,-,caller=T77; bus_for_each_drv+0x10c/0x168
+4,333,3930454,-,caller=T77; __device_attach+0xfc/0x188
+4,334,3930493,-,caller=T77; device_initial_probe+0x14/0x24
+4,335,3930531,-,caller=T77; bus_probe_device+0x94/0x11c
+4,336,3930567,-,caller=T77; device_add+0x234/0x46c
+4,337,3930603,-,caller=T77; of_platform_device_create_pdata+0xb8/0x140
+4,338,3930657,-,caller=T77; of_platform_bus_create+0x1e0/0x370
+4,339,3930697,-,caller=T77; of_platform_populate+0x74/0xe0
+4,340,3930735,-,caller=T77; mdss_probe+0x320/0x3e0
+4,341,3930776,-,caller=T77; platform_probe+0xa0/0xe0
+4,342,3930810,-,caller=T77; really_probe+0x180/0x354
+4,343,3930849,-,caller=T77; __driver_probe_device+0x98/0xd4
+4,344,3930888,-,caller=T77; driver_probe_device+0x3c/0x218
+4,345,3930927,-,caller=T77; __device_attach_driver+0x154/0x190
+4,346,3930967,-,caller=T77; bus_for_each_drv+0x10c/0x168
+4,347,3931004,-,caller=T77; __device_attach+0xfc/0x188
+4,348,3931041,-,caller=T77; device_initial_probe+0x14/0x24
+4,349,3931081,-,caller=T77; bus_probe_device+0x94/0x11c
+4,350,3931117,-,caller=T77; deferred_probe_work_func+0xa4/0xf4
+4,351,3931157,-,caller=T77; process_scheduled_works+0x1c4/0x454
+4,352,3931203,-,caller=T77; worker_thread+0x238/0x2f0
+4,353,3931239,-,caller=T77; kthread+0x11c/0x1c8
+4,354,3931285,-,caller=T77; ret_from_fork+0x10/0x20
+4,355,3931341,-,caller=T77;---[ end trace 0000000000000000 ]---
+5,356,3969305,-,caller=T77;i2c_qup 78b6000.i2c: using default clock-frequency 100000
+ SUBSYSTEM=platform
+ DEVICE=+platform:78b6000.i2c
+6,357,3982370,-,caller=T77;max98927 0-003a: MAX98927 revisionID: 0x42
+ SUBSYSTEM=i2c
+ DEVICE=+i2c:0-003a
+5,358,3989848,-,caller=T77;i2c_qup 78b7000.i2c: using default clock-frequency 100000
+ SUBSYSTEM=platform
+ DEVICE=+platform:78b7000.i2c
+4,359,3998335,-,caller=T89;edt_ft5x06 1-0038: supply iovcc not found, using dummy regulator
+ SUBSYSTEM=i2c
+ DEVICE=+i2c:1-0038
+6,360,4011640,-,caller=T84;sdhci_msm 7864900.mmc: Got CD GPIO
+ SUBSYSTEM=platform
+ DEVICE=+platform:7864900.mmc
+6,361,4012488,-,caller=T77;msm_mdp 1a01000.display-controller: Adding to iommu group 0
+ SUBSYSTEM=platform
+ DEVICE=+platform:1a01000.display-controller
+4,362,4014587,-,caller=T77;msm_mdp 1a01000.display-controller: No interconnect support may cause display underflows!
+ SUBSYSTEM=platform
+ DEVICE=+platform:1a01000.display-controller
+6,363,4022879,-,caller=T77;/soc@0/display-subsystem@1a00000/dsi@1a94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0
+6,364,4023655,-,caller=T77;/soc@0/display-subsystem@1a00000/dsi@1a94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@1a00000/dsi@1a94000
+6,365,4026580,-,caller=T77;msm_mdp 1a01000.display-controller: bound 1a94000.dsi (ops dsi_ops)
+ SUBSYSTEM=platform
+ DEVICE=+platform:1a01000.display-controller
+6,366,4029025,-,caller=T77;msm_mdp 1a01000.display-controller: [drm:mdp5_kms_init] MDP5 version v1.16
+ SUBSYSTEM=platform
+ DEVICE=+platform:1a01000.display-controller
+6,367,4057740,-,caller=T138;mmc1: SDHCI controller on 7824900.mmc [7824900.mmc] using ADMA 64-bit
+6,368,4060044,-,caller=T77;[drm] Initialized msm 1.12.0 for 1a01000.display-controller on minor 0
+3,369,4060344,-,caller=T77;msm_mdp 1a01000.display-controller: no GPU device was found
+ SUBSYSTEM=platform
+ DEVICE=+platform:1a01000.display-controller
+6,370,4061328,-,caller=T84;mmc0: SDHCI controller on 7864900.mmc [7864900.mmc] using ADMA 64-bit
+4,371,4142183,-,caller=T77;------------[ cut here ]------------
+4,372,4142245,-,caller=T77;pclk0_clk_src: rcg didn't update its configuration.
+4,373,4142597,-,caller=T77;WARNING: CPU: 1 PID: 77 at drivers/clk/qcom/clk-rcg2.c:133 update_config+0xd4/0xe8
+4,374,4142687,-,caller=T77;Modules linked in:
+4,375,4142723,-,caller=T77;CPU: 1 UID: 0 PID: 77 Comm: kworker/u33:0 Tainted: G        W          6.12.93-4k-g05a6f7b2c2c5-dirty #5 ae851062da66a5a27dc021cdce66ce624c32a9fa
+4,376,4142763,-,caller=T77;Tainted: [W]=WARN
+4,377,4142769,-,caller=T77;Hardware name: Xiaomi Mi A1 (DT)
+4,378,4142782,-,caller=T77;Workqueue: events_unbound deferred_probe_work_func
+4,379,4142827,-,caller=T77;pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+4,380,4142842,-,caller=T77;pc : update_config+0xd4/0xe8
+4,381,4142858,-,caller=T77;lr : update_config+0xd0/0xe8
+4,382,4142873,-,caller=T77;sp : ffffffc082e32900
+4,383,4142880,-,caller=T77;x29: ffffffc082e32910 x28: 0000000000000000 x27: ffffffc082b88000
+4,384,4142901,-,caller=T77;x26: ffffffc082b93290 x25: ffffffc082b88000 x24: 0000000000000005
+4,385,4142920,-,caller=T77;x23: 0000000000000003 x22: 0000000000000001 x21: 0000000000000001
+4,386,4142938,-,caller=T77;x20: ffffffc081b519c5 x19: ffffffc0829a2380 x18: ffffffc082e05000
+4,387,4142957,-,caller=T77;x17: 00000000529c6ef0 x16: 00000000529c6ef0 x15: 0000000000000003
+4,388,4142976,-,caller=T77;x14: 0000000000000011 x13: 0000000000000000 x12: 0000000000000000
+4,389,4142995,-,caller=T77;x11: 0000000000000000 x10: 00000000ffffffff x9 : 09f7d7c0182d0f00
+4,390,4143014,-,caller=T77;x8 : 09f7d7c0182d0f00 x7 : 6470752074276e64 x6 : 696420676372203a
+4,391,4143033,-,caller=T77;x5 : ffffffc082b274ab x4 : ffffffc081aced66 x3 : ffff0a00ffffff00
+4,392,4143051,-,caller=T77;x2 : 0000000000000026 x1 : 0000000000000000 x0 : 00000000fffffff0
+4,393,4143071,-,caller=T77;Call trace:
+4,394,4143078,-,caller=T77; update_config+0xd4/0xe8
+4,395,4143094,-,caller=T77; clk_rcg2_configure+0x88/0xb4
+4,396,4143111,-,caller=T77; clk_pixel_set_rate+0x1a4/0x208
+4,397,4143128,-,caller=T77; clk_change_rate+0x4f8/0xc24
+4,398,4143145,-,caller=T77; clk_change_rate+0x78c/0xc24
+4,399,4143156,-,caller=T77; clk_change_rate+0x78c/0xc24
+4,400,4143166,-,caller=T77; clk_change_rate+0x78c/0xc24
+4,401,4143177,-,caller=T77; clk_change_rate+0x78c/0xc24
+4,402,4143188,-,caller=T77; clk_core_set_rate_nolock+0x1e0/0x37c
+4,403,4143211,-,caller=T77; clk_set_rate+0x90/0x130
+4,404,4143226,-,caller=T77; _opp_config_clk_single+0x38/0x8c
+4,405,4143257,-,caller=T77; dev_pm_opp_set_rate+0x130/0x1b8
+4,406,4143274,-,caller=T77; dsi_link_clk_set_rate_6g+0x44/0xbc
+4,407,4143292,-,caller=T77; msm_dsi_host_power_on+0xfc/0x9cc
+4,408,4143305,-,caller=T77; dsi_mgr_bridge_pre_enable+0x1e8/0x430
+4,409,4143321,-,caller=T77; drm_atomic_bridge_chain_pre_enable+0x1cc/0x218
+4,410,4143344,-,caller=T77; drm_atomic_helper_commit_modeset_enables+0x208/0x2f8
+4,411,4143371,-,caller=T77; msm_atomic_commit_tail+0x234/0x8a0
+4,412,4143389,-,caller=T77; commit_tail+0xc0/0x184
+4,413,4143406,-,caller=T77; drm_atomic_helper_commit+0x2a4/0x2c0
+4,414,4143421,-,caller=T77; drm_atomic_commit+0xc0/0xf0
+4,415,4143433,-,caller=T77; drm_client_modeset_commit_atomic+0x280/0x358
+4,416,4143450,-,caller=T77; drm_client_modeset_commit_locked+0x50/0x19c
+4,417,4143465,-,caller=T77; drm_client_modeset_commit+0x2c/0x58
+4,418,4143478,-,caller=T77; drm_fb_helper_set_par+0x60/0xac
+4,419,4143508,-,caller=T77; fbcon_init+0x394/0x598
+4,420,4143534,-,caller=T77; visual_init+0xd8/0x12c
+4,421,4143554,-,caller=T77; do_bind_con_driver+0x448/0x518
+4,422,4143569,-,caller=T77; do_take_over_console+0x400/0x44c
+4,423,4143581,-,caller=T77; do_fbcon_takeover+0xe4/0x1b8
+4,424,4143597,-,caller=T77; fbcon_fb_registered+0x188/0x210
+4,425,4143612,-,caller=T77; register_framebuffer+0x1a8/0x244
+4,426,4143627,-,caller=T77; __drm_fb_helper_initial_config_and_unlock+0x424/0x5a8
+4,427,4143645,-,caller=T77; drm_fb_helper_initial_config+0x34/0x4c
+4,428,4143661,-,caller=T77; msm_fbdev_client_hotplug+0x70/0xcc
+4,429,4143687,-,caller=T77; drm_client_register+0x80/0xe0
+4,430,4143700,-,caller=T77; msm_fbdev_setup+0x98/0x180
+4,431,4143714,-,caller=T77; msm_drm_bind+0x370/0x3e4
+4,432,4143733,-,caller=T77; try_to_bring_up_aggregate_device+0x194/0x1f0
+4,433,4143763,-,caller=T77; __component_add+0xd8/0x1f8
+4,434,4143781,-,caller=T77; component_add+0x14/0x24
+4,435,4143797,-,caller=T77; dsi_dev_attach+0x1c/0x2c
+4,436,4143810,-,caller=T77; dsi_host_attach+0x60/0x98
+4,437,4143823,-,caller=T77; mipi_dsi_attach+0x48/0x70
+4,438,4143834,-,caller=T77; otm1911_probe+0x12c/0x174
+4,439,4143849,-,caller=T77; mipi_dsi_drv_probe+0x34/0x44
+4,440,4143868,-,caller=T77; really_probe+0x180/0x354
+4,441,4143884,-,caller=T77; __driver_probe_device+0x98/0xd4
+4,442,4143900,-,caller=T77; driver_probe_device+0x3c/0x218
+4,443,4143915,-,caller=T77; __device_attach_driver+0x154/0x190
+4,444,4143931,-,caller=T77; bus_for_each_drv+0x10c/0x168
+4,445,4143948,-,caller=T77; __device_attach+0xfc/0x188
+4,446,4143963,-,caller=T77; device_initial_probe+0x14/0x24
+4,447,4143978,-,caller=T77; bus_probe_device+0x94/0x11c
+4,448,4143992,-,caller=T77; device_add+0x234/0x46c
+4,449,4144005,-,caller=T77; mipi_dsi_device_register_full+0x100/0x218
+4,450,4144022,-,caller=T77; mipi_dsi_host_register+0x78/0x1c4
+4,451,4144039,-,caller=T77; msm_dsi_host_register+0x3c/0x5c
+4,452,4144051,-,caller=T77; msm_dsi_manager_register+0x168/0x204
+4,453,4144066,-,caller=T77; dsi_dev_probe+0x110/0x1e0
+4,454,4144078,-,caller=T77; platform_probe+0xa0/0xe0
+4,455,4144094,-,caller=T77; really_probe+0x180/0x354
+4,456,4144109,-,caller=T77; __driver_probe_device+0x98/0xd4
+4,457,4144124,-,caller=T77; driver_probe_device+0x3c/0x218
+4,458,4144140,-,caller=T77; __device_attach_driver+0x154/0x190
+4,459,4144157,-,caller=T77; bus_for_each_drv+0x10c/0x168
+4,460,4144171,-,caller=T77; __device_attach+0xfc/0x188
+4,461,4144187,-,caller=T77; device_initial_probe+0x14/0x24
+4,462,4144203,-,caller=T77; bus_probe_device+0x94/0x11c
+4,463,4144216,-,caller=T77; deferred_probe_work_func+0xa4/0xf4
+4,464,4144232,-,caller=T77; process_scheduled_works+0x1c4/0x454
+4,465,4144254,-,caller=T77; worker_thread+0x238/0x2f0
+4,466,4144267,-,caller=T77; kthread+0x11c/0x1c8
+4,467,4144290,-,caller=T77; ret_from_fork+0x10/0x20
+4,468,4144324,-,caller=T77;---[ end trace 0000000000000000 ]---
+4,469,4145389,-,caller=T77;------------[ cut here ]------------
+4,470,4145395,-,caller=T77;pclk0_clk_src: rcg didn't update its configuration.
+4,471,4145571,-,caller=T77;WARNING: CPU: 1 PID: 77 at drivers/clk/qcom/clk-rcg2.c:133 update_config+0xd4/0xe8
+4,472,4145594,-,caller=T77;Modules linked in:
+4,473,4145604,-,caller=T77;CPU: 1 UID: 0 PID: 77 Comm: kworker/u33:0 Tainted: G        W          6.12.93-4k-g05a6f7b2c2c5-dirty #5 ae851062da66a5a27dc021cdce66ce624c32a9fa
+4,474,4145622,-,caller=T77;Tainted: [W]=WARN
+4,475,4145627,-,caller=T77;Hardware name: Xiaomi Mi A1 (DT)
+4,476,4145634,-,caller=T77;Workqueue: events_unbound deferred_probe_work_func
+4,477,4145653,-,caller=T77;pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+4,478,4145666,-,caller=T77;pc : update_config+0xd4/0xe8
+4,479,4145681,-,caller=T77;lr : update_config+0xd0/0xe8
+4,480,4145694,-,caller=T77;sp : ffffffc082e32b60
+4,481,4145700,-,caller=T77;x29: ffffffc082e32b70 x28: 0000000000000000 x27: ffffffc082b88000
+4,482,4145720,-,caller=T77;x26: ffffffc082b93290 x25: ffffffc082b88000 x24: 0000000000000005
+4,483,4145740,-,caller=T77;x23: 0000000000000003 x22: 0000000000000001 x21: 0000000000000001
+4,484,4145758,-,caller=T77;x20: ffffffc081b519c5 x19: ffffffc0829a2380 x18: ffffffc082e05000
+4,485,4145777,-,caller=T77;x17: 00000000529c6ef0 x16: 00000000529c6ef0 x15: 0000000000000003
+4,486,4145796,-,caller=T77;x14: 0000000000000011 x13: 0000000000000000 x12: 0000000000000000
+4,487,4145814,-,caller=T77;x11: 0000000000000000 x10: 00000000ffffffff x9 : 09f7d7c0182d0f00
+4,488,4145833,-,caller=T77;x8 : 09f7d7c0182d0f00 x7 : 6470752074276e64 x6 : 696420676372203a
+4,489,4145851,-,caller=T77;x5 : ffffffc082b287fb x4 : ffffffc081aced66 x3 : ffff0a00ffffff00
+4,490,4145870,-,caller=T77;x2 : 0000000000000026 x1 : 0000000000000000 x0 : 00000000fffffff0
+4,491,4145888,-,caller=T77;Call trace:
+4,492,4145893,-,caller=T77; update_config+0xd4/0xe8
+4,493,4145909,-,caller=T77; clk_rcg2_configure+0x88/0xb4
+4,494,4145924,-,caller=T77; clk_pixel_set_rate+0x1a4/0x208
+4,495,4145939,-,caller=T77; clk_change_rate+0x4f8/0xc24
+4,496,4145949,-,caller=T77; clk_change_rate+0x78c/0xc24
+4,497,4145960,-,caller=T77; clk_core_set_rate_nolock+0x1e0/0x37c
+4,498,4145977,-,caller=T77; clk_set_rate+0x90/0x130
+4,499,4145991,-,caller=T77; dsi_link_clk_set_rate_6g+0x54/0xbc
+4,500,4146003,-,caller=T77; msm_dsi_host_power_on+0xfc/0x9cc
+4,501,4146016,-,caller=T77; dsi_mgr_bridge_pre_enable+0x1e8/0x430
+4,502,4146029,-,caller=T77; drm_atomic_bridge_chain_pre_enable+0x1cc/0x218
+4,503,4146044,-,caller=T77; drm_atomic_helper_commit_modeset_enables+0x208/0x2f8
+4,504,4146062,-,caller=T77; msm_atomic_commit_tail+0x234/0x8a0
+4,505,4146076,-,caller=T77; commit_tail+0xc0/0x184
+4,506,4146091,-,caller=T77; drm_atomic_helper_commit+0x2a4/0x2c0
+4,507,4146107,-,caller=T77; drm_atomic_commit+0xc0/0xf0
+4,508,4146117,-,caller=T77; drm_client_modeset_commit_atomic+0x280/0x358
+4,509,4146133,-,caller=T77; drm_client_modeset_commit_locked+0x50/0x19c
+4,510,4146147,-,caller=T77; drm_client_modeset_commit+0x2c/0x58
+4,511,4146161,-,caller=T77; drm_fb_helper_set_par+0x60/0xac
+4,512,4146176,-,caller=T77; fbcon_init+0x394/0x598
+4,513,4146192,-,caller=T77; visual_init+0xd8/0x12c
+4,514,4146206,-,caller=T77; do_bind_con_driver+0x448/0x518
+4,515,4146218,-,caller=T77; do_take_over_console+0x400/0x44c
+4,516,4146230,-,caller=T77; do_fbcon_takeover+0xe4/0x1b8
+4,517,4146246,-,caller=T77; fbcon_fb_registered+0x188/0x210
+4,518,4146261,-,caller=T77; register_framebuffer+0x1a8/0x244
+4,519,4146275,-,caller=T77; __drm_fb_helper_initial_config_and_unlock+0x424/0x5a8
+4,520,4146293,-,caller=T77; drm_fb_helper_initial_config+0x34/0x4c
+4,521,4146309,-,caller=T77; msm_fbdev_client_hotplug+0x70/0xcc
+4,522,4146325,-,caller=T77; drm_client_register+0x80/0xe0
+4,523,4146338,-,caller=T77; msm_fbdev_setup+0x98/0x180
+4,524,4146352,-,caller=T77; msm_drm_bind+0x370/0x3e4
+4,525,4146367,-,caller=T77; try_to_bring_up_aggregate_device+0x194/0x1f0
+4,526,4146385,-,caller=T77; __component_add+0xd8/0x1f8
+4,527,4146402,-,caller=T77; component_add+0x14/0x24
+4,528,4146417,-,caller=T77; dsi_dev_attach+0x1c/0x2c
+4,529,4146428,-,caller=T77; dsi_host_attach+0x60/0x98
+4,530,4146440,-,caller=T77; mipi_dsi_attach+0x48/0x70
+4,531,4146450,-,caller=T77; otm1911_probe+0x12c/0x174
+4,532,4146465,-,caller=T77; mipi_dsi_drv_probe+0x34/0x44
+4,533,4146480,-,caller=T77; really_probe+0x180/0x354
+4,534,4146495,-,caller=T77; __driver_probe_device+0x98/0xd4
+4,535,4146510,-,caller=T77; driver_probe_device+0x3c/0x218
+4,536,4146525,-,caller=T77; __device_attach_driver+0x154/0x190
+4,537,4146540,-,caller=T77; bus_for_each_drv+0x10c/0x168
+4,538,4146554,-,caller=T77; __device_attach+0xfc/0x188
+4,539,4146569,-,caller=T77; device_initial_probe+0x14/0x24
+4,540,4146583,-,caller=T77; bus_probe_device+0x94/0x11c
+4,541,4146598,-,caller=T77; device_add+0x234/0x46c
+4,542,4146610,-,caller=T77; mipi_dsi_device_register_full+0x100/0x218
+4,543,4146627,-,caller=T77; mipi_dsi_host_register+0x78/0x1c4
+4,544,4146643,-,caller=T77; msm_dsi_host_register+0x3c/0x5c
+4,545,4146655,-,caller=T77; msm_dsi_manager_register+0x168/0x204
+4,546,4146668,-,caller=T77; dsi_dev_probe+0x110/0x1e0
+4,547,4146679,-,caller=T77; platform_probe+0xa0/0xe0
+4,548,4146691,-,caller=T77; really_probe+0x180/0x354
+4,549,4146707,-,caller=T77; __driver_probe_device+0x98/0xd4
+4,550,4146722,-,caller=T77; driver_probe_device+0x3c/0x218
+4,551,4146737,-,caller=T77; __device_attach_driver+0x154/0x190
+4,552,4146752,-,caller=T77; bus_for_each_drv+0x10c/0x168
+4,553,4146766,-,caller=T77; __device_attach+0xfc/0x188
+4,554,4146781,-,caller=T77; device_initial_probe+0x14/0x24
+4,555,4146795,-,caller=T77; bus_probe_device+0x94/0x11c
+4,556,4146809,-,caller=T77; deferred_probe_work_func+0xa4/0xf4
+4,557,4146825,-,caller=T77; process_scheduled_works+0x1c4/0x454
+4,558,4146839,-,caller=T77; worker_thread+0x238/0x2f0
+4,559,4146851,-,caller=T77; kthread+0x11c/0x1c8
+4,560,4146865,-,caller=T77; ret_from_fork+0x10/0x20
+4,561,4146882,-,caller=T77;---[ end trace 0000000000000000 ]---
+3,562,4169791,-,caller=C0;[drm:mdp5_irq_error_handler] *ERROR* errors: 04000000
+6,563,4199926,-,caller=T95;mmc1: new HS400 MMC card at address 0001
+6,564,4206683,-,caller=T95;mmcblk1: mmc1:0001 HCG8a4 58.2 GiB
+6,565,4217748,-,caller=T95; mmcblk1: p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 p32 p33 p34 p35 p36 p37 p38 p39 p40 p41 p42 p43 p44 p45 p46 p47 p48 p49 p50 p51 p52
+3,566,4219868,-,caller=T15;dsi_err_worker: status=5
+6,567,4219934,-,caller=T77;panel-otm1911 1a94000.dsi.0: panel status 0x9c (downstream expects 0x9c)
+ SUBSYSTEM=mipi-dsi
+ DEVICE=+mipi-dsi:1a94000.dsi.0
+6,568,4237465,-,caller=T95;mmcblk1boot0: mmc1:0001 HCG8a4 4.00 MiB
+6,569,4248241,-,caller=T95;mmcblk1boot1: mmc1:0001 HCG8a4 4.00 MiB
+6,570,4256234,-,caller=T95;mmcblk1rpmb: mmc1:0001 HCG8a4 4.00 MiB, chardev (506:0)
+6,571,4325483,-,caller=T113;mmc0: new ultra high speed SDR104 SDHC card at address 0001
+6,572,4331314,-,caller=T113;mmcblk0: mmc0:0001 SD32G 29.1 GiB
+6,573,4341497,-,caller=T113; mmcblk0: p1 p2
+4,574,4521010,-,caller=T77;fb0: Framebuffer is not in virtual address space.
+4,575,4529602,-,caller=T161;------------[ cut here ]------------
+4,576,4529628,-,caller=T161;Unbalanced enable for IRQ 38
+4,577,4529783,-,caller=T161;WARNING: CPU: 1 PID: 161 at kernel/irq/manage.c:796 enable_irq+0xa4/0x108
+4,578,4529846,-,caller=T161;Modules linked in:
+4,579,4529883,-,caller=T161;CPU: 1 UID: 0 PID: 161 Comm: kworker/1:2 Tainted: G        W          6.12.93-4k-g05a6f7b2c2c5-dirty #5 ae851062da66a5a27dc021cdce66ce624c32a9fa
+4,580,4529918,-,caller=T161;Tainted: [W]=WARN
+4,581,4529926,-,caller=T161;Hardware name: Xiaomi Mi A1 (DT)
+4,582,4529937,-,caller=T161;Workqueue: events wled_ovp_work
+4,583,4529979,-,caller=T161;pstate: 604000c5 (nZCv daIF +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+4,584,4529993,-,caller=T161;pc : enable_irq+0xa4/0x108
+4,585,4530003,-,caller=T161;lr : enable_irq+0xa0/0x108
+4,586,4530013,-,caller=T161;sp : ffffffc083eebd60
+4,587,4530020,-,caller=T161;x29: ffffffc083eebd70 x28: ffffff801ac49440 x27: ffffff8012c0ca00
+4,588,4530043,-,caller=T161;x26: ffffff80153c1f40 x25: 0000000000000000 x24: ffffff80175a0138
+4,589,4530063,-,caller=T161;x23: ffffff8012c2f405 x22: ffffff80fa7ea740 x21: ffffff8012c2f400
+4,590,4530082,-,caller=T161;x20: 000000007fffffff x19: ffffff80175a2600 x18: ffffffc083eed000
+4,591,4530100,-,caller=T161;x17: 00000000529c6ef0 x16: 00000000529c6ef0 x15: 0000000000000003
+4,592,4530119,-,caller=T161;x14: ffffffc0828b5320 x13: 0000000000000003 x12: 0000000000000000
+4,593,4530137,-,caller=T161;x11: 0000000000000000 x10: 00000000ffffffff x9 : cc41121e8653e900
+4,594,4530156,-,caller=T161;x8 : cc41121e8653e900 x7 : 6c62616e65206465 x6 : 636e616c61626e55
+4,595,4530174,-,caller=T161;x5 : ffffffc082b29dfc x4 : ffffffc082b29dfe x3 : 0000000000000000
+4,596,4530192,-,caller=T161;x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffffff80175a2600
+4,597,4530214,-,caller=T161;Call trace:
+4,598,4530221,-,caller=T161; enable_irq+0xa4/0x108
+4,599,4530236,-,caller=T161; wled_ovp_work+0x14/0x24
+4,600,4530249,-,caller=T161; process_scheduled_works+0x1c4/0x454
+4,601,4530270,-,caller=T161; worker_thread+0x238/0x2f0
+4,602,4530283,-,caller=T161; kthread+0x11c/0x1c8
+4,603,4530313,-,caller=T161; ret_from_fork+0x10/0x20
+4,604,4530346,-,caller=T161;---[ end trace 0000000000000000 ]---
+6,605,4563257,-,caller=T77;Console: switching to colour frame buffer device 135x120
+4,606,4616715,-,caller=T77;fb0: Framebuffer is not in virtual address space.
+6,607,5726393,-,caller=T77;msm_mdp 1a01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+ SUBSYSTEM=platform
+ DEVICE=+platform:1a01000.display-controller
+6,608,5743072,-,caller=T77;panel-otm1911 1a94000.dsi.0: 1080x1920@60 24bpp dsi 4dl - ready
+ SUBSYSTEM=mipi-dsi
+ DEVICE=+mipi-dsi:1a94000.dsi.0
+6,609,5762715,-,caller=T1;input: gpio-keys as /devices/platform/gpio-keys/input/input3
+6,610,6874571,-,caller=T1;clk: Disabling unused clocks
+6,611,7232649,-,caller=T1;PM: genpd: Disabling unused power domains
+6,612,7603345,-,caller=T1;ALSA device list:
+6,613,7952722,-,caller=T1;  No soundcards found.
+3,614,19429729,-,caller=T89;edt_ft5x06 1-0038: touchscreen probe failed
+ SUBSYSTEM=i2c
+ DEVICE=+i2c:1-0038
+3,615,19440836,-,caller=T89;edt_ft5x06 1-0038: probe with driver edt_ft5x06 failed with error -110
+ SUBSYSTEM=i2c
+ DEVICE=+i2c:1-0038
+6,616,19550414,-,caller=T1;Freeing unused kernel memory: 4864K
+6,617,19928097,-,caller=T1;Run /init as init process
+7,618,20287004,-,caller=T1;  with arguments:
+7,619,20642148,-,caller=T1;    /init
+7,620,20651184,-,caller=T1;  with environment:
+7,621,20659660,-,caller=T1;    HOME=/
+7,622,20668074,-,caller=T1;    TERM=linux
+7,623,20676493,-,caller=T1;    buildvariant=user
+7,624,20685463,-,caller=T1;    dm=system none ro,0 1 android-verity /dev/mmcblk0p25
+14,625,21367524,-,caller=T1;init: init first stage started!
+14,626,21379700,-,caller=T1;init: Unable to open /lib/modules, skipping module loading.
+14,627,21393224,-,caller=T1;init: Copied ramdisk prop to /second_stage_resources/system/etc/ramdisk/build.prop
+14,628,21443847,-,caller=T1;init: Switching root to '/first_stage_ramdisk'
+14,629,21457283,-,caller=T1;init: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,630,21477837,-,caller=T1;init: Failed to read vbmeta partitions.
+14,631,21538008,-,caller=T1;init: DSU not detected, proceeding with normal boot
+14,632,21548787,-,caller=T1;init: AVB is not enabled, skip verity setup for '/system'
+14,633,21566254,-,caller=T1;init: [libfs_mgr] superblock s_max_mnt_count:65535,/dev/block/by-name/system_a
+6,634,21672480,-,caller=T1;EXT4-fs (mmcblk1p25): mounted filesystem d392d8bb-6c67-58f7-b0b2-091ad46c5bc2 ro without journal. Quota mode: none.
+14,635,21692841,-,caller=T1;init: [libfs_mgr] __mount(source=/dev/block/by-name/system_a,target=/system,type=ext4)=0: Success
+14,636,21706284,-,caller=T1;init: Switching root to '/system'
+12,637,21745464,-,caller=T168;DIAG: independent Android USB capture ready
+14,638,21798902,-,caller=T1;init: Skipped setting INIT_AVB_VERSION (not in recovery mode)
+12,639,21803306,-,caller=T167;DIAG: bootdevice guard installed read-only f2fs-only fstab and vendor contexts before policy load
+12,640,21820439,-,caller=T167;DIAG: bootdevice canonical alias and legacy wait path ready
+5,641,23554901,-,caller=C7;random: crng init done
+14,642,24250471,-,caller=T1;init: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+14,643,24272774,-,caller=T1;init: Skipping mount of system_ext, system is not dynamic.
+14,644,24283711,-,caller=T1;init: Skipping mount of product, system is not dynamic.
+14,645,24294076,-,caller=T1;init: Opening SELinux policy
+14,646,24363035,-,caller=T1;init: Using userdebug system sepolicy /debug_ramdisk/userdebug_plat_sepolicy.cil
+14,647,24782145,-,caller=T1;init: Compiling SELinux policy
+14,648,24807841,-,caller=T1;init: Using /system/etc/selinux/plat_sepolicy_genfs_202604.cil for genfs labels
+11,649,46977132,-,caller=T1;init: /system/bin/secilc: linker: Warning: failed to find generated linker configuration from "/linkerconfig/ld.config.txt"
+11,650,46998922,-,caller=T1;init: /system/bin/secilc: WARNING: linker: Warning: failed to find generated linker configuration from "/linkerconfig/ld.config.txt"
+14,651,47038626,-,caller=T1;init: Loading SELinux policy
+6,652,47240858,-,caller=T1;SELinux:  policy capability network_peer_controls=1
+6,653,47252468,-,caller=T1;SELinux:  policy capability open_perms=1
+6,654,47263336,-,caller=T1;SELinux:  policy capability extended_socket_class=1
+6,655,47274277,-,caller=T1;SELinux:  policy capability always_check_network=0
+6,656,47285193,-,caller=T1;SELinux:  policy capability cgroup_seclabel=0
+6,657,47296036,-,caller=T1;SELinux:  policy capability nnp_nosuid_transition=1
+6,658,47306883,-,caller=T1;SELinux:  policy capability genfs_seclabel_symlinks=0
+6,659,47317753,-,caller=T1;SELinux:  policy capability ioctl_skip_cloexec=0
+6,660,47328574,-,caller=T1;SELinux:  policy capability userspace_initial_context=0
+6,661,47339392,-,caller=T1;SELinux: policy capability memfd_class=0
+6,662,47350204,-,caller=T1;SELinux: policy capability genfs_seclabel_wildcard=0
+6,663,47361063,-,caller=T1;SELinux:  unknown policy capability 9
+6,664,47372660,-,caller=T1;SELinux:  unknown policy capability 12
+5,665,49870929,-,caller=T81;audit: type=1403 audit(122863.363:2): auid=4294967295 ses=4294967295 lsm=selinux res=1
+5,666,50324154,-,caller=T81;audit: type=1404 audit(122863.367:3): enforcing=1 old_enforcing=0 auid=4294967295 ses=4294967295 enabled=1 old-enabled=1 lsm=selinux res=1
+5,667,50349438,-,caller=T81;audit: type=1400 audit(122863.839:4): avc:  denied  { read } for  pid=1 comm="init" name="ack-vendor-file-contexts" dev="tmpfs" ino=23 scontext=u:r:kernel:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+14,668,50391067,-,caller=T1;selinux: SELinux: Loaded file context from:
+14,669,50404926,-,caller=T1;selinux: \x09\x09/system/etc/selinux/plat_file_contexts
+14,670,50883073,-,caller=T1;selinux: \x09\x09/system_ext/etc/selinux/system_ext_file_contexts
+14,671,51361485,-,caller=T1;selinux: \x09\x09/product/etc/selinux/product_file_contexts
+14,672,51841321,-,caller=T1;selinux: \x09\x09/odm/etc/selinux/odm_file_contexts
+14,673,52362821,-,caller=T1;init: init second stage started!
+14,674,52377944,-,caller=T1;init: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+14,675,54166357,-,caller=T1;selinux: SELinux: Loaded file context from:
+14,676,54652134,-,caller=T1;selinux: \x09\x09/system/etc/selinux/plat_file_contexts
+14,677,55138611,-,caller=T1;selinux: \x09\x09/system_ext/etc/selinux/system_ext_file_contexts
+14,678,55621195,-,caller=T1;selinux: \x09\x09/product/etc/selinux/product_file_contexts
+14,679,56099242,-,caller=T1;selinux: \x09\x09/vendor/etc/selinux/vendor_file_contexts
+14,680,56572413,-,caller=T1;selinux: \x09\x09/odm/etc/selinux/odm_file_contexts
+5,681,56740577,-,caller=T81;audit: type=1107 audit(122870.231:5): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=audio.offload.disable pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,682,56740976,-,caller=T1;init: Do not have permissions to set 'audio.offload.disable' to 'false' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+11,683,56801363,-,caller=T1;init: Do not have permissions to set 'ro.audio.soundfx.dirac' to 'true' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,684,56802339,-,caller=T81;audit: type=1107 audit(122870.291:6): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=ro.audio.soundfx.dirac pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,685,56828785,-,caller=T1;init: Do not have permissions to set 'persist.vendor.btstack.enable.splita2dp' to 'false' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:bluetooth_prop:s0)
+5,686,58362743,-,caller=T81;audit: type=1107 audit(122870.319:7): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.vendor.btstack.enable.splita2dp pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:bluetooth_prop:s0 tclass=property_service permissive=0'
+11,687,58387768,-,caller=T1;init: Do not have permissions to set 'qcom.bluetooth.soc' to 'smd' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,688,59971931,-,caller=T81;audit: type=1107 audit(122871.879:8): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=qcom.bluetooth.soc pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,689,59998532,-,caller=T1;init: Do not have permissions to set 'ro.bluetooth.hfp.ver' to '1.7' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,690,61664565,-,caller=T81;audit: type=1107 audit(122873.491:9): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=ro.bluetooth.hfp.ver pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,691,61691991,-,caller=T1;init: Do not have permissions to set 'ro.qualcomm.bt.hci_transport' to 'smd' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,692,63444705,-,caller=T81;audit: type=1107 audit(122875.183:10): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=ro.qualcomm.bt.hci_transport pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,693,63473456,-,caller=T1;init: Do not have permissions to set 'camera.display.lmax' to '1280x720' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,694,65302605,-,caller=T81;audit: type=1107 audit(122876.963:11): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=camera.display.lmax pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,695,65332675,-,caller=T1;init: Do not have permissions to set 'camera.display.umax' to '1920x1080' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,696,67244627,-,caller=T81;audit: type=1107 audit(122878.823:12): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=camera.display.umax pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,697,67275581,-,caller=T1;init: Do not have permissions to set 'camera.hal1.packagelist' to 'com.skype.raider,com.google.android.talk' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,698,69275039,-,caller=T81;audit: type=1107 audit(122880.767:13): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=camera.hal1.packagelist pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,699,69322553,-,caller=T1;init: Do not have permissions to set 'camera.lowpower.record.enable' to '1' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,700,71391079,-,caller=T81;audit: type=1107 audit(122882.815:14): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=camera.lowpower.record.enable pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,701,71424231,-,caller=T1;init: Do not have permissions to set 'media.camera.ts.monotonic' to '1' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,702,73568167,-,caller=T81;audit: type=1107 audit(122884.915:15): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=media.camera.ts.monotonic pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,703,73603998,-,caller=T1;init: Do not have permissions to set 'persist.camera.isp.clock.optmz' to '0' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:camera_prop:s0)
+5,704,75841011,-,caller=T81;audit: type=1107 audit(122887.095:16): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.camera.isp.clock.optmz pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:camera_prop:s0 tclass=property_service permissive=0'
+11,705,75878035,-,caller=T1;init: Do not have permissions to set 'persist.camera.stats.test' to '5' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:camera_prop:s0)
+5,706,78196327,-,caller=T81;audit: type=1107 audit(122889.367:17): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.camera.stats.test pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:camera_prop:s0 tclass=property_service permissive=0'
+11,707,78234630,-,caller=T1;init: Do not have permissions to set 'vidc.enc.dcvs.extra-buff-count' to '2' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,708,80607351,-,caller=T81;audit: type=1107 audit(122891.727:18): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=vidc.enc.dcvs.extra-buff-count pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,709,80647434,-,caller=T1;init: Do not have permissions to set 'persist.hwc.mdpcomp.enable' to 'true' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,710,83052149,-,caller=T81;audit: type=1107 audit(122894.139:19): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.hwc.mdpcomp.enable pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,711,83092311,-,caller=T1;init: Do not have permissions to set 'persist.qfp' to 'false' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,712,85542196,-,caller=T81;audit: type=1107 audit(122896.583:20): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.qfp pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,713,85581965,-,caller=T1;init: Do not have permissions to set 'ro.fm.transmitter' to 'false' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,714,88092826,-,caller=T81;audit: type=1107 audit(122899.071:21): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=ro.fm.transmitter pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,715,88134396,-,caller=T1;init: Do not have permissions to set 'av.debug.disable.pers.cache' to '1' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,716,90680135,-,caller=T81;audit: type=1107 audit(122901.627:22): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=av.debug.disable.pers.cache pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,717,90719678,-,caller=T1;init: Do not have permissions to set 'media.aac_51_output_enabled' to 'true' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,718,93314689,-,caller=T81;audit: type=1107 audit(122904.211:23): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=media.aac_51_output_enabled pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,719,93357067,-,caller=T1;init: Do not have permissions to set 'media.msm8956hw' to '0' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,720,96048003,-,caller=T81;audit: type=1107 audit(122906.847:24): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=media.msm8956hw pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,721,96091648,-,caller=T1;init: Do not have permissions to set 'media.stagefright.audio.sink' to '280' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,722,98870569,-,caller=T81;audit: type=1107 audit(122909.583:25): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=media.stagefright.audio.sink pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,723,98916487,-,caller=T1;init: Do not have permissions to set 'mm.enable.smoothstreaming' to 'true' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+4,724,99867896,-,caller=C2;sched: DL replenish lagged too much
+5,725,101731593,-,caller=T81;audit: type=1107 audit(122912.407:26): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=mm.enable.smoothstreaming pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,726,101775887,-,caller=T1;init: Do not have permissions to set 'mmp.enable.3g2' to 'true' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,727,102724026,-,caller=T81;audit: type=1107 audit(122915.267:27): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=mmp.enable.3g2 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,728,102795148,-,caller=T1;init: Do not have permissions to set 'persist.data.netmgrd.qos.enable' to 'true' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,729,104734449,-,caller=T81;audit: type=1107 audit(122916.287:28): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.data.netmgrd.qos.enable pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,730,104805322,-,caller=T1;init: Do not have permissions to set 'DEVICE_PROVISIONED' to '1' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,731,106794392,-,caller=T81;audit: type=1107 audit(122918.295:29): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=DEVICE_PROVISIONED pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,732,106868013,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_long_ons_0' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,733,108864471,-,caller=T81;audit: type=1107 audit(122920.359:30): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_long_ons_0 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,734,108935379,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_long_ons_1' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,735,110932527,-,caller=T81;audit: type=1107 audit(122922.427:31): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_long_ons_1 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,736,111004559,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_long_ons_2' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,737,113000737,-,caller=T81;audit: type=1107 audit(122924.495:32): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_long_ons_2 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,738,113072589,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_long_ons_3' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,739,115068275,-,caller=T81;audit: type=1107 audit(122926.563:33): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_long_ons_3 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,740,115140572,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_plmn' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,741,117134895,-,caller=T81;audit: type=1107 audit(122928.631:34): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_plmn pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,742,117206693,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_short_ons_0' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+11,743,117207144,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_short_ons_1' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,744,119201460,-,caller=T81;audit: type=1107 audit(122930.699:35): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_short_ons_0 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,745,119272816,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_short_ons_2' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+12,746,121265884,-,caller=T169;DIAG: block observer step=open mount namespace failed errno=13
+5,747,121268125,-,caller=T81;audit: type=1107 audit(122930.699:36): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_short_ons_1 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+5,748,121268791,-,caller=T81;audit: type=1107 audit(122932.763:37): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_short_ons_2 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+5,749,121269328,-,caller=T81;audit: type=1400 audit(122934.755:38): avc:  denied  { read } for  pid=169 comm="init" dev="nsfs" ino=4026531841 scontext=u:r:kernel:s0 tcontext=u:object_r:unlabeled:s0 tclass=file permissive=0
+11,750,121315014,-,caller=T1;init: Do not have permissions to set 'persist.rild.nitz_short_ons_3' to '""' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+5,751,121315413,-,caller=T81;audit: type=1107 audit(122934.807:39): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.rild.nitz_short_ons_3 pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+12,752,121386611,-,caller=T169;DIAG: proc component=1 fstat_errno=13
+5,753,121387407,-,caller=T81;audit: type=1400 audit(122934.879:40): avc:  denied  { getattr } for  pid=169 comm="init" path="/1" dev="proc" ino=10603 scontext=u:r:kernel:s0 tcontext=u:r:init:s0 tclass=dir permissive=0
+5,754,121448769,-,caller=T81;audit: type=1107 audit(122934.939:41): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=rild.libargs pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+11,755,121451142,-,caller=T1;init: Do not have permissions to set 'rild.libargs' to '-d /dev/smd0' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+12,756,121458752,-,caller=T169;DIAG: proc component=1/ns fstat_errno=13
+11,757,121458762,-,caller=T1;init: Do not have permissions to set 'rild.libpath' to '/vendor/lib64/libril-qc-hal-qmi.so' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+12,758,121459094,-,caller=T169;DIAG: proc component=1/ns/mnt fstat_errno=13
+12,759,121459615,-,caller=T169;DIAG: proc component=1/root mode=40755 uid=0 dev=259:17 ino=2 target=- label= label_errno=2
+11,760,121482225,-,caller=T1;init: Do not have permissions to set 'persist.timed.enable' to 'true' in property file '/vendor/build.prop': SELinux permission check failed (source_context=u:r:vendor_init:s0, target_context=u:object_r:default_prop:s0)
+12,761,121604072,-,caller=T1;init: Overriding previous property 'ro.config.notification_sound':'OnTheHunt.ogg' with new value 'Kernel.ogg'
+12,762,121604223,-,caller=T1;init: Overriding previous property 'ro.config.alarm_alert':'Alarm_Classic.ogg' with new value 'Fresh_morning.ogg'
+12,763,121604480,-,caller=T1;init: Overriding previous property 'ro.config.ringtone':'Ring_Synth_04.ogg' with new value 'The_next_adventure.ogg'
+12,764,121604739,-,caller=T1;init: Overriding previous property 'dalvik.vm.usap_pool_enabled':'false' with new value 'true'
+12,765,121604793,-,caller=T1;init: Overriding previous property 'dalvik.vm.usap_pool_size_max':'3' with new value '2'
+14,766,121612748,-,caller=T1;init: Setting product property ro.product.brand to 'Xiaomi' (from ro.product.odm.brand)
+14,767,121612891,-,caller=T1;init: Setting product property ro.product.device to 'tissot' (from ro.product.odm.device)
+14,768,121612970,-,caller=T1;init: Setting product property ro.product.manufacturer to 'Xiaomi' (from ro.product.odm.manufacturer)
+14,769,121613048,-,caller=T1;init: Setting product property ro.product.model to 'Mi A1' (from ro.product.odm.model)
+14,770,121613121,-,caller=T1;init: Setting product property ro.product.name to 'tissot' (from ro.product.odm.name)
+14,771,121613259,-,caller=T1;init: Setting property 'ro.product.cpu.abilist' to 'arm64-v8a,armeabi-v7a,armeabi'
+14,772,121613315,-,caller=T1;init: Setting property 'ro.product.cpu.abilist32' to 'armeabi-v7a,armeabi'
+14,773,121613370,-,caller=T1;init: Setting property 'ro.product.cpu.abilist64' to 'arm64-v8a'
+14,774,121613889,-,caller=T1;init: Property 'ro.boot.flash.locked' set successfully to '1'
+14,775,121613946,-,caller=T1;init: Property 'ro.boot.vbmeta.device_state' set successfully to 'locked'
+14,776,121614004,-,caller=T1;init: Property 'ro.boot.vbmeta.hash_alg' set successfully to 'sha256'
+14,777,121614058,-,caller=T1;init: Property 'ro.boot.vbmeta.avb_version' set successfully to '1.0'
+14,778,121614112,-,caller=T1;init: Property 'ro.boot.vbmeta.invalidate_on_error' set successfully to 'yes'
+14,779,121614174,-,caller=T1;init: Property 'ro.boot.verifiedbootstate' set successfully to 'green'
+14,780,121614230,-,caller=T1;init: Property 'ro.boot.veritymode' set successfully to 'enforcing'
+14,781,121614284,-,caller=T1;init: Property 'ro.boot.warranty_bit' set successfully to '0'
+14,782,121614337,-,caller=T1;init: Property 'ro.warranty_bit' set successfully to '0'
+14,783,121614390,-,caller=T1;init: Property 'ro.debuggable' set successfully to '0'
+14,784,121614443,-,caller=T1;init: Property 'ro.force.debuggable' set successfully to '0'
+14,785,121614494,-,caller=T1;init: Property 'ro.adb.secure' set successfully to '1'
+14,786,121614543,-,caller=T1;init: Property 'ro.secure' set successfully to '1'
+14,787,121614607,-,caller=T1;init: Property 'ro.bootimage.build.type' set successfully to 'user'
+14,788,121614662,-,caller=T1;init: Property 'ro.build.type' set successfully to 'user'
+14,789,121614714,-,caller=T1;init: Property 'ro.build.keys' set successfully to 'release-keys'
+14,790,121614766,-,caller=T1;init: Property 'ro.build.tags' set successfully to 'release-keys'
+14,791,121614822,-,caller=T1;init: Property 'ro.system.build.tags' set successfully to 'release-keys'
+14,792,121614875,-,caller=T1;init: Property 'ro.product.build.type' set successfully to 'user'
+14,793,121614928,-,caller=T1;init: Property 'ro.system_dlkm.build.type' set successfully to 'user'
+14,794,121614984,-,caller=T1;init: Property 'ro.odm.build.type' set successfully to 'user'
+14,795,121615038,-,caller=T1;init: Property 'ro.system.build.type' set successfully to 'user'
+14,796,121615095,-,caller=T1;init: Property 'ro.system_ext.build.type' set successfully to 'user'
+14,797,121615154,-,caller=T1;init: Property 'ro.vendor.build.type' set successfully to 'user'
+14,798,121615208,-,caller=T1;init: Property 'ro.vendor_dlkm.build.type' set successfully to 'user'
+14,799,121615261,-,caller=T1;init: Property 'ro.vendor.boot.warranty_bit' set successfully to '0'
+14,800,121615313,-,caller=T1;init: Property 'ro.vendor.warranty_bit' set successfully to '0'
+14,801,121615362,-,caller=T1;init: Property 'vendor.boot.vbmeta.device_state' set successfully to 'locked'
+14,802,121615413,-,caller=T1;init: Property 'vendor.boot.verifiedbootstate' set successfully to 'green'
+14,803,121615462,-,caller=T1;init: Property 'oplusboot.verifiedbootstate' set successfully to 'green'
+14,804,121615517,-,caller=T1;init: Property 'sys.oem_unlock_allowed' set successfully to '0'
+14,805,121615572,-,caller=T1;init: Property 'ro.oem_unlock_supported' set successfully to '0'
+14,806,121615626,-,caller=T1;init: Property 'ro.crypto.state' set successfully to 'encrypted'
+14,807,121615675,-,caller=T1;init: Property 'ro.is_ever_orange' set successfully to '0'
+14,808,121615729,-,caller=T1;init: Property 'ro.secureboot.devicelock' set successfully to '1'
+14,809,121615782,-,caller=T1;init: Property 'ro.secureboot.lockstate' set successfully to 'locked'
+14,810,121615845,-,caller=T1;init: Property 'ro.build.flavor' set to 'tissot-user'
+14,811,121615938,-,caller=T1;init: Property 'ro.build.display.id' set to 'CP2A.260605.016'
+5,812,124440321,-,caller=T81;audit: type=1107 audit(122934.947:42): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=rild.libpath pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+3,813,134517568,-,caller=C3;rcu: INFO: rcu_preempt detected stalls on CPUs/tasks:
+3,814,134753626,-,caller=T23;rcu: INFO: rcu_preempt detected expedited stalls on CPUs/tasks: { 4-.... } 2560 jiffies s: 81 root: 0x10/.
+3,815,134753719,-,caller=T23;rcu: blocking rcu_node structures (internal RCU debug):
+6,816,134753742,-,caller=T23;Sending NMI from CPU 1 to CPUs 4:
+4,817,137390552,-,caller=C4;NMI backtrace for cpu 4
+4,818,137390898,-,caller=C4;CPU: 4 UID: 0 PID: 81 Comm: kauditd Tainted: G        W          6.12.93-4k-g05a6f7b2c2c5-dirty #5 ae851062da66a5a27dc021cdce66ce624c32a9fa
+4,819,137391602,-,caller=C4;Tainted: [W]=WARN
+4,820,137391762,-,caller=C4;Hardware name: Xiaomi Mi A1 (DT)
+4,821,137391970,-,caller=C4;pstate: 20400005 (nzCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+4,822,137392447,-,caller=C4;pc : console_flush_all+0x2d4/0x458
+4,823,137392999,-,caller=C4;lr : console_flush_all+0x2c8/0x458
+4,824,137393452,-,caller=C4;sp : ffffffc083153a30
+4,825,137393633,-,caller=C4;x29: ffffffc083153a80 x28: 0000000000000001 x27: ffffffc0829d9988
+4,826,137394334,-,caller=C4;x26: 0000000000000000 x25: ffffffc082b40b24 x24: ffffff8014cf6540
+4,827,137394974,-,caller=C4;x23: 0000000000000084 x22: 0000000000000000 x21: ffffffc082b40000
+4,828,137395604,-,caller=C4;x20: ffffffc083153ae8 x19: ffffffc083153af4 x18: ffffffc082e2d000
+4,829,137396258,-,caller=C4;x17: 00000000ffffffff x16: 0000000000001100 x15: 0000000000000008
+4,830,137396876,-,caller=C4;x14: ffffffc083153748 x13: 0000000000000001 x12: 0000000000000000
+4,831,137397491,-,caller=C4;x11: 0000000000000000 x10: 00000000ffffffff x9 : 0000000000000001
+4,832,137398114,-,caller=C4;x8 : 0000000000000000 x7 : 0000000000000000 x6 : 0000000000aaaaaa
+4,833,137398722,-,caller=C4;x5 : 0000000000000000 x4 : 0000000000000000 x3 : 00000000ffffffff
+4,834,137399331,-,caller=C4;x2 : ffffffc0831539b8 x1 : 0000000000000000 x0 : ffffffc08289d0f8
+4,835,137399954,-,caller=C4;Call trace:
+4,836,137400117,-,caller=C4; console_flush_all+0x2d4/0x458
+4,837,137400630,-,caller=C4; console_unlock+0x78/0x184
+4,838,137401091,-,caller=C4; vprintk_emit+0x138/0x2ac
+4,839,137401539,-,caller=C4; vprintk_default+0x44/0x70
+4,840,137401993,-,caller=C4; vprintk+0xe4/0x164
+4,841,137402475,-,caller=C4; _printk+0x54/0x80
+4,842,137402923,-,caller=C4; kauditd_hold_skb+0xf0/0xf4
+4,843,137403358,-,caller=C4; kauditd_send_queue+0x1f0/0x230
+4,844,137403804,-,caller=C4; kauditd_thread+0x368/0x438
+4,845,137404213,-,caller=C4; kthread+0x11c/0x1c8
+4,846,137404772,-,caller=C4; ret_from_fork+0x10/0x20
+5,847,137408520,-,caller=T81;audit: type=1400 audit(122934.951:43): avc:  denied  { getattr } for  pid=169 comm="init" path="/1/ns" dev="proc" ino=10604 scontext=u:r:kernel:s0 tcontext=u:r:init:s0 tclass=dir permissive=0
+14,848,137414088,-,caller=T1;init: Running restorecon...
+3,849,137439924,-,caller=C3;rcu: \x09(detected by 3, t=3228 jiffies, g=2509, q=108 ncpus=8)
+3,850,137440020,-,caller=C3;rcu: All QSes seen, last rcu_preempt kthread activity 728 (4294926650-4294925922), jiffies_till_next_fqs=1, root ->qsmask 0x0
+3,851,137440054,-,caller=C3;rcu: rcu_preempt kthread timer wakeup didn't happen for 727 jiffies! g2509 f0x2 RCU_GP_WAIT_FQS(5) ->state=0x200
+3,852,137440073,-,caller=C3;rcu: \x09Possible timer handling issue on cpu=3 timer-softirq=5687
+3,853,137440088,-,caller=C3;rcu: rcu_preempt kthread starved for 728 jiffies! g2509 f0x2 RCU_GP_WAIT_FQS(5) ->state=0x200 ->cpu=3
+3,854,137440104,-,caller=C3;rcu: \x09Unless rcu_preempt kthread gets sufficient CPU time, OOM is now expected behavior.
+3,855,137440112,-,caller=C3;rcu: RCU grace-period kthread stack dump:
+6,856,137440121,-,caller=C3;task:rcu_preempt     state:R stack:0     pid:18    tgid:18    ppid:2      flags:0x00000008
+6,857,137440190,-,caller=C3;Call trace:
+6,858,137440206,-,caller=C3; __switch_to+0x1a0/0x310
+6,859,137440302,-,caller=C3; __schedule+0xb80/0xfd0
+6,860,137440324,-,caller=C3; schedule+0x74/0x10c
+6,861,137440343,-,caller=C3; schedule_timeout+0x90/0x1ac
+6,862,137440365,-,caller=C3; rcu_gp_fqs_loop+0x1e4/0x8f4
+6,863,137440404,-,caller=C3; rcu_gp_kthread+0x64/0x208
+6,864,137440421,-,caller=C3; kthread+0x11c/0x1c8
+6,865,137440460,-,caller=C3; ret_from_fork+0x10/0x20
+3,866,137440513,-,caller=C3;rcu: Stack dump where RCU GP kthread last ran:
+4,867,137440556,-,caller=C3;CPU: 3 UID: 0 PID: 0 Comm: swapper/3 Tainted: G        W          6.12.93-4k-g05a6f7b2c2c5-dirty #5 ae851062da66a5a27dc021cdce66ce624c32a9fa
+4,868,137440599,-,caller=C3;Tainted: [W]=WARN
+4,869,137440609,-,caller=C3;Hardware name: Xiaomi Mi A1 (DT)
+4,870,137440624,-,caller=C3;pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+4,871,137440643,-,caller=C3;pc : arch_local_irq_enable+0x8/0x20
+4,872,137440664,-,caller=C3;lr : default_idle_call+0x44/0x54
+4,873,137440681,-,caller=C3;sp : ffffffc082c73de0
+4,874,137440692,-,caller=C3;x29: ffffffc082c73de0 x28: ffffffc08286a000 x27: 0000000000000008
+4,875,137440719,-,caller=C3;x26: ffffffc08286adf0 x25: ffffffc0828457f0 x24: 0000000000000000
+4,876,137440739,-,caller=C3;x23: ffffff8012e72880 x22: ffffffc08286a000 x21: 0000000000000001
+4,877,137440762,-,caller=C3;x20: 0000000000000000 x19: ffffff8012e72880 x18: ffffffc082c45000
+4,878,137440784,-,caller=C3;x17: 00000000529c6ef0 x16: 00000000529c6ef0 x15: 0000000000000000
+4,879,137440805,-,caller=C3;x14: 0000000000000000 x13: 000000000000a692 x12: 00000000003d0900
+4,880,137440824,-,caller=C3;x11: ffffffc082867000 x10: 0000000000000000 x9 : 000000000005fbdc
+4,881,137440843,-,caller=C3;x8 : 4000000000000000 x7 : 0000000000000064 x6 : 0000000000000018
+4,882,137440864,-,caller=C3;x5 : 0000000000000001 x4 : 0000001f516524ef x3 : 000000000005fbdc
+4,883,137440882,-,caller=C3;x2 : 0000000000000001 x1 : 0000000000000003 x0 : 00000000ffffffff
+4,884,137440902,-,caller=C3;Call trace:
+4,885,137440913,-,caller=C3; arch_local_irq_enable+0x8/0x20
+4,886,137440925,-,caller=C3; do_idle+0x108/0x378
+4,887,137440938,-,caller=C3; cpu_startup_entry+0x34/0x3c
+4,888,137440954,-,caller=C3; secondary_start_kernel+0x128/0x198
+4,889,137440977,-,caller=C3; __secondary_switched+0xc0/0xc4
+14,890,137545421,-,caller=T1;init: Created socket '/dev/socket/property_service_for_system', mode 660, user 0, group 1000
+5,891,138428142,-,caller=T81;audit: type=1400 audit(122934.951:44): avc:  denied  { getattr } for  pid=169 comm="init" path="mnt:[4026531841]" dev="nsfs" ino=4026531841 scontext=u:r:kernel:s0 tcontext=u:object_r:unlabeled:s0 tclass=file permissive=0
+14,892,138479419,-,caller=T1;init: Created socket '/dev/socket/property_service', mode 666, user 0, group 0
+5,893,139460425,-,caller=T81;audit: type=1107 audit(122934.959:45): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=persist.timed.enable pid=1 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=0'
+14,894,139489274,-,caller=T1;init: [libfs_mgr] vendor overlay: vndk version not defined
+14,895,143781069,-,caller=T1;init: SetupMountNamespaces done
+14,896,143805274,-,caller=T1;init: Forked subcontext for 'u:r:vendor_init:s0' with pid 180
+14,897,143822963,-,caller=T1;init: Parsing file /system/etc/init/hw/init.rc...
+14,898,143839245,-,caller=T1;init: Added '/init.environ.rc' to import list
+14,899,143851448,-,caller=T1;init: Added '/system/etc/init/hw/init.usb.rc' to import list
+14,900,143862926,-,caller=T1;init: Added '/init.qcom.rc' to import list
+14,901,143874421,-,caller=T1;init: Added '/vendor/etc/init/hw/init.qcom.rc' to import list
+14,902,143885850,-,caller=T1;init: Added '/system/etc/init/hw/init.usb.configfs.rc' to import list
+14,903,143897477,-,caller=T1;init: Added '/system/etc/init/hw/init.zygote64_32.rc' to import list
+14,904,143914728,-,caller=T1;init: Added '/system/etc/init/hw/init.boringssl.zygote64_32.rc' to import list
+14,905,143932888,-,caller=T1;init: Added '/system/etc/init/init-perfetto.rc' to import list
+14,906,143946407,-,caller=T1;init: Parsing file /init.environ.rc...
+14,907,143960971,-,caller=T1;init: Parsing file /system/etc/init/hw/init.usb.rc...
+14,908,143975593,-,caller=T1;init: Parsing file /init.qcom.rc...
+14,909,143987429,-,caller=T1;init: Unable to read config file '/init.qcom.rc': open() failed: No such file or directory
+14,910,144001087,-,caller=T1;init: Parsing file /vendor/etc/init/hw/init.qcom.rc...
+14,911,144015149,-,caller=T1;init: Added '/vendor/etc/init/hw/init.qcom.usb.rc' to import list
+14,912,144026916,-,caller=T1;init: Added '/vendor/etc/init/hw/init.msm.usb.configfs.rc' to import list
+14,913,144038270,-,caller=T1;init: Added '/vendor/etc/init/hw/init.target.rc' to import list
+11,914,144059560,-,caller=T1;init: /vendor/etc/init/hw/init.qcom.rc: 391: ParseTriggers() failed: unexported property trigger found: persist.env.fastdorm.enabled
+5,915,144060127,-,caller=T81;audit: type=1107 audit(122957.551:46): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { read } for property=persist.env.fastdorm.enabled pid=0 uid=0 gid=0 scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=file permissive=0'
+14,916,144180345,-,caller=T1;init: Parsing file /vendor/etc/init/hw/init.qcom.usb.rc...
+14,917,146735824,-,caller=T1;init: Parsing file /vendor/etc/init/hw/init.msm.usb.configfs.rc...
+14,918,147796075,-,caller=T1;init: Parsing file /vendor/etc/init/hw/init.target.rc...
+12,919,147816126,-,caller=T1;init: No user specified for service 'vendor.power_off_alarm', so it is root.
+14,920,147830162,-,caller=T1;init: Parsing file /system/etc/init/hw/init.usb.configfs.rc...
+14,921,147911879,-,caller=T1;init: Parsing file /system/etc/init/hw/init.zygote64_32.rc...
+14,922,148387891,-,caller=T1;init: Added '/system/etc/init/hw/init.zygote64.rc' to import list
+14,923,148401910,-,caller=T1;init: Parsing file /system/etc/init/hw/init.zygote64.rc...
+14,924,148416912,-,caller=T1;init: Parsing file /system/etc/init/hw/init.boringssl.zygote64_32.rc...
+14,925,148430634,-,caller=T1;init: Parsing file /system/etc/init/init-perfetto.rc...
+14,926,148444344,-,caller=T1;init: Parsing directory /system/etc/init...
+14,927,148457172,-,caller=T1;init: Parsing file /system/etc/init/aconfigd.rc...
+14,928,148472043,-,caller=T1;init: Parsing file /system/etc/init/aisealhostservice.rc...
+14,929,148485728,-,caller=T1;init: Parsing file /system/etc/init/android.system.suspend-service.rc...
+14,930,148499312,-,caller=T1;init: Parsing file /system/etc/init/aoad.rc...
+14,931,148512425,-,caller=T1;init: Parsing file /system/etc/init/apexd.rc...
+14,932,148525869,-,caller=T1;init: Parsing file /system/etc/init/atrace.rc...
+14,933,148545280,-,caller=T1;init: Parsing file /system/etc/init/audioserver.rc...
+14,934,148560851,-,caller=T1;init: Parsing file /system/etc/init/blank_screen.rc...
+14,935,148575333,-,caller=T1;init: Parsing file /system/etc/init/bootanim.rc...
+14,936,148588974,-,caller=T1;init: Parsing file /system/etc/init/bootstat.rc...
+14,937,148628774,-,caller=T1;init: Parsing file /system/etc/init/cameraserver.rc...
+14,938,149098302,-,caller=T1;init: Parsing file /system/etc/init/casefolding_remover.rc...
+14,939,149545460,-,caller=T1;init: Parsing file /system/etc/init/cppreopts.rc...
+14,940,149559886,-,caller=T1;init: Parsing file /system/etc/init/credstore.rc...
+14,941,149572965,-,caller=T1;init: Parsing file /system/etc/init/dmesgd.rc...
+14,942,149586504,-,caller=T1;init: Parsing file /system/etc/init/drmserver.rc...
+14,943,149612495,-,caller=T1;init: Parsing file /system/etc/init/dumpstate.rc...
+14,944,150073200,-,caller=T1;init: Parsing file /system/etc/init/flags_health_check.rc...
+14,945,150536169,-,caller=T1;init: Parsing file /system/etc/init/gatekeeperd.rc...
+14,946,150993200,-,caller=T1;init: Parsing file /system/etc/init/gpuservice.rc...
+14,947,151433109,-,caller=T1;init: Parsing file /system/etc/init/gsid.rc...
+14,948,151447110,-,caller=T1;init: Parsing file /system/etc/init/heapprofd.rc...
+14,949,151460738,-,caller=T1;init: Parsing file /system/etc/init/hidservice.rc...
+14,950,151473938,-,caller=T1;init: Parsing file /system/etc/init/idmap2d.rc...
+14,951,151486627,-,caller=T1;init: Parsing file /system/etc/init/incidentd.rc...
+14,952,151499365,-,caller=T1;init: Parsing file /system/etc/init/init-perfetto.rc...
+14,953,151510870,-,caller=T1;init: Parsing file /system/etc/init/installd.rc...
+14,954,151525277,-,caller=T1;init: Parsing file /system/etc/init/kcmdlinectrl.rc...
+14,955,151538341,-,caller=T1;init: Parsing file /system/etc/init/kcmdlinemodprobe.rc...
+14,956,151550901,-,caller=T1;init: Parsing file /system/etc/init/keystore2.rc...
+14,957,151574808,-,caller=T1;init: Parsing file /system/etc/init/llkd.rc...
+14,958,152031617,-,caller=T1;init: Parsing file /system/etc/init/lmkd.rc...
+14,959,152491336,-,caller=T1;init: Parsing file /system/etc/init/logd.rc...
+14,960,152936563,-,caller=T1;init: Parsing file /system/etc/init/lpdumpd.rc...
+14,961,153353782,-,caller=T1;init: Parsing file /system/etc/init/mdnsd.rc...
+14,962,153366999,-,caller=T1;init: Parsing file /system/etc/init/media.codeclist.generator.rc...
+14,963,153378758,-,caller=T1;init: Parsing file /system/etc/init/mediaextractor.rc...
+14,964,153390621,-,caller=T1;init: Parsing file /system/etc/init/mediametrics.rc...
+14,965,153412719,-,caller=T1;init: Parsing file /system/etc/init/mediaserver.rc...
+14,966,153820397,-,caller=T1;init: Parsing file /system/etc/init/misctrl.rc...
+14,967,154217375,-,caller=T1;init: Parsing file /system/etc/init/mmd.rc...
+14,968,154620478,-,caller=T1;init: Parsing file /system/etc/init/mtectrl.rc...
+14,969,154997232,-,caller=T1;init: Parsing file /system/etc/init/netbpfload.rc...
+14,970,155009895,-,caller=T1;init: Parsing file /system/etc/init/netd.rc...
+14,971,155022151,-,caller=T1;init: Parsing file /system/etc/init/odsign.rc...
+14,972,155047492,-,caller=T1;init: Parsing file /system/etc/init/perfetto.rc...
+14,973,155480587,-,caller=T1;init: Parsing file /system/etc/init/pmgd.rc...
+14,974,155872913,-,caller=T1;init: Parsing file /system/etc/init/prefetch.rc...
+14,975,156271148,-,caller=T1;init: Parsing file /system/etc/init/prng_seeder.rc...
+14,976,156659633,-,caller=T1;init: Parsing file /system/etc/init/recovery-persist.rc...
+14,977,157045446,-,caller=T1;init: Parsing file /system/etc/init/recovery-refresh.rc...
+14,978,157417620,-,caller=T1;init: Parsing file /system/etc/init/rss_hwm_reset.rc...
+14,979,157430233,-,caller=T1;init: Parsing file /system/etc/init/servicemanager.rc...
+14,980,157441890,-,caller=T1;init: Parsing file /system/etc/init/simpleperf.rc...
+14,981,157467105,-,caller=T1;init: Parsing file /system/etc/init/snapuserd.rc...
+14,982,157845387,-,caller=T1;init: Parsing file /system/etc/init/storaged.rc...
+14,983,158204032,-,caller=T1;init: Parsing file /system/etc/init/surfaceflinger.rc...
+14,984,158215979,-,caller=T1;init: Parsing file /system/etc/init/tombstoned.rc...
+14,985,158226666,-,caller=T1;init: Parsing file /system/etc/init/traced_perf.rc...
+14,986,158237482,-,caller=T1;init: Parsing file /system/etc/init/tradeinmode.rc...
+14,987,158248319,-,caller=T1;init: Parsing file /system/etc/init/uncrypt.rc...
+14,988,158259325,-,caller=T1;init: Parsing file /system/etc/init/update_engine.rc...
+14,989,158270448,-,caller=T1;init: Parsing file /system/etc/init/update_verifier.rc...
+14,990,158281401,-,caller=T1;init: Parsing file /system/etc/init/usbd.rc...
+14,991,158293159,-,caller=T1;init: Parsing file /system/etc/init/virtual_camera.hal.rc...
+14,992,158316669,-,caller=T1;init: Parsing file /system/etc/init/vold.rc...
+14,993,158678983,-,caller=T1;init: Parsing file /system/etc/init/wifi.rc...
+14,994,159050797,-,caller=T1;init: Parsing file /system/etc/init/zygote_next.rc...
+14,995,159396966,-,caller=T1;init: Parsing directory /system_ext/etc/init...
+14,996,159406985,-,caller=T1;init: Parsing file /system_ext/etc/init/android.hidl.allocator@1.0-service.rc...
+14,997,159418399,-,caller=T1;init: Parsing file /system_ext/etc/init/dpmd.rc...
+12,998,159429249,-,caller=T1;init: No user specified for service 'dpmd', so it is root.
+14,999,159438161,-,caller=T1;init: Parsing file /system_ext/etc/init/hwservicemanager.rc...
+14,1000,159449394,-,caller=T1;init: Parsing file /system_ext/etc/init/init.lineage-system_ext.rc...
+14,1001,159460352,-,caller=T1;init: Parsing file /system_ext/etc/init/init.lineage-updater.rc...
+14,1002,159471464,-,caller=T1;init: Parsing file /system_ext/etc/init/wificond.rc...
+14,1003,159482649,-,caller=T1;init: Parsing directory /vendor/etc/init...
+14,1004,159514603,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.audio.service.rc...
+12,1005,159878361,-,caller=T1;init: ignored duplicate definition of service 'vendor.audio-hal'
+14,1006,160215173,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.biometrics.fingerprint-service.xiaomi.rc...
+14,1007,160575233,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.bluetooth@1.0-service-qti.rc...
+14,1008,160912308,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.boot-service.qti.rc...
+14,1009,160923609,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.camera.provider@2.4-service.rc...
+14,1010,160933862,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.cas@1.2-service.rc...
+14,1011,160945362,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.drm-service.clearkey.rc...
+14,1012,160956445,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.drm@1.2-service.widevine.rc...
+12,1013,160987271,-,caller=T1;init: 'writepid /dev/cpuset/foreground/tasks' is converted into 'task_profiles ProcessCapacityHigh' for service vendor.drm-widevine-hal-1-2
+14,1014,161620151,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.gatekeeper@1.0-service.rc...
+14,1015,161963434,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.gnss@2.0-service-qti.rc...
+14,1016,162292167,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.graphics.allocator@2.0-service.rc...
+14,1017,162303915,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.graphics.composer@2.1-service.rc...
+14,1018,162314767,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.health-service.qti.rc...
+14,1019,162324903,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.ir-service.example.rc...
+14,1020,162335273,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.keymaster@3.0-service.rc...
+14,1021,162346130,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.media.omx@1.0-service.rc...
+14,1022,162367672,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.power-service.lineage-libperfmgr.rc...
+14,1023,162692249,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.sensors@1.0-service.rc...
+14,1024,162703833,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.usb-service.qti.rc...
+14,1025,162713959,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.wifi-service.rc...
+14,1026,162724144,-,caller=T1;init: Parsing file /vendor/etc/init/android.hardware.wifi.supplicant-service.rc...
+14,1027,162734904,-,caller=T1;init: Parsing file /vendor/etc/init/boringssl_self_test.rc...
+14,1028,162745077,-,caller=T1;init: Added '/vendor/etc/boringssl_self_test.zygote64_32.rc' to import list
+14,1029,162754194,-,caller=T1;init: Parsing file /vendor/etc/boringssl_self_test.zygote64_32.rc...
+14,1030,162764428,-,caller=T1;init: Parsing file /vendor/etc/init/cnd.rc...
+14,1031,162774815,-,caller=T1;init: Parsing file /vendor/etc/init/dataadpl.rc...
+14,1032,162785718,-,caller=T1;init: Parsing file /vendor/etc/init/dataqti.rc...
+14,1033,162796526,-,caller=T1;init: Parsing file /vendor/etc/init/dpmQmiMgr.rc...
+14,1034,162806185,-,caller=T1;init: Parsing file /vendor/etc/init/hostapd.android.rc...
+14,1035,162815534,-,caller=T1;init: Parsing file /vendor/etc/init/ims_rtp_daemon_legacy.rc...
+12,1036,162839644,-,caller=T1;init: ignored duplicate definition of service 'vendor.ims_rtp_daemon'
+14,1037,163125183,-,caller=T1;init: Parsing file /vendor/etc/init/imsdatadaemon.rc...
+12,1038,163428473,-,caller=T1;init: ignored duplicate definition of service 'vendor.imsdatadaemon'
+14,1039,163708702,-,caller=T1;init: Parsing file /vendor/etc/init/imsqmidaemon.rc...
+12,1040,163721459,-,caller=T1;init: ignored duplicate definition of service 'vendor.imsqmidaemon'
+14,1041,163728985,-,caller=T1;init: Parsing file /vendor/etc/init/imsrcsd.rc...
+12,1042,163738402,-,caller=T1;init: ignored duplicate definition of service 'vendor.imsrcsservice'
+14,1043,163745680,-,caller=T1;init: Parsing file /vendor/etc/init/init-qcril-data.rc...
+14,1044,163755691,-,caller=T1;init: Parsing file /vendor/etc/init/ipacm.rc...
+14,1045,163765669,-,caller=T1;init: Parsing file /vendor/etc/init/lights-xiaomi_msm8953.rc...
+14,1046,163775424,-,caller=T1;init: Parsing file /vendor/etc/init/memtrack_qti.rc...
+14,1047,163784821,-,caller=T1;init: Parsing file /vendor/etc/init/netmgrd.rc...
+12,1048,163811691,-,caller=T1;init: No user specified for service 'vendor.netmgrd', so it is root.
+14,1049,164119338,-,caller=T1;init: Parsing file /vendor/etc/init/port-bridge.rc...
+14,1050,164430426,-,caller=T1;init: Parsing file /vendor/etc/init/qcrild.rc...
+14,1051,164752490,-,caller=T1;init: Parsing file /vendor/etc/init/timekeep.rc...
+14,1052,165067477,-,caller=T1;init: Parsing file /vendor/etc/init/vendor.display.color@1.0-service.rc...
+14,1053,165377010,-,caller=T1;init: Parsing file /vendor/etc/init/vendor.lineage.health-service.default.rc...
+14,1054,165689077,-,caller=T1;init: Parsing file /vendor/etc/init/vendor.lineage.livedisplay-service.sdm.rc...
+14,1055,165998667,-,caller=T1;init: Parsing file /vendor/etc/init/vendor.lineage.touch-service.xiaomi.rc...
+14,1056,166009753,-,caller=T1;init: Parsing file /vendor/etc/init/vendor.qti.hardware.alarm@1.0-service.rc...
+14,1057,166019364,-,caller=T1;init: Parsing file /vendor/etc/init/vendor.qti.hardware.tui_comm@1.0-service-qti.rc...
+14,1058,166028983,-,caller=T1;init: Parsing file /vendor/etc/init/vendor.qti.hardware.vibrator.service.rc...
+14,1059,166038992,-,caller=T1;init: Parsing file /vendor/etc/init/vndservicemanager.rc...
+14,1060,166064014,-,caller=T1;init: Parsing file /odm/etc/init...
+14,1061,166367559,-,caller=T1;init: Unable to read config file '/odm/etc/init': open() failed: No such file or directory
+14,1062,166677330,-,caller=T1;init: Parsing directory /product/etc/init...
+14,1063,166987500,-,caller=T1;init: Parsing file /product/etc/init/init.openssh.rc...
+14,1064,167002854,-,caller=T1;init: processing action (SetupCgroups) from (<Builtin Action>:0)
+14,1065,167042522,-,caller=T1;libprocessgroup: Using system/app isolation under: /sys/fs/cgroup
+14,1066,167479256,-,caller=T1;init: Command 'SetupCgroups' action=SetupCgroups (<Builtin Action>:0) took 465ms and succeeded
+14,1067,167811206,-,caller=T1;init: processing action (early-init) from (/system/etc/init/hw/init.rc:15)
+14,1068,167918061,-,caller=T1;init: starting service 'ueventd'...
+14,1069,167947864,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0
+14,1070,167965252,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_181
+12,1071,168007264,-,caller=T1;libprocessgroup: A JoinCgroup action in the SystemMemoryProcess profile is used for controller memory in the cgroup v2 hierarchy and will be ignored
+12,1072,168036111,-,caller=T1;libprocessgroup: A JoinCgroup action in the SystemMemoryProcess profile is used for controller memory in the cgroup v2 hierarchy and will be ignored
+14,1073,168076361,-,caller=T1;init: ... started service 'ueventd' has pid 181
+14,1074,168087211,-,caller=T1;init: Command 'start ueventd' action=early-init (/system/etc/init/hw/init.rc:77) took 169ms and succeeded
+14,1075,168104155,-,caller=T1;init: Command 'exec_start init_dev_config' action=early-init (/system/etc/init/hw/init.rc:83) took 0ms and failed: Could not start exec service: Cannot expand path: property 'ro.vendor.init_dev_config.path' doesn't exist while expanding '${ro.vendor.init_dev_config.path}': Invalid argument
+14,1076,168141114,-,caller=T1;init: starting service 'apexd-bootstrap'...
+14,1077,168172293,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_182
+14,1078,168236430,-,caller=T1;init: ... started service 'apexd-bootstrap' has pid 182
+14,1079,168247931,-,caller=T1;init: SVC_EXEC service 'apexd-bootstrap' pid 182 (uid 0 gid 1000+0 context default) started; waiting...
+14,1080,168259465,-,caller=T1;init: Command 'exec_start apexd-bootstrap' action=early-init (/system/etc/init/hw/init.rc:91) took 122ms and succeeded
+14,1081,168415614,-,caller=T181;ueventd: ueventd started!
+14,1082,168451896,-,caller=T181;selinux: SELinux: Loaded file context from:
+14,1083,168462613,-,caller=T181;selinux: \x09\x09/system/etc/selinux/plat_file_contexts
+14,1084,168472724,-,caller=T181;selinux: \x09\x09/system_ext/etc/selinux/system_ext_file_contexts
+14,1085,168482695,-,caller=T181;selinux: \x09\x09/product/etc/selinux/product_file_contexts
+14,1086,168494868,-,caller=T181;selinux: \x09\x09/vendor/etc/selinux/vendor_file_contexts
+14,1087,168910828,-,caller=T181;selinux: \x09\x09/odm/etc/selinux/odm_file_contexts
+14,1088,169013414,-,caller=T182;apexd: Started. subcommand = --bootstrap
+6,1089,169367783,-,caller=T182;erofs: (device erofs): initialized per-cpu workers successfully.
+6,1090,169379487,-,caller=T182;erofs: (device erofs): mounted with root inode @ nid 36.
+14,1091,169383454,-,caller=T181;ueventd: Parsing file /system/etc/ueventd.rc...
+14,1092,169816876,-,caller=T182;apexd: File-backed mount is enabled (detected via test mount)
+14,1093,169835053,-,caller=T182;apexd-bootstrap: Scanning /odm/apex for pre-installed ApexFiles
+14,1094,169836121,-,caller=T181;ueventd: Added '/vendor/etc/ueventd.rc' to import list
+12,1095,169847325,-,caller=T182;apexd-bootstrap: /odm/apex does not exist. Skipping
+14,1096,170280103,-,caller=T181;ueventd: Added '/odm/etc/ueventd.rc' to import list
+14,1097,170287997,-,caller=T182;apexd-bootstrap: Scanning /vendor/apex for pre-installed ApexFiles
+12,1098,170288545,-,caller=T182;apexd-bootstrap: /vendor/apex does not exist. Skipping
+14,1099,170744107,-,caller=T182;apexd-bootstrap: Scanning /product/apex for pre-installed ApexFiles
+14,1100,170760079,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /product/apex/com.google.android.gmssystem.prodvic.apex
+14,1101,170770966,-,caller=T181;ueventd: Parsing file /vendor/etc/ueventd.rc...
+14,1102,170771537,-,caller=T182;apexd-bootstrap: Scanning /system_ext/apex for pre-installed ApexFiles
+14,1103,170774026,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system_ext/apex/com.android.hardware.biometrics.fingerprint.virtual.apex
+14,1104,171255612,-,caller=T182;apexd-bootstrap: Scanning /system/apex for pre-installed ApexFiles
+14,1105,171272004,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.scheduling.capex
+14,1106,171284456,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.devicelock.apex
+14,1107,171296227,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.mediaprovider.capex
+14,1108,171307880,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.uprobestats.capex
+14,1109,171321221,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.media.capex
+14,1110,171405371,-,caller=T181;ueventd: Parsing file /odm/etc/ueventd.rc...
+14,1111,171795637,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.telephonycore.capex
+14,1112,172261212,-,caller=T181;ueventd: Unable to read config file '/odm/etc/ueventd.rc': open() failed: No such file or directory
+14,1113,172734508,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.tzdata.apex
+14,1114,172747676,-,caller=T181;ueventd: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+14,1115,172756458,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.runtime.apex
+14,1116,172779995,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.i18n.apex
+14,1117,172791921,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.cellbroadcast.capex
+14,1118,172803691,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.crashrecovery.capex
+14,1119,172815416,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.adbd.capex
+14,1120,172828889,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.ipsec.capex
+14,1121,173308313,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.nfcservices.capex
+14,1122,173788517,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.apex.cts.shim.apex
+14,1123,174299791,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.healthfitness.apex
+14,1124,174315444,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.ondevicepersonalization.capex
+14,1125,174333342,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.resolv.capex
+14,1126,174350037,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.os.statsd.apex
+14,1127,174364977,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.npumanager.capex
+14,1128,174379565,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.neuralnetworks.capex
+14,1129,174394759,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.wifi.capex
+14,1130,174409968,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.virt.apex
+14,1131,174424759,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.adservices.capex
+14,1132,174439825,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.uwb.capex
+14,1133,174454247,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.permission.capex
+14,1134,174469190,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.media.swcodec.capex
+14,1135,174483306,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.configinfrastructure.capex
+14,1136,174500487,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.extservices.capex
+14,1137,174516049,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.rkpd.apex
+14,1138,174586750,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.art.capex
+14,1139,174795842,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.webapp.capex
+14,1140,174795978,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.tethering.capex
+14,1141,174796010,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.sdkext.apex
+14,1142,174796037,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.appsearch.capex
+14,1143,174796065,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.bt.capex
+14,1144,174796092,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.conscrypt.capex
+14,1145,174796118,-,caller=T182;apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.profiling.capex
+14,1146,175570471,-,caller=T182;apexd-bootstrap: Successfully scanned 40 preinstalled APEXes duration=5735ms
+14,1147,175583848,-,caller=T182;apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.virt.apex
+14,1148,175596480,-,caller=T182;apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.i18n.apex
+14,1149,175609822,-,caller=T182;apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.runtime.apex
+14,1150,175622638,-,caller=T182;apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.tzdata.apex
+14,1151,175635013,-,caller=T182;apexd-bootstrap: Need to pre-allocate 44 loop devices
+5,1152,175653535,-,caller=T81;audit: type=1400 audit(122989.143:47): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+14,1153,175782613,-,caller=T182;apexd-bootstrap: Found 16 idle loopback devices that were pre-allocated by kernel. Allocated 28 more.
+5,1154,176538575,-,caller=T81;audit: type=1400 audit(122989.147:48): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+4,1155,176806934,-,caller=T79;audit: audit_backlog=65 > audit_backlog_limit=64
+5,1156,177452631,-,caller=T81;audit: type=1400 audit(122989.155:49): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+4,1157,177462453,-,caller=T79;audit: audit_lost=1 audit_rate_limit=0 audit_backlog_limit=64
+3,1158,177462581,-,caller=T79;audit: backlog limit exceeded
+6,1159,177480626,-,caller=T283;loop0: detected capacity change from 0 to 2400
+6,1160,177489211,-,caller=T285;loop3: detected capacity change from 0 to 1704
+6,1161,177505435,-,caller=T282;loop2: detected capacity change from 0 to 25440
+6,1162,177507460,-,caller=T284;loop1: detected capacity change from 0 to 83168
+5,1163,178396305,-,caller=T81;audit: type=1400 audit(122989.159:50): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1164,181698607,-,caller=T81;audit: type=1400 audit(122989.163:51): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1165,182674653,-,caller=T81;audit: type=1400 audit(122989.167:52): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1166,182675255,-,caller=T81;audit: type=1400 audit(122989.171:53): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1167,182675732,-,caller=T81;audit: type=1400 audit(122989.175:54): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+14,1168,184201211,-,caller=T181;ueventd: Coldboot took 11.392 seconds
+5,1169,184692381,-,caller=T81;audit: type=1400 audit(122989.179:55): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1170,186286958,-,caller=T81;audit: type=1400 audit(122989.183:56): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1171,186287561,-,caller=T81;audit: type=1400 audit(122989.187:57): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+6,1172,186305450,-,caller=T284;EXT4-fs (loop1): mounted filesystem 7d1522e1-9dfa-5edb-a43e-98e3a4d20250 ro without journal. Quota mode: none.
+6,1173,186597163,-,caller=T282;EXT4-fs (loop2): mounted filesystem 7d1522e1-9dfa-5edb-a43e-98e3a4d20250 ro without journal. Quota mode: none.
+5,1174,189519002,-,caller=T81;audit: type=1400 audit(122989.195:58): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1175,190601524,-,caller=T81;audit: type=1400 audit(122989.199:59): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1176,191684502,-,caller=T81;audit: type=1400 audit(122989.203:60): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1177,191712050,-,caller=T81;audit: type=1400 audit(122989.207:61): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1178,191739305,-,caller=T81;audit: type=1400 audit(122989.211:62): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+5,1179,191766457,-,caller=T81;audit: type=1400 audit(122989.215:63): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+6,1180,191783251,-,caller=T285;EXT4-fs (loop3): mounted filesystem 7d1522e1-9dfa-5edb-a43e-98e3a4d20250 ro without journal. Quota mode: none.
+6,1181,191785414,-,caller=T283;EXT4-fs (loop0): mounted filesystem 7d1522e1-9dfa-5edb-a43e-98e3a4d20250 ro without journal. Quota mode: none.
+5,1182,191795875,-,caller=T81;audit: type=1400 audit(122989.219:64): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+14,1183,191819479,-,caller=T182;apexd-bootstrap: Activated 4 packages. duration=14352ms
+5,1184,192368932,-,caller=T81;audit: type=1400 audit(122989.227:65): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+14,1185,192396960,-,caller=T182;apexd-bootstrap: OnBootstrap done, duration=22562
+5,1186,192963525,-,caller=T81;audit: type=1400 audit(122989.231:66): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+14,1187,193003946,-,caller=T1;init: Service 'apexd-bootstrap' (pid 182) exited with status 0 waiting took 24.834000 seconds
+5,1188,193567590,-,caller=T81;audit: type=1400 audit(122989.235:67): avc:  denied  { write } for  pid=79 comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=0
+14,1189,193594836,-,caller=T1;init: Sending SIGKILL to service 'apexd-bootstrap' (pid 182) process group...
+14,1190,193598447,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_182
+14,1191,194753362,-,caller=T1;init: linkerconfig generated /linkerconfig with mounted APEX modules info
+14,1192,195365511,-,caller=T1;init: Command 'perform_apex_config' action=early-init (/system/etc/init/hw/init.rc:92) took 1112ms and succeeded
+14,1193,196040930,-,caller=T1;init: Command 'mkdir /dev/boringssl 0755 root root' action=early-init (/system/etc/init/hw/init.rc:95) took 59ms and succeeded
+14,1194,197332430,-,caller=T1;init: Command 'mkdir /dev/boringssl/selftest 0755 root root' action=early-init (/system/etc/init/hw/init.rc:96) took 66ms and succeeded
+14,1195,198628356,-,caller=T1;init: Command 'mkdir /dev/sys 0755 system system' action=early-init (/system/etc/init/hw/init.rc:99) took 54ms and succeeded
+14,1196,199937004,-,caller=T1;init: Command 'mkdir /dev/sys/fs 0755 system system' action=early-init (/system/etc/init/hw/init.rc:100) took 56ms and succeeded
+14,1197,201262476,-,caller=T1;init: Command 'mkdir /dev/sys/block 0755 system system' action=early-init (/system/etc/init/hw/init.rc:101) took 59ms and succeeded
+14,1198,202591607,-,caller=T1;init: Command 'mkdir /dev/fscklogs 0770 root system' action=early-init (/system/etc/init/hw/init.rc:105) took 57ms and succeeded
+14,1199,203881506,-,caller=T1;init: processing action (ro.boot.bootchart.enabled= && early-init) from (/system/etc/init/hw/init.rc:113)
+14,1200,203899148,-,caller=T1;init: processing action (persist.sys.evox.spoof.migrated= && early-init) from (/system/etc/init/hw/init.rc:1159)
+14,1201,203918243,-,caller=T1;init: processing action (early-init) from (/init.environ.rc:2)
+14,1202,203935467,-,caller=T1;init: processing action (early-init) from (/vendor/etc/init/hw/init.qcom.rc:32)
+14,1203,203958389,-,caller=T1;init: processing action (early-init) from (/vendor/etc/init/hw/init.target.rc:29)
+14,1204,204464443,-,caller=T1;init: Command 'write /proc/sys/kernel/sched_boost 1' action=early-init (/vendor/etc/init/hw/init.target.rc:30) took 487ms and succeeded
+14,1205,205811190,-,caller=T1;init: Command 'symlink /data/tombstones /tombstones' action=early-init (/vendor/etc/init/hw/init.target.rc:31) took 36ms and failed: symlink() failed: Read-only file system
+14,1206,207132737,-,caller=T1;init: processing action (early-init) from (/system/etc/init/aconfigd.rc:26)
+14,1207,207852546,-,caller=T1;init: Command 'mkdir /metadata/aconfig 0775 root system' action=early-init (/system/etc/init/aconfigd.rc:27) took 48ms and failed: mkdir() failed on /metadata/aconfig: Read-only file system
+14,1208,209339601,-,caller=T1;init: starting service 'early_system_aconfigd_platform_init'...
+14,1209,210191754,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1000
+14,1210,211096982,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1000/pid_294
+14,1211,211803793,-,caller=T1;init: ... started service 'early_system_aconfigd_platform_init' has pid 294
+14,1212,211822558,-,caller=T1;init: SVC_EXEC service 'early_system_aconfigd_platform_init' pid 294 (uid 1000 gid 1000+0 context default) started; waiting...
+14,1213,211856928,-,caller=T1;init: Command 'exec_start early_system_aconfigd_platform_init' action=early-init (/system/etc/init/aconfigd.rc:31) took 2536ms and succeeded
+13,1214,214105841,-,caller=T294;main[294]: Starting aconfigd_system command: EarlyPlatformInit
+13,1215,214124248,-,caller=T294;main[294]: Starting early-init platform init
+14,1216,214145391,-,caller=T294;aconfigd_rust::utils[294]: build fingerprint is: google/grizzly_beta/grizzly:17/CP41.260828.004.A8/16319058:user/release-keys
+14,1217,214180806,-,caller=T294;aconfigd_rust::aconfigd[294]: device build fingerprint google/grizzly_beta/grizzly:17/CP41.260828.004.A8/16319058:user/release-keys
+14,1218,214216673,-,caller=T294;aconfigd_rust::utils[294]: security patch date is: 2026-09-01
+14,1219,214234876,-,caller=T294;aconfigd_rust::aconfigd[294]: device security patch 2026-09-01
+14,1220,214253245,-,caller=T294;aconfigd_rust::aconfigd[294]: start initialize system flags
+14,1221,214276144,-,caller=T294;aconfigd_rust::storage_files[294]: create storage files object from container system
+14,1222,214414491,-,caller=T294;aconfigd_rust::storage_files[294]: copy system storage files to persist and boot directories
+11,1223,215184560,-,caller=T294;main[294]: Failed to initialize platform storage in early init: failed to copy file from /system/etc/aconfig/package.map to /metadata/aconfig/maps/system.package.new: Os { code: 2, kind: NotFound, message: "No such file or directory" }
+14,1224,216885710,-,caller=T1;init: Service 'early_system_aconfigd_platform_init' (pid 294) exited with status 5 waiting took 6.713000 seconds
+14,1225,216905628,-,caller=T1;init: Sending SIGKILL to service 'early_system_aconfigd_platform_init' (pid 294) process group...
+14,1226,216927590,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_1000/pid_294
+14,1227,216951031,-,caller=T1;init: processing action (early-init) from (/system/etc/init/kcmdlinemodprobe.rc:16)
+14,1228,216974155,-,caller=T1;init: starting service 'exec 1 (/system/bin/kcmdlinemodprobe)'...
+14,1229,217008975,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_295
+14,1230,217047538,-,caller=T1;init: ... started service 'exec 1 (/system/bin/kcmdlinemodprobe)' has pid 295
+14,1231,217068355,-,caller=T1;init: SVC_EXEC service 'exec 1 (/system/bin/kcmdlinemodprobe)' pid 295 (uid 0 gid 0+0 context default) started; waiting...
+14,1232,217107791,-,caller=T1;init: Command 'exec -- /system/bin/kcmdlinemodprobe' action=early-init (/system/etc/init/kcmdlinemodprobe.rc:17) took 136ms and succeeded
+14,1233,217311957,-,caller=T1;init: Service 'exec 1 (/system/bin/kcmdlinemodprobe)' (pid 295) exited with status 0 waiting took 0.305000 seconds
+14,1234,217352734,-,caller=T1;init: Sending SIGKILL to service 'exec 1 (/system/bin/kcmdlinemodprobe)' (pid 295) process group...
+14,1235,217375401,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_295
+14,1236,217411398,-,caller=T1;init: processing action (early-init) from (/system/etc/init/prng_seeder.rc:5)
+14,1237,218256567,-,caller=T1;init: starting service 'prng_seeder'...
+14,1238,219116661,-,caller=T1;init: Created socket '/dev/socket/prng_seeder', mode 666, user 1092, group 1092
+14,1239,219953438,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1092
+14,1240,219983635,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1092/pid_296
+14,1241,220027964,-,caller=T1;init: ... started service 'prng_seeder' has pid 296
+14,1242,220049483,-,caller=T1;init: Command 'start prng_seeder' action=early-init (/system/etc/init/prng_seeder.rc:6) took 1812ms and succeeded
+14,1243,220089502,-,caller=T1;init: processing action (ro.product.cpu.abilist32=* && early-init) from (/vendor/etc/boringssl_self_test.zygote64_32.rc:1)
+14,1244,220136680,-,caller=T1;init: starting service 'boringssl_self_test32_vendor'...
+14,1245,220178509,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_297
+14,1246,220260461,-,caller=T1;init: ... started service 'boringssl_self_test32_vendor' has pid 297
+14,1247,220282430,-,caller=T1;init: SVC_EXEC service 'boringssl_self_test32_vendor' pid 297 (uid 0 gid 0+0 context default) started; waiting...
+14,1248,220326009,-,caller=T1;init: Command 'exec_start boringssl_self_test32_vendor' action=ro.product.cpu.abilist32=* && early-init (/vendor/etc/boringssl_self_test.zygote64_32.rc:2) took 195ms and succeeded
+14,1249,221086577,-,caller=T1;init: Service 'boringssl_self_test32_vendor' (pid 297) exited with status 0 waiting took 0.908000 seconds
+14,1250,221919815,-,caller=T1;init: Sending SIGKILL to service 'boringssl_self_test32_vendor' (pid 297) process group...
+14,1251,222779136,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_297
+14,1252,223651489,-,caller=T1;init: processing action (ro.product.cpu.abilist64=* && early-init) from (/vendor/etc/boringssl_self_test.zygote64_32.rc:3)
+14,1253,225319786,-,caller=T1;init: starting service 'boringssl_self_test64_vendor'...
+14,1254,226312783,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_298
+14,1255,227425378,-,caller=T1;init: ... started service 'boringssl_self_test64_vendor' has pid 298
+14,1256,228255640,-,caller=T1;init: SVC_EXEC service 'boringssl_self_test64_vendor' pid 298 (uid 0 gid 0+0 context default) started; waiting...
+14,1257,229879183,-,caller=T1;init: Command 'exec_start boringssl_self_test64_vendor' action=ro.product.cpu.abilist64=* && early-init (/vendor/etc/boringssl_self_test.zygote64_32.rc:4) took 4583ms and succeeded
+14,1258,229920440,-,caller=T1;init: Service 'boringssl_self_test64_vendor' (pid 298) exited with status 0 waiting took 3.632000 seconds
+14,1259,229940832,-,caller=T1;init: Sending SIGKILL to service 'boringssl_self_test64_vendor' (pid 298) process group...
+14,1260,229964745,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_298
+14,1261,230026975,-,caller=T1;init: processing action (ConnectEarlyStageSnapuserd) from (<Builtin Action>:0)
+14,1262,230848604,-,caller=T1;init: processing action (wait_for_coldboot_done) from (<Builtin Action>:0)
+14,1263,231660920,-,caller=T1;init: start_waiting_for_property("ro.cold_boot_done", "true"): already set
+14,1264,231682404,-,caller=T1;init: processing action (CheckTradeInModeStatus) from (<Builtin Action>:0)
+14,1265,231702779,-,caller=T1;init: processing action (SetMmapRndBits) from (<Builtin Action>:0)
+14,1266,231785539,-,caller=T1;init: Command 'SetMmapRndBits' action=SetMmapRndBits (<Builtin Action>:0) took 61ms and succeeded
+14,1267,232591510,-,caller=T1;init: processing action (KeychordInit) from (<Builtin Action>:0)
+12,1268,233388360,-,caller=T1;init: EVIOCSMASK not supported: Invalid argument
+14,1269,233410424,-,caller=T1;init: processing action (init) from (/system/etc/init/hw/init.rc:116)
+14,1270,233507689,-,caller=T1;init: Command 'symlink /proc/self/fd/2 /dev/stderr' action=init (/system/etc/init/hw/init.rc:125) took 52ms and succeeded
+14,1271,235143091,-,caller=T1;init: Command 'mkdir /dev/socket/ot-daemon 0770 thread_network thread_network' action=init (/system/etc/init/hw/init.rc:128) took 67ms and succeeded
+14,1272,236986813,-,caller=T1;init: Command 'mkdir /dev/blkio/background' action=init (/system/etc/init/hw/init.rc:256) took 66ms and succeeded
+14,1273,238669025,-,caller=T1;init: Command 'write /dev/blkio/blkio.weight 1000' action=init (/system/etc/init/hw/init.rc:267) took 62ms and succeeded
+14,1274,240333060,-,caller=T1;init: Command 'write /dev/blkio/background/blkio.weight 200' action=init (/system/etc/init/hw/init.rc:268) took 72ms and succeeded
+14,1275,242003675,-,caller=T1;init: Command 'write /dev/blkio/background/blkio.bfq.weight 10' action=init (/system/etc/init/hw/init.rc:269) took 73ms and succeeded
+14,1276,243667822,-,caller=T1;init: Command 'write /dev/blkio/blkio.group_idle 0' action=init (/system/etc/init/hw/init.rc:270) took 65ms and succeeded
+14,1277,245344040,-,caller=T1;init: Command 'write /dev/blkio/background/blkio.group_idle 0' action=init (/system/etc/init/hw/init.rc:271) took 74ms and succeeded
+14,1278,247437335,-,caller=T1;init: starting service 'logd'...
+14,1279,247497039,-,caller=T1;init: Created socket '/dev/socket/logd', mode 666, user 1036, group 1036
+14,1280,248339921,-,caller=T1;init: Created socket '/dev/socket/logdr', mode 666, user 1036, group 1036
+14,1281,249179703,-,caller=T1;init: Created socket '/dev/socket/logdw', mode 222, user 1036, group 1036
+14,1282,250144337,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1036
+14,1283,251153265,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1036/pid_299
+14,1284,252243328,-,caller=T1;init: ... started service 'logd' has pid 299
+12,1285,252348347,-,caller=T299;logd: libprocessgroup: A JoinCgroup action in the SystemMemoryProcess profile is used for controller memory in the cgroup v2 hierarchy and will be ignored
+14,1286,253025212,-,caller=T1;init: Command 'start logd' action=init (/system/etc/init/hw/init.rc:503) took 5587ms and succeeded
+12,1287,253066543,-,caller=T299;logd: libprocessgroup: A JoinCgroup action in the SystemMemoryProcess profile is used for controller memory in the cgroup v2 hierarchy and will be ignored
+14,1288,253912438,-,caller=T1;init: starting service 'lmkd'...
+38,1289,253938104,-,caller=T299;logd.auditd: start
+14,1290,254719186,-,caller=T1;init: Created socket '/dev/socket/lmkd', mode 660, user 1000, group 1000
+14,1291,254729211,-,caller=T299;logd: Loaded bug_map file: /system_ext/etc/selinux/bug_map
+14,1292,255501240,-,caller=T299;logd: Loaded bug_map file: /vendor/etc/selinux/selinux_denial_metadata
+14,1293,255523186,-,caller=T299;logd: Loaded bug_map file: /system/etc/selinux/bug_map
+14,1294,255664310,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1069
+14,1295,256438744,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1069/pid_303
+14,1296,256484195,-,caller=T1;init: ... started service 'lmkd' has pid 303
+14,1297,256504162,-,caller=T1;init: Command 'start lmkd' action=init (/system/etc/init/hw/init.rc:510) took 2610ms and succeeded
+14,1298,256546867,-,caller=T1;init: starting service 'servicemanager'...
+14,1299,257472373,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1000/pid_310
+14,1300,258523848,-,caller=T1;init: ... started service 'servicemanager' has pid 310
+14,1301,258662695,-,caller=T310;servicemanager: Starting sm instance on /dev/binder
+14,1302,259276125,-,caller=T1;init: Command 'start servicemanager' action=init (/system/etc/init/hw/init.rc:513) took 2747ms and succeeded
+14,1303,259315692,-,caller=T310;SELinux: SELinux: Loaded service context from:
+14,1304,260052460,-,caller=T310;SELinux: \x09\x09/system/etc/selinux/plat_service_contexts
+14,1305,260061176,-,caller=T1;init: starting service 'hwservicemanager'...
+14,1306,260071373,-,caller=T310;SELinux: \x09\x09/system_ext/etc/selinux/system_ext_service_contexts
+14,1307,260071446,-,caller=T310;SELinux: \x09\x09/product/etc/selinux/product_service_contexts
+14,1308,260071490,-,caller=T310;SELinux: \x09\x09/vendor/etc/selinux/vendor_service_contexts
+14,1309,260071546,-,caller=T310;SELinux: \x09\x09/odm/etc/selinux/odm_service_contexts
+14,1310,263776263,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1000/pid_312
+14,1311,263816324,-,caller=T1;init: ... started service 'hwservicemanager' has pid 312
+14,1312,263836091,-,caller=T1;init: Command 'start hwservicemanager' action=init (/system/etc/init/hw/init.rc:514) took 3796ms and succeeded
+14,1313,263860052,-,caller=T1;init: starting service 'vndservicemanager'...
+14,1314,263898510,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1000/pid_313
+14,1315,263940208,-,caller=T1;init: ... started service 'vndservicemanager' has pid 313
+14,1316,263959936,-,caller=T1;init: Command 'start vndservicemanager' action=init (/system/etc/init/hw/init.rc:515) took 104ms and succeeded
+14,1317,263999162,-,caller=T1;init: processing action (init) from (/vendor/etc/init/hw/init.qcom.rc:38)
+14,1318,264122081,-,caller=T313;vndservicemanager: Starting sm instance on /dev/vndbinder
+14,1319,264163142,-,caller=T313;SELinux: SELinux: Loaded vndservice context from:
+14,1320,264182625,-,caller=T313;SELinux: \x09\x09/vendor/etc/selinux/vndservice_contexts
+14,1321,264401477,-,caller=T1;init: Command 'mkdir /sys/fs/cgroup/memory/bg 0750 root system' action=init (/vendor/etc/init/hw/init.qcom.rc:40) took 378ms and succeeded
+14,1322,265980329,-,caller=T1;init: Command 'write /sys/fs/cgroup/memory/bg/memory.swappiness 140' action=init (/vendor/etc/init/hw/init.qcom.rc:41) took 118ms and succeeded
+14,1323,267579121,-,caller=T1;init: Command 'write /sys/fs/cgroup/memory/bg/memory.move_charge_at_immigrate 1' action=init (/vendor/etc/init/hw/init.qcom.rc:42) took 137ms and succeeded
+14,1324,269178672,-,caller=T1;init: processing action (init) from (/vendor/etc/init/hw/init.target.rc:44)
+14,1325,269212892,-,caller=T1;init: processing action (ro.product.cpu.abilist32=* && init) from (/system/etc/init/hw/init.boringssl.zygote64_32.rc:1)
+14,1326,269252019,-,caller=T1;init: starting service 'boringssl_self_test32'...
+14,1327,269285267,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999
+14,1328,269531459,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_314
+14,1329,270558772,-,caller=T1;init: ... started service 'boringssl_self_test32' has pid 314
+14,1330,270577922,-,caller=T1;init: SVC_EXEC service 'boringssl_self_test32' pid 314 (uid 9999 gid 0+0 context default) started; waiting...
+14,1331,270596089,-,caller=T1;init: Command 'exec_start boringssl_self_test32' action=ro.product.cpu.abilist32=* && init (/system/etc/init/hw/init.boringssl.zygote64_32.rc:2) took 1346ms and succeeded
+14,1332,271092719,-,caller=T1;init: Service 'boringssl_self_test32' (pid 314) exited with status 0 waiting took 1.809000 seconds
+14,1333,271111271,-,caller=T1;init: Sending SIGKILL to service 'boringssl_self_test32' (pid 314) process group...
+14,1334,271131394,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_314
+14,1335,271153044,-,caller=T1;init: processing action (ro.product.cpu.abilist64=* && init) from (/system/etc/init/hw/init.boringssl.zygote64_32.rc:3)
+14,1336,271208904,-,caller=T1;init: starting service 'boringssl_self_test64'...
+14,1337,272112246,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_315
+14,1338,272867811,-,caller=T1;init: ... started service 'boringssl_self_test64' has pid 315
+14,1339,272887402,-,caller=T1;init: SVC_EXEC service 'boringssl_self_test64' pid 315 (uid 9999 gid 0+0 context default) started; waiting...
+14,1340,272906119,-,caller=T1;init: Command 'exec_start boringssl_self_test64' action=ro.product.cpu.abilist64=* && init (/system/etc/init/hw/init.boringssl.zygote64_32.rc:4) took 1714ms and succeeded
+14,1341,273394533,-,caller=T1;init: Service 'boringssl_self_test64' (pid 315) exited with status 0 waiting took 1.307000 seconds
+14,1342,273413188,-,caller=T1;init: Sending SIGKILL to service 'boringssl_self_test64' (pid 315) process group...
+14,1343,273433388,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_315
+14,1344,273492375,-,caller=T1;init: processing action (ro.board.api_level=202604 && init) from (/system/etc/init/android.system.suspend-service.rc:7)
+14,1345,274963537,-,caller=T1;init: processing action (init) from (/system/etc/init/audioserver.rc:66)
+14,1346,275770937,-,caller=T1;init: Command 'mkdir /dev/socket/audioserver 0775 audioserver audioserver' action=init (/system/etc/init/audioserver.rc:67) took 71ms and succeeded
+14,1347,277229503,-,caller=T1;init: processing action (init) from (/system/etc/init/perfetto.rc:163)
+14,1348,278023587,-,caller=T1;init: processing action (init) from (/system_ext/etc/init/init.lineage-system_ext.rc:2)
+14,1349,278042895,-,caller=T1;init: processing action (init) from (/vendor/etc/init/android.hardware.usb-service.qti.rc:4)
+14,1350,278063937,-,caller=T1;init: processing action (CopyRollbackLogs) from (<Builtin Action>:0)
+14,1351,278083291,-,caller=T1;init: processing action (late-init) from (/system/etc/init/hw/init.rc:567)
+14,1352,278104299,-,caller=T1;init: processing action (late-init) from (/system/etc/init/atrace.rc:3)
+14,1353,279771887,-,caller=T1;init: Command 'copy /system/etc/ftrace_synthetic_events.conf /sys/kernel/tracing/synthetic_events' action=late-init (/system/etc/init/atrace.rc:290) took 78ms and succeeded
+14,1354,281276754,-,caller=T1;init: Command 'copy /system/etc/ftrace_synthetic_events.conf /sys/kernel/debug/tracing/synthetic_events' action=late-init (/system/etc/init/atrace.rc:291) took 67ms and succeeded
+14,1355,282764926,-,caller=T1;init: processing action (ro.boot.fastboot.boottrace= && late-init) from (/system/etc/init/atrace.rc:309)
+14,1356,283545101,-,caller=T1;init: Command 'write /sys/kernel/debug/tracing/tracing_on 0' action=ro.boot.fastboot.boottrace= && late-init (/system/etc/init/atrace.rc:310) took 56ms and succeeded
+14,1357,284989685,-,caller=T1;init: processing action (late-init) from (/vendor/etc/init/vendor.qti.hardware.vibrator.service.rc:7)
+14,1358,285018974,-,caller=T1;init: processing action (queue_property_triggers) from (<Builtin Action>:0)
+14,1359,285038353,-,caller=T1;init: processing action (early-fs) from (/system/etc/init/hw/init.rc:602)
+14,1360,285092788,-,caller=T1;init: starting service 'vold'...
+14,1361,285984398,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_316
+14,1362,286027716,-,caller=T1;init: ... started service 'vold' has pid 316
+14,1363,286049311,-,caller=T1;init: Command 'start vold' action=early-fs (/system/etc/init/hw/init.rc:604) took 975ms and succeeded
+11,1364,286330538,-,caller=T310;cutils-trace: Error opening trace file: Permission denied (13)
+14,1365,286788570,-,caller=T1;init: processing action (fs) from (/vendor/etc/init/hw/init.target.rc:33)
+12,1366,286801803,-,caller=T316;libbinder.BackendUnifiedServiceManager: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: vold
+14,1367,287559236,-,caller=T180;init: wait for '/dev/block/platform/soc/../..' took 7ms
+14,1368,287563704,-,caller=T310;servicemanager: getDeviceHalManifest: Reading VINTF information.
+14,1369,288290915,-,caller=T1;init: Command 'wait /dev/block/platform/soc/${ro.boot.bootdevice}' action=fs (/vendor/etc/init/hw/init.target.rc:34) took 748ms and succeeded
+14,1370,288312748,-,caller=T310;servicemanager: Loaded APEX Infos from /bootstrap-apex/apex-info-list.xml
+14,1371,289763638,-,caller=T310;servicemanager: Loaded APEX Infos from /bootstrap-apex/apex-info-list.xml
+14,1372,289782916,-,caller=T310;servicemanager: getDeviceHalManifest: Successfully processed VINTF information
+14,1373,289800657,-,caller=T310;servicemanager: getFrameworkHalManifest: Reading VINTF information.
+14,1374,289826014,-,caller=T310;servicemanager: Loaded APEX Infos from /bootstrap-apex/apex-info-list.xml
+14,1375,289844778,-,caller=T310;servicemanager: getFrameworkHalManifest: Successfully processed VINTF information
+14,1376,289863382,-,caller=T310;servicemanager: Caller(pid=316,uid=0,sid=u:r:vold:s0) Found android.system.vold.IVold/default in framework VINTF manifest.
+12,1377,289897167,-,caller=T310;libbinder.Binder: Binder transaction to android.os.IServiceManager, function: isDeclared, code: 9, took 2337ms. Data bytes: 144 Reply bytes: 8 Flags: 16
+14,1378,289934611,-,caller=T310;servicemanager: Caller(pid=316,uid=0,sid=u:r:vold:s0) Found android.system.vold.IVold/default in framework VINTF manifest.
+14,1379,290159063,-,caller=T1;init: Command 'symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice' action=fs (/vendor/etc/init/hw/init.target.rc:35) took 417ms and failed: symlink() failed: File exists
+14,1380,291671439,-,caller=T1;init: [libfs_mgr] Running /system/bin/fsck.f2fs -a -c 10000 --debug-cache /dev/block/bootdevice/by-name/userdata
+14,1381,293854910,-,caller=T1;fsck.f2fs: Info: Automatic fix mode enabled.
+36,1382,293865427,-,caller=T304;type=1400 audit(123107.343:114): avc:  denied  { getattr } for  comm="fsck.f2fs" path="/sys/devices/platform/soc@0/7824900.mmc/mmc_host/mmc1/mmc1:0001/block/mmcblk1/mmcblk1p49/partition" dev="sysfs" ino=29027 scontext=u:r:fsck:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=0
+14,1383,294572847,-,caller=T1;fsck.f2fs: \x09Info: can't find /sys, assuming normal block device
+14,1384,297467457,-,caller=T1;fsck.f2fs: Info: not exist /proc/version!
+14,1385,298187691,-,caller=T1;fsck.f2fs: Info: MKFS version
+14,1386,298206172,-,caller=T1;fsck.f2fs:   "4.19.325-cip136-st20-perf-g1dd4197c3595"
+14,1387,298223577,-,caller=T1;fsck.f2fs: Info: FSCK version
+14,1388,298240736,-,caller=T1;fsck.f2fs:   from "4.19.325-cip136-st20-perf-mglru-next-g7f57b3823629"
+14,1389,298258412,-,caller=T1;fsck.f2fs:     to "6.12.93-4k-g05a6f7b2c2c5-dirty"
+14,1390,298275800,-,caller=T1;fsck.f2fs: Info: superblock features = 1499 :  encrypt extra_attr project_quota quota verity casefold
+14,1391,298293060,-,caller=T1;fsck.f2fs: Info: superblock encrypt level = 0, salt = 00000000000000000000000000000000
+14,1392,298310323,-,caller=T1;fsck.f2fs: Info: Segments per section = 1
+14,1393,298327582,-,caller=T1;fsck.f2fs: Info: Sections per zone = 1
+14,1394,298344735,-,caller=T1;fsck.f2fs: Info: total FS sectors = 99203000 (48438 MB)
+14,1395,298361921,-,caller=T1;fsck.f2fs: Info: CKPT version = 5ccd0cbe
+14,1396,298379036,-,caller=T1;fsck.f2fs: Info: Casefold: linear_lookup [enable]
+14,1397,298396122,-,caller=T1;fsck.f2fs: Info: version timestamp cur: 185085, prev: 184431
+14,1398,298415146,-,caller=T1;fsck.f2fs: [update_superblock: 935] Info: Done to update superblock
+14,1399,299125379,-,caller=T1;fsck.f2fs: Info: checkpoint state = 45 :  crc compacted_summary unmount
+14,1400,299143278,-,caller=T1;fsck.f2fs: Info: No error was reported
+14,1401,299161490,-,caller=T1;fsck.f2fs: 
+14,1402,299859052,-,caller=T1;fsck.f2fs: c, u, RA, CH, CM, Repl=
+14,1403,300550271,-,caller=T1;fsck.f2fs: 10000 9 9 0 9 0
+14,1404,300573043,-,caller=T1;init: [libfs_mgr] fsck on /data took 8924ms
+6,1405,300595599,-,caller=T1;F2FS-fs (mmcblk1p49): Using encoding defined by superblock: utf8-12.1.0 with flags 0x0
+5,1406,300767448,-,caller=T1;F2FS-fs (mmcblk1p49): Mounted with checkpoint version = 5ccd0cbe
+14,1407,300787769,-,caller=T1;init: [libfs_mgr] __mount(source=/dev/block/bootdevice/by-name/userdata,target=/data,type=f2fs)=0: Success
+14,1408,300827122,-,caller=T1;init: [libfs_mgr] /data is file encrypted
+14,1409,301548459,-,caller=T1;init: [libfs_mgr] superblock s_max_mnt_count:10,/dev/block/bootdevice/by-name/persist
+6,1410,302321293,-,caller=T1;EXT4-fs (mmcblk1p27): mounted filesystem 57f8f4bc-abf4-655f-bf67-946fc0f9f25b r/w with ordered data mode. Quota mode: none.
+14,1411,303721735,-,caller=T1;init: [libfs_mgr] check_fs(): mount(/dev/block/bootdevice/by-name/persist,/mnt/vendor/persist,ext4)=0: Success
+6,1412,303744677,-,caller=T1;EXT4-fs (mmcblk1p27): unmounting filesystem 57f8f4bc-abf4-655f-bf67-946fc0f9f25b.
+14,1413,303772744,-,caller=T1;init: [libfs_mgr] umount_retry(): unmount(/mnt/vendor/persist) succeeded
+14,1414,303792264,-,caller=T1;init: [libfs_mgr] Running /system/bin/e2fsck on /dev/block/mmcblk1p27
+14,1415,304090732,-,caller=T1;e2fsck: /dev/block/bootdevice/by-name/persist: clean, 173/2048 files, 1412/8192 blocks
+14,1416,304825526,-,caller=T1;init: [libfs_mgr] fsck on /mnt/vendor/persist took 2573ms
+6,1417,304857429,-,caller=T1;EXT4-fs (mmcblk1p27): mounted filesystem 57f8f4bc-abf4-655f-bf67-946fc0f9f25b r/w with ordered data mode. Quota mode: none.
+14,1418,304893584,-,caller=T1;init: [libfs_mgr] __mount(source=/dev/block/bootdevice/by-name/persist,target=/mnt/vendor/persist,type=ext4)=0: Success
+14,1419,304934388,-,caller=T1;init: [libfs_mgr] superblock s_max_mnt_count:65535,/dev/block/bootdevice/by-name/dsp
+6,1420,304967559,-,caller=T1;EXT4-fs (mmcblk1p13): mounted filesystem af32c008-2a39-7e5b-a5dc-201456d93103 ro with ordered data mode. Quota mode: none.
+14,1421,305003650,-,caller=T1;init: [libfs_mgr] __mount(source=/dev/block/bootdevice/by-name/dsp,target=/vendor/dsp,type=ext4)=0: Success
+14,1422,305132283,-,caller=T1;init: [libfs_mgr] __mount(source=/dev/block/bootdevice/by-name/modem_a,target=/vendor/firmware_mnt,type=vfat)=0: Success
+14,1423,306554480,-,caller=T1;init: Command 'mount_all /vendor/etc/fstab.qcom --early' action=fs (/vendor/etc/init/hw/init.target.rc:36) took 14984ms and succeeded
+14,1424,306681138,-,caller=T1;init: processing action (fs) from (/system/etc/init/logd.rc:29)
+14,1425,306704862,-,caller=T1;init: processing action (fs) from (/system/etc/init/wifi.rc:25)
+14,1426,306726397,-,caller=T1;init: processing action (post-fs) from (/system/etc/init/hw/init.rc:606)
+14,1427,306749499,-,caller=T1;init: starting service 'exec 2 (/system/bin/vdc checkpoint markBootAttempt)'...
+14,1428,306783708,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1000/pid_333
+14,1429,306823798,-,caller=T1;init: ... started service 'exec 2 (/system/bin/vdc checkpoint markBootAttempt)' has pid 333
+14,1430,306842701,-,caller=T1;init: SVC_EXEC service 'exec 2 (/system/bin/vdc checkpoint markBootAttempt)' pid 333 (uid 1000 gid 1000+0 context default) started; waiting...
+14,1431,306877733,-,caller=T1;init: Command 'exec - system system -- /system/bin/vdc checkpoint markBootAttempt' action=post-fs (/system/etc/init/hw/init.rc:607) took 130ms and succeeded
+11,1432,307039727,-,caller=T333;cutils-trace: Error opening trace file: Permission denied (13)
+12,1433,307063193,-,caller=T333;libbinder.BackendUnifiedServiceManager: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: vold
+15,1434,307098924,-,caller=T333;vdc: Waited 0ms for vold
+14,1435,307125194,-,caller=T1;init: Service 'exec 2 (/system/bin/vdc checkpoint markBootAttempt)' (pid 333) exited with status 0 waiting took 0.344000 seconds
+14,1436,307160541,-,caller=T1;init: Sending SIGKILL to service 'exec 2 (/system/bin/vdc checkpoint markBootAttempt)' (pid 333) process group...
+14,1437,307198098,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_1000/pid_333
+14,1438,308128119,-,caller=T1;init: Command 'restorecon --recursive --cross-filesystems /sys/kernel/debug' action=post-fs (/system/etc/init/hw/init.rc:619) took 748ms and succeeded
+14,1439,309560027,-,caller=T1;init: Command 'chown system cache /cache' action=post-fs (/system/etc/init/hw/init.rc:622) took 1ms and failed: lchown() failed: Read-only file system
+14,1440,309596997,-,caller=T1;init: Command 'chmod 0770 /cache' action=post-fs (/system/etc/init/hw/init.rc:623) took 0ms and failed: fchmodat() failed: Read-only file system
+14,1441,309650662,-,caller=T1;init: Command 'mkdir /cache/recovery 0770 system cache' action=post-fs (/system/etc/init/hw/init.rc:629) took 8ms and failed: mkdir() failed on /cache/recovery: Required key not available
+14,1442,309692732,-,caller=T1;init: Command 'mkdir /cache/backup_stage 0700 system system' action=post-fs (/system/etc/init/hw/init.rc:632) took 5ms and failed: mkdir() failed on /cache/backup_stage: Required key not available
+14,1443,309735653,-,caller=T1;init: Command 'mkdir /cache/backup 0700 system system' action=post-fs (/system/etc/init/hw/init.rc:633) took 5ms and failed: mkdir() failed on /cache/backup: Required key not available
+14,1444,309780804,-,caller=T1;init: Command 'mkdir /cache/lost+found 0770 root root' action=post-fs (/system/etc/init/hw/init.rc:660) took 5ms and failed: mkdir() failed on /cache/lost+found: Required key not available
+11,1445,309832889,-,caller=T1;selinux: SELinux:  setxattr failed: /metadata:  Read-only file system
+14,1446,309888389,-,caller=T1;init: Command 'mkdir /metadata/vold' action=post-fs (/system/etc/init/hw/init.rc:663) took 32ms and failed: mkdir() failed on /metadata/vold: Read-only file system
+14,1447,311427887,-,caller=T1;init: Command 'mkdir /metadata/password_slots 0771 root system' action=post-fs (/system/etc/init/hw/init.rc:665) took 39ms and failed: mkdir() failed on /metadata/password_slots: Read-only file system
+14,1448,312964062,-,caller=T1;init: Command 'mkdir /metadata/bootstat 0750 system log' action=post-fs (/system/etc/init/hw/init.rc:666) took 34ms and failed: mkdir() failed on /metadata/bootstat: Read-only file system
+14,1449,314500535,-,caller=T1;init: Command 'mkdir /metadata/ota 0750 root system' action=post-fs (/system/etc/init/hw/init.rc:667) took 32ms and failed: mkdir() failed on /metadata/ota: Read-only file system
+14,1450,316096254,-,caller=T1;init: Command 'mkdir /metadata/watchdog 0770 root system' action=post-fs (/system/etc/init/hw/init.rc:669) took 37ms and failed: mkdir() failed on /metadata/watchdog: Read-only file system
+14,1451,317666697,-,caller=T1;init: Command 'mkdir /metadata/tradeinmode 0770 root system' action=post-fs (/system/etc/init/hw/init.rc:670) took 35ms and failed: mkdir() failed on /metadata/tradeinmode: Read-only file system
+14,1452,319212827,-,caller=T1;init: Command 'mkdir /metadata/prefetch 0770 root system' action=post-fs (/system/etc/init/hw/init.rc:671) took 6ms and failed: mkdir() failed on /metadata/prefetch: Read-only file system
+14,1453,319256899,-,caller=T1;init: Command 'mkdir /metadata/apex 0700 root system' action=post-fs (/system/etc/init/hw/init.rc:673) took 4ms and failed: mkdir() failed on /metadata/apex: Read-only file system
+11,1454,319311334,-,caller=T1;selinux: SELinux:  Could not stat /metadata/apex: No such file or directory.
+14,1455,319337273,-,caller=T1;init: Command 'mkdir /metadata/staged-install 0770 root system' action=post-fs (/system/etc/init/hw/init.rc:684) took 5ms and failed: mkdir() failed on /metadata/staged-install: Read-only file system
+14,1456,319376097,-,caller=T1;init: processing action (post-fs) from (/vendor/etc/init/hw/init.qcom.rc:59)
+14,1457,319397299,-,caller=T1;init: processing action (post-fs) from (/vendor/etc/init/hw/init.target.rc:60)
+14,1458,319420059,-,caller=T1;init: starting service 'vendor.qseecomd'...
+14,1459,319616719,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_334
+14,1460,320709322,-,caller=T1;init: ... started service 'vendor.qseecomd' has pid 334
+14,1461,321494998,-,caller=T1;init: Command 'start vendor.qseecomd' action=post-fs (/vendor/etc/init/hw/init.target.rc:63) took 2076ms and succeeded
+
+DIAG: EOF Android kmsg dump complete

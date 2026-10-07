@@ -3230,3 +3230,636 @@
 14,3185,215486906,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
 14,3186,215754905,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 897
 14,3187,215755730,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3188,215758246,-,caller=T1;init: Service 'vendor.boot-qti' (pid 890) received SIGABRT
+14,3189,215758452,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 890) process group...
+14,3190,215761551,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_890
+14,3191,215777513,-,caller=T1;init: Untracked process (pid: 896 name: (android.hardwar) ppid: 1 pgrp: 896 state: Z) exited with status 0
+14,3192,215777833,-,caller=T1;init: Untracked process (pid: 896 name: (android.hardwar) ppid: 1 pgrp: 896 state: Z) did not have an associated service entry and will not be reaped
+14,3193,215780066,-,caller=T1;init: Untracked process (pid: 894 name: (crash_dump64) ppid: 1 pgrp: 893 state: Z) exited with status 0
+14,3194,215780221,-,caller=T1;init: Untracked process (pid: 894 name: (crash_dump64) ppid: 1 pgrp: 893 state: Z) did not have an associated service entry and will not be reaped
+11,3195,215781499,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3196,215784554,-,caller=T898;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3197,216094806,-,caller=T337;type=1400 audit(101437.591:265): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3198,216111836,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 897, started 662ms ago)
+14,3199,216112110,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3200,216283502,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 897) exited with status 1
+14,3201,216283714,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 897) process group...
+14,3202,216286090,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_897
+12,3203,216490506,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3204,216492925,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3205,216515135,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3206,216517168,-,caller=T900;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3207,217129332,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3208,217144221,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_902
+14,3209,217189288,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 902
+14,3210,217189787,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3211,217496365,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3212,217498820,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3213,217504387,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3214,217505912,-,caller=T903;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3215,217621331,-,caller=T337;type=1400 audit(101439.119:266): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3216,217634009,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 902) exited with status 1
+14,3217,217634228,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 902) process group...
+14,3218,217637076,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_902
+14,3219,218125561,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3220,218142080,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_905
+14,3221,218184271,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 905
+14,3222,218184732,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3223,218502209,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3224,218504692,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3225,218510165,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3226,218512254,-,caller=T906;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3227,219037902,-,caller=T337;type=1400 audit(101440.535:267): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3228,219050932,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 905) exited with status 1
+14,3229,219051185,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 905) process group...
+14,3230,219053496,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_905
+14,3231,219129530,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3232,219145112,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_908
+14,3233,219196259,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 908
+14,3234,219196776,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3235,219508510,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3236,219510999,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3237,219516610,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3238,219517923,-,caller=T909;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3239,219892448,-,caller=T1;init: starting service 'vendor.boot-qti'...
+14,3240,219911106,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_910
+14,3241,219938475,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 910
+36,3242,219985682,-,caller=T337;type=1400 audit(101441.483:268): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3243,219997389,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 908) exited with status 1
+14,3244,219997899,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 908) process group...
+14,3245,220000376,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_908
+14,3246,220123534,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3247,220143853,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_912
+14,3248,220180999,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 912
+14,3249,220181575,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3250,220366492,-,caller=T910;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,3251,220369144,-,caller=T910;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3252,220369279,-,caller=T910;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+11,3253,220369352,-,caller=T910;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+36,3254,220369465,-,caller=T337;type=1400 audit(101441.867:269): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+10,3255,220369520,-,caller=T910;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+12,3256,220514989,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3257,220518078,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3258,220546034,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3259,220549279,-,caller=T918;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3260,220626440,-,caller=T1;init: Service 'vendor.boot-qti' (pid 910) received SIGABRT
+14,3261,220627010,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 910) process group...
+14,3262,220633577,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_910
+14,3263,220639872,-,caller=T1;init: Untracked process (pid: 917 name: (android.hardwar) ppid: 1 pgrp: 917 state: Z) exited with status 0
+14,3264,220640058,-,caller=T1;init: Untracked process (pid: 917 name: (android.hardwar) ppid: 1 pgrp: 917 state: Z) did not have an associated service entry and will not be reaped
+14,3265,220641092,-,caller=T1;init: Untracked process (pid: 915 name: (crash_dump64) ppid: 1 pgrp: 914 state: Z) exited with status 0
+14,3266,220641173,-,caller=T1;init: Untracked process (pid: 915 name: (crash_dump64) ppid: 1 pgrp: 914 state: Z) did not have an associated service entry and will not be reaped
+14,3267,221133266,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 912, started 992ms ago)
+14,3268,221133523,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3269,221230524,-,caller=T337;type=1400 audit(101442.727:270): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3270,221243195,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 912) exited with status 1
+14,3271,221243371,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 912) process group...
+14,3272,221245644,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_912
+12,3273,221522108,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3274,221524609,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3275,221547076,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3276,221549223,-,caller=T920;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3277,222156387,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3278,222171856,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_922
+14,3279,222233883,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 922
+14,3280,222237556,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3281,222528221,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3282,222530785,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3283,222544040,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3284,222556976,-,caller=T923;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3285,222815570,-,caller=T337;type=1400 audit(101444.311:271): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3286,223020524,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 922) exited with status 1
+14,3287,223022548,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 922) process group...
+14,3288,223053590,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_922
+14,3289,223159971,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3290,223333141,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_925
+12,3291,223534242,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3292,223536805,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3293,223606087,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 925
+14,3294,223609478,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+11,3295,223620487,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3296,223633677,-,caller=T926;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3297,223722314,-,caller=T337;type=1400 audit(101445.219:272): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3298,223737175,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 925) exited with status 1
+14,3299,223740033,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 925) process group...
+14,3300,223769704,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_925
+14,3301,224180587,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3302,224352132,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_928
+12,3303,224540660,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3304,224543380,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3305,224624872,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 928
+14,3306,224628361,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+11,3307,224639558,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3308,224652704,-,caller=T929;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3309,224754106,-,caller=T337;type=1400 audit(101446.251:273): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3310,224767852,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 928) exited with status 1
+14,3311,224769838,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 928) process group...
+14,3312,224801427,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_928
+14,3313,224924296,-,caller=T1;init: starting service 'vendor.boot-qti'...
+14,3314,225094236,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_930
+14,3315,225128890,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 930
+14,3316,225169384,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3317,225188623,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_932
+14,3318,225240862,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 932
+14,3319,225241537,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3320,225259358,-,caller=T930;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,3321,225261796,-,caller=T930;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3322,225261940,-,caller=T930;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+36,3323,225261959,-,caller=T337;type=1400 audit(101446.759:274): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+11,3324,225262003,-,caller=T930;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+10,3325,225262153,-,caller=T930;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+14,3326,225514330,-,caller=T1;init: Service 'vendor.boot-qti' (pid 930) received SIGABRT
+14,3327,225515220,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 930) process group...
+14,3328,225521903,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_930
+14,3329,225527984,-,caller=T1;init: Untracked process (pid: 935 name: (crash_dump64) ppid: 1 pgrp: 934 state: Z) exited with status 0
+14,3330,225528202,-,caller=T1;init: Untracked process (pid: 935 name: (crash_dump64) ppid: 1 pgrp: 934 state: Z) did not have an associated service entry and will not be reaped
+14,3331,225529051,-,caller=T1;init: Untracked process (pid: 937 name: (android.hardwar) ppid: 1 pgrp: 937 state: Z) exited with status 0
+14,3332,225529104,-,caller=T1;init: Untracked process (pid: 937 name: (android.hardwar) ppid: 1 pgrp: 937 state: Z) did not have an associated service entry and will not be reaped
+12,3333,225547235,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3334,225549965,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3335,225555613,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3336,225556959,-,caller=T938;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3337,226153625,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 932, started 968ms ago)
+14,3338,226153871,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3339,226553637,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3340,226556053,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3341,226561186,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3342,226562926,-,caller=T940;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3343,227141282,-,caller=T337;type=1400 audit(101448.635:275): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3344,227158365,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 932, started 1973ms ago)
+14,3345,227158836,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3346,227333718,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 932) exited with status 1
+14,3347,227333923,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 932) process group...
+14,3348,227336257,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_932
+12,3349,227559705,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3350,227562047,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3351,227585866,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3352,227588215,-,caller=T942;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3353,228181429,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3354,228197596,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_944
+14,3355,228268463,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 944
+14,3356,228272012,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3357,228404030,-,caller=T337;type=1400 audit(101449.903:276): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3358,228420343,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 944) exited with status 1
+14,3359,228422236,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 944) process group...
+14,3360,228453146,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_944
+12,3361,228565759,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3362,228568475,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3363,228601108,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3364,228612109,-,caller=T945;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3365,229206140,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3366,229378067,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_947
+12,3367,229571963,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3368,229574432,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3369,229609805,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 947
+14,3370,229610420,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+11,3371,229612681,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3372,229615195,-,caller=T948;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3373,230072449,-,caller=T1;init: starting service 'vendor.boot-qti'...
+14,3374,230088932,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_949
+14,3375,230137944,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 949
+14,3376,230195738,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 947, started 842ms ago)
+14,3377,230196065,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3378,230276878,-,caller=T949;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,3379,230279698,-,caller=T949;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3380,230279873,-,caller=T949;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+36,3381,230279879,-,caller=T337;type=1400 audit(101451.775:277): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+11,3382,230279949,-,caller=T949;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+10,3383,230280115,-,caller=T949;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+36,3384,230469897,-,caller=T337;type=1400 audit(101451.963:278): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3385,230541189,-,caller=T1;init: Service 'vendor.boot-qti' (pid 949) received SIGABRT
+14,3386,230541546,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 949) process group...
+14,3387,230548742,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_949
+14,3388,230554278,-,caller=T1;init: Untracked process (pid: 953 name: (crash_dump64) ppid: 1 pgrp: 952 state: Z) exited with status 0
+14,3389,230554478,-,caller=T1;init: Untracked process (pid: 953 name: (crash_dump64) ppid: 1 pgrp: 952 state: Z) did not have an associated service entry and will not be reaped
+14,3390,230555672,-,caller=T1;init: Untracked process (pid: 955 name: (android.hardwar) ppid: 1 pgrp: 955 state: Z) exited with status 0
+14,3391,230555737,-,caller=T1;init: Untracked process (pid: 955 name: (android.hardwar) ppid: 1 pgrp: 955 state: Z) did not have an associated service entry and will not be reaped
+12,3392,230578473,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3393,230580918,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3394,230586292,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3395,230587960,-,caller=T956;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3396,230669287,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 947) exited with status 1
+14,3397,230669473,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 947) process group...
+14,3398,230672146,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_947
+14,3399,231191571,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3400,231206914,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_958
+14,3401,231257101,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 958
+14,3402,231257692,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3403,231584654,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3404,231587137,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3405,231592535,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3406,231593787,-,caller=T959;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3407,232183725,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 958, started 979ms ago)
+14,3408,232183968,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3409,232590900,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3410,232593366,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3411,232599113,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3412,232600585,-,caller=T961;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3413,232685386,-,caller=T337;type=1400 audit(101454.183:279): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3414,232697583,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 958) exited with status 1
+14,3415,232697842,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 958) process group...
+14,3416,232700430,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_958
+14,3417,233200735,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3418,233216524,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_963
+14,3419,233260210,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 963
+14,3420,233260699,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3421,233597239,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3422,233599713,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3423,233605445,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3424,233606750,-,caller=T964;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3425,234183774,-,caller=T337;type=1400 audit(101455.679:280): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3426,234197147,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 963) exited with status 1
+14,3427,234197408,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 963) process group...
+14,3428,234200175,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_963
+14,3429,234206280,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3430,234222127,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_966
+14,3431,234258174,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 966
+14,3432,234258933,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3433,234603565,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3434,234605901,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3435,234611786,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3436,234613052,-,caller=T967;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3437,235088354,-,caller=T1;init: starting service 'vendor.boot-qti'...
+14,3438,235103995,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_968
+14,3439,235151299,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 968
+14,3440,235211122,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 966, started 991ms ago)
+14,3441,235211479,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3442,235226823,-,caller=T337;type=1400 audit(101456.723:281): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3443,235239137,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 966) exited with status 1
+14,3444,235239768,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 966) process group...
+14,3445,235242090,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_966
+14,3446,235490224,-,caller=T968;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,3447,235492739,-,caller=T968;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3448,235492876,-,caller=T968;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+11,3449,235492943,-,caller=T968;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+10,3450,235493104,-,caller=T968;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+36,3451,235493104,-,caller=T337;type=1400 audit(101456.991:282): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+12,3452,235609777,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3453,235612147,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3454,235618336,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3455,235620283,-,caller=T972;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3456,236204526,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3457,236220400,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_977
+14,3458,236246320,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 977
+14,3459,236247306,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3460,236422321,-,caller=T1;init: Untracked process (pid: 973 name: (crash_dump64) ppid: 1 pgrp: 971 state: Z) exited with status 0
+14,3461,236422526,-,caller=T1;init: Untracked process (pid: 973 name: (crash_dump64) ppid: 1 pgrp: 971 state: Z) did not have an associated service entry and will not be reaped
+14,3462,236425111,-,caller=T1;init: Service 'vendor.boot-qti' (pid 968) received SIGABRT
+14,3463,236425239,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 968) process group...
+14,3464,236524308,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_968
+14,3465,236530280,-,caller=T1;init: Untracked process (pid: 975 name: (android.hardwar) ppid: 1 pgrp: 975 state: Z) exited with status 0
+14,3466,236530498,-,caller=T1;init: Untracked process (pid: 975 name: (android.hardwar) ppid: 1 pgrp: 975 state: Z) did not have an associated service entry and will not be reaped
+12,3467,236616339,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3468,236618942,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3469,236624528,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3470,236625901,-,caller=T978;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3471,236782166,-,caller=T337;type=1400 audit(101458.279:283): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3472,236995050,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 977) exited with status 1
+14,3473,236995274,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 977) process group...
+14,3474,236997673,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_977
+14,3475,237220310,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3476,237236073,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_980
+14,3477,237273641,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 980
+14,3478,237274233,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3479,237622337,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3480,237624781,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3481,237630175,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3482,237631862,-,caller=T981;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3483,238212580,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 980, started 979ms ago)
+14,3484,238212830,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3485,238378525,-,caller=T337;type=1400 audit(101459.875:284): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3486,238390959,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 980) exited with status 1
+14,3487,238391218,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 980) process group...
+14,3488,238393599,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_980
+12,3489,238628605,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3490,238631111,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3491,238654614,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3492,238656669,-,caller=T983;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3493,239236034,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3494,239251535,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_985
+14,3495,239321800,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 985
+14,3496,239325394,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3497,239634838,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3498,239637565,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3499,239650070,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3500,239664039,-,caller=T986;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3501,239934888,-,caller=T337;type=1400 audit(101461.431:285): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3502,239949872,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 985) exited with status 1
+14,3503,239952912,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 985) process group...
+14,3504,239982179,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_985
+14,3505,240117438,-,caller=T1;init: starting service 'vendor.boot-qti'...
+14,3506,240278857,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_988
+14,3507,240334378,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 988
+14,3508,240355815,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3509,240428232,-,caller=T988;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+36,3510,240431201,-,caller=T337;type=1400 audit(101461.927:286): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+11,3511,240431217,-,caller=T988;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3512,240431449,-,caller=T988;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+11,3513,240431516,-,caller=T988;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+10,3514,240431739,-,caller=T988;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+14,3515,240541242,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_991
+12,3516,240642163,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3517,240645572,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3518,240829743,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 991
+14,3519,240834142,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3520,240864825,-,caller=T1;init: Service 'vendor.boot-qti' (pid 988) received SIGABRT
+14,3521,240868099,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 988) process group...
+14,3522,240898148,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_988
+14,3523,240946061,-,caller=T1;init: Untracked process (pid: 992 name: (crash_dump64) ppid: 1 pgrp: 990 state: Z) exited with status 0
+14,3524,240949062,-,caller=T1;init: Untracked process (pid: 992 name: (crash_dump64) ppid: 1 pgrp: 990 state: Z) did not have an associated service entry and will not be reaped
+14,3525,240964953,-,caller=T1;init: Untracked process (pid: 994 name: (android.hardwar) ppid: 1 pgrp: 994 state: Z) exited with status 0
+36,3526,240965203,-,caller=T337;type=1400 audit(101462.463:287): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3527,240967992,-,caller=T1;init: Untracked process (pid: 994 name: (android.hardwar) ppid: 1 pgrp: 994 state: Z) did not have an associated service entry and will not be reaped
+11,3528,240978369,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3529,240984716,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 991) exited with status 1
+14,3530,240987341,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 991) process group...
+14,3531,240991819,-,caller=T995;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3532,241016051,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_991
+14,3533,241266164,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3534,241434429,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_997
+12,3535,241650023,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3536,241652671,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3537,241703413,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 997
+14,3538,241706450,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+11,3539,241718057,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3540,241732708,-,caller=T998;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3541,241839964,-,caller=T337;type=1400 audit(101463.335:288): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3542,241854167,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 997) exited with status 1
+14,3543,241859398,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 997) process group...
+14,3544,241888937,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_997
+14,3545,242265674,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3546,242435369,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1000
+14,3547,242536906,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1000
+14,3548,242537416,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3549,242656532,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3550,242659828,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+36,3551,242661144,-,caller=T337;type=1400 audit(101464.159:289): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3552,242673369,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1000) exited with status 1
+14,3553,242673811,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1000) process group...
+14,3554,242676741,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1000
+11,3555,242687241,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3556,242689272,-,caller=T1001;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3557,243248412,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3558,243265278,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1003
+14,3559,243304936,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1003
+14,3560,243305523,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3561,243663585,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3562,243665887,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3563,243671701,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3564,243672978,-,caller=T1004;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3565,244103187,-,caller=T337;type=1400 audit(101465.599:290): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3566,244224766,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1003) exited with status 1
+14,3567,244225091,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1003) process group...
+14,3568,244227680,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1003
+14,3569,244252422,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3570,244268139,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1006
+14,3571,244316338,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1006
+14,3572,244316861,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3573,244669862,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3574,244672276,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3575,244677743,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3576,244679133,-,caller=T1007;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3577,245244440,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 1006, started 979ms ago)
+14,3578,245244685,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3579,245269101,-,caller=T1;init: starting service 'vendor.boot-qti'...
+14,3580,245285024,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_1009
+14,3581,245325936,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 1009
+14,3582,245443335,-,caller=T1009;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,3583,245445783,-,caller=T1009;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3584,245445923,-,caller=T1009;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+11,3585,245445985,-,caller=T1009;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+36,3586,245446022,-,caller=T337;type=1400 audit(101466.943:291): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+10,3587,245446147,-,caller=T1009;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+12,3588,245675870,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3589,245678384,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3590,245702008,-,caller=T1;init: Untracked process (pid: 1012 name: (crash_dump64) ppid: 1 pgrp: 1011 state: Z) exited with status 0
+14,3591,245702215,-,caller=T1;init: Untracked process (pid: 1012 name: (crash_dump64) ppid: 1 pgrp: 1011 state: Z) did not have an associated service entry and will not be reaped
+14,3592,245703226,-,caller=T1;init: Service 'vendor.boot-qti' (pid 1009) received SIGABRT
+14,3593,245703312,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 1009) process group...
+14,3594,245707720,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_1009
+14,3595,245720814,-,caller=T1;init: Untracked process (pid: 1014 name: (android.hardwar) ppid: 1 pgrp: 1014 state: Z) exited with status 0
+14,3596,245720980,-,caller=T1;init: Untracked process (pid: 1014 name: (android.hardwar) ppid: 1 pgrp: 1014 state: Z) did not have an associated service entry and will not be reaped
+11,3597,245721825,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3598,245724523,-,caller=T1015;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3599,246257658,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 1006, started 1992ms ago)
+14,3600,246257904,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3601,246539145,-,caller=T337;type=1400 audit(101468.035:292): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3602,246552748,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1006) exited with status 1
+14,3603,246553008,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1006) process group...
+14,3604,246555644,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1006
+12,3605,246681776,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3606,246684510,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3607,246707248,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3608,246709378,-,caller=T1017;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3609,247275750,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3610,247291392,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1019
+14,3611,247353304,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1019
+14,3612,247356875,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3613,247688290,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3614,247690839,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3615,247704095,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3616,247716829,-,caller=T1020;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3617,248025302,-,caller=T337;type=1400 audit(101469.523:293): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3618,248041499,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1019) exited with status 1
+14,3619,248044591,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1019) process group...
+14,3620,248075784,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1019
+14,3621,248294356,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3622,248472061,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1022
+12,3623,248694422,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3624,248697494,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3625,248730922,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1022
+14,3626,248731502,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+11,3627,248733110,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3628,248735289,-,caller=T1023;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3629,249262863,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 1022, started 817ms ago)
+14,3630,249263145,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3631,249701642,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+36,3632,249702492,-,caller=T337;type=1400 audit(101471.199:294): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3633,249704827,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3634,249716969,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1022) exited with status 1
+14,3635,249717340,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1022) process group...
+14,3636,249719750,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1022
+11,3637,249753182,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3638,249765376,-,caller=T1025;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3639,250297274,-,caller=T1;init: starting service 'vendor.boot-qti'...
+14,3640,250469027,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_1027
+12,3641,250708562,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3642,250711283,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3643,250728193,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 1027
+14,3644,250731730,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3645,250749748,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1029
+14,3646,250802410,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1029
+14,3647,250803168,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+11,3648,250806402,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3649,250808864,-,caller=T1028;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3650,250959729,-,caller=T1027;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,3651,250962225,-,caller=T1027;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3652,250962348,-,caller=T1027;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+11,3653,250962414,-,caller=T1027;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+10,3654,250962764,-,caller=T1027;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+36,3655,250962978,-,caller=T337;type=1400 audit(101472.459:295): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+14,3656,251207895,-,caller=T1;init: Untracked process (pid: 1032 name: (crash_dump64) ppid: 1 pgrp: 1031 state: Z) exited with status 0
+14,3657,251208092,-,caller=T1;init: Untracked process (pid: 1032 name: (crash_dump64) ppid: 1 pgrp: 1031 state: Z) did not have an associated service entry and will not be reaped
+14,3658,251208603,-,caller=T1;init: Service 'vendor.boot-qti' (pid 1027) received SIGABRT
+14,3659,251208686,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 1027) process group...
+14,3660,251213236,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_1027
+14,3661,251218172,-,caller=T1;init: Untracked process (pid: 1034 name: (android.hardwar) ppid: 1 pgrp: 1034 state: Z) exited with status 0
+14,3662,251218342,-,caller=T1;init: Untracked process (pid: 1034 name: (android.hardwar) ppid: 1 pgrp: 1034 state: Z) did not have an associated service entry and will not be reaped
+14,3663,251272300,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 1029, started 525ms ago)
+14,3664,251272541,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+12,3665,251715163,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3666,251717509,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3667,251722425,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3668,251723913,-,caller=T1036;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3669,252083758,-,caller=T337;type=1400 audit(101473.579:296): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3670,252097039,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1029) exited with status 1
+14,3671,252097295,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1029) process group...
+14,3672,252099649,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1029
+14,3673,252289180,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3674,252304645,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1038
+14,3675,252341182,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1038
+14,3676,252341658,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3677,252653952,-,caller=T337;type=1400 audit(101474.151:297): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3678,252665796,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1038) exited with status 1
+14,3679,252666144,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1038) process group...
+14,3680,252668525,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1038
+12,3681,252721034,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3682,252723503,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3683,252749333,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3684,252751498,-,caller=T1039;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3685,253300051,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3686,253317749,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1041
+14,3687,253388486,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1041
+14,3688,253392227,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3689,253516219,-,caller=T337;type=1400 audit(101475.015:298): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3690,253529928,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1041) exited with status 1
+14,3691,253533189,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1041) process group...
+14,3692,253562525,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1041
+12,3693,253727077,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3694,253729629,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3695,253758541,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3696,253772064,-,caller=T1042;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3697,254321278,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3698,254492773,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1044
+12,3699,254733368,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3700,254736186,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3701,254775520,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1044
+14,3702,254778215,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+11,3703,254789577,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3704,254803978,-,caller=T1045;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3705,254905325,-,caller=T337;type=1400 audit(101476.403:299): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3706,254920755,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1044) exited with status 1
+14,3707,254923670,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1044) process group...
+14,3708,254953447,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1044
+14,3709,255329190,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3710,255500236,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1047
+14,3711,255604279,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1047
+14,3712,255607639,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3713,255625001,-,caller=T1;init: starting service 'vendor.boot-qti'...
+36,3714,255713408,-,caller=T337;type=1400 audit(101477.211:300): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+12,3715,255739969,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3716,255742777,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3717,255805734,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_1049
+14,3718,256044919,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 1049
+14,3719,256048355,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1047) exited with status 1
+14,3720,256048795,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1047) process group...
+14,3721,256051989,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1047
+11,3722,256057367,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3723,256059640,-,caller=T1048;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3724,256296738,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3725,256312159,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1051
+14,3726,256337380,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1051
+14,3727,256337968,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3728,256465482,-,caller=T1049;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+11,3729,256468720,-,caller=T1049;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+36,3730,256468848,-,caller=T337;type=1400 audit(101477.967:301): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+14,3731,256468964,-,caller=T1049;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+11,3732,256469037,-,caller=T1049;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+10,3733,256469242,-,caller=T1049;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+36,3734,256512253,-,caller=T337;type=1400 audit(101478.011:302): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3735,256524838,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1051) exited with status 1
+14,3736,256525304,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1051) process group...
+14,3737,256528191,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1051
+12,3738,256746225,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3739,256748821,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3740,256754952,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3741,256756306,-,caller=T1055;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3742,257301588,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3743,257317303,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1059
+14,3744,257345469,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1059
+14,3745,257346079,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3746,257521003,-,caller=T1;init: Untracked process (pid: 1054 name: (crash_dump64) ppid: 1 pgrp: 1053 state: Z) exited with status 0
+14,3747,257521181,-,caller=T1;init: Untracked process (pid: 1054 name: (crash_dump64) ppid: 1 pgrp: 1053 state: Z) did not have an associated service entry and will not be reaped
+14,3748,257574080,-,caller=T1;init: Untracked process (pid: 1057 name: (android.hardwar) ppid: 1 pgrp: 1057 state: Z) exited with status 0
+14,3749,257574257,-,caller=T1;init: Untracked process (pid: 1057 name: (android.hardwar) ppid: 1 pgrp: 1057 state: Z) did not have an associated service entry and will not be reaped
+14,3750,257619722,-,caller=T1;init: Service 'vendor.boot-qti' (pid 1049) received SIGABRT
+14,3751,257619990,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 1049) process group...
+14,3752,257622227,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_1049
+12,3753,257752918,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3754,257755396,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3755,257761087,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3756,257762248,-,caller=T1060;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3757,258304824,-,caller=T1;init: service 'vendor.keymaster-3-0' requested start, but it is already running (flags: 4, pid: 1059, started 990ms ago)
+14,3758,258305056,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3759,258559985,-,caller=T337;type=1400 audit(101480.059:303): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3760,258572846,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1059) exited with status 1
+14,3761,258573103,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1059) process group...
+14,3762,258575440,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1059
+12,3763,258759161,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3764,258761480,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3765,258783295,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3766,258785304,-,caller=T1062;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3767,259329243,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3768,259344673,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1064
+14,3769,259413428,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1064
+14,3770,259416972,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+36,3771,259541709,-,caller=T337;type=1400 audit(101481.039:304): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3772,259556206,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1064) exited with status 1
+14,3773,259558416,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1064) process group...
+14,3774,259588758,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1064
+12,3775,259765247,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3776,259767984,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+11,3777,259802112,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3778,259814167,-,caller=T1065;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3779,260349147,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3780,260521377,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1067
+12,3781,260771665,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3782,260774247,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3783,260804291,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1067
+14,3784,260808573,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3785,260825572,-,caller=T1;init: starting service 'vendor.boot-qti'...
+36,3786,260991980,-,caller=T337;type=1400 audit(101482.491:305): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3787,261012078,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_1069
+14,3788,261289659,-,caller=T1;init: ... started service 'vendor.boot-qti' has pid 1069
+14,3789,261320647,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1067) exited with status 1
+14,3790,261324027,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1067) process group...
+14,3791,261353560,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1067
+11,3792,261387453,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3793,261395012,-,caller=T1069;android.hardware.boot-service.qti: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+36,3794,261398329,-,caller=T337;type=1400 audit(101482.895:306): avc:  denied  { read } for  comm="android.hardwar" name="ack-protected-fstab.qcom" dev="tmpfs" ino=22 scontext=u:r:hal_bootctl_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=0
+11,3795,261398392,-,caller=T1069;android.hardware.boot-service.qti: [libfstab] ReadFstabFromFileCommon(): failed to read file: '/vendor/etc/fstab.qcom': Permission denied
+14,3796,261398805,-,caller=T1069;android.hardware.boot-service.qti: [libfstab] ReadDefaultFstab(): failed to find device default fstab
+11,3797,261398902,-,caller=T1069;android.hardware.boot-service.qti: Could not read merge status: failed to read default fstab
+10,3798,261399181,-,caller=T1069;android.hardware.boot-service.qti: Check failed: bootcontrol_init() 
+14,3799,261401200,-,caller=T1068;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+14,3800,261413010,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3801,261605935,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1076
+12,3802,261777855,-,caller=T313;libbinder.ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 17. Are binder threads started and available?)
+14,3803,261780599,-,caller=T302;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Since 'android.hardware.boot.IBootControl/default' could not be found trying to start it as a lazy AIDL service. (if it's not configured to be a lazy service, it may be stuck starting or still starting).
+14,3804,261883853,-,caller=T1;init: ... started service 'vendor.keymaster-3-0' has pid 1076
+14,3805,261884491,-,caller=T1;init: Control message: Processed ctl.interface_start for 'android.hardware.keymaster@3.0::IKeymasterDevice/default' from pid: 303 (/system/system_ext/bin/hwservicemanager)
+14,3806,261886432,-,caller=T1;init: Service 'vendor.boot-qti' (pid 1069) received SIGABRT
+14,3807,261886519,-,caller=T1;init: Sending SIGKILL to service 'vendor.boot-qti' (pid 1069) process group...
+14,3808,261889671,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_1069
+14,3809,261896203,-,caller=T1;init: Untracked process (pid: 1073 name: (crash_dump64) ppid: 1 pgrp: 1072 state: Z) exited with status 0
+14,3810,261896483,-,caller=T1;init: Untracked process (pid: 1073 name: (crash_dump64) ppid: 1 pgrp: 1072 state: Z) did not have an associated service entry and will not be reaped
+14,3811,261897401,-,caller=T1;init: Untracked process (pid: 1075 name: (android.hardwar) ppid: 1 pgrp: 1075 state: Z) exited with status 0
+14,3812,261897457,-,caller=T1;init: Untracked process (pid: 1075 name: (android.hardwar) ppid: 1 pgrp: 1075 state: Z) did not have an associated service entry and will not be reaped
+11,3813,261898197,-,caller=T1;init: Control message: Could not find 'aidl/android.hardware.boot.IBootControl/default' for ctl.interface_start from pid: 302 (/system/bin/servicemanager)
+14,3814,261900708,-,caller=T1077;servicemanager: Caller(pid=313,uid=0,sid=u:r:vold:s0) Tried to start aidl service android.hardware.boot.IBootControl/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+36,3815,262157020,-,caller=T337;type=1400 audit(101483.655:307): avc:  denied  { ioctl } for  comm="android.hardwar" path="/dev/qseecom" dev="tmpfs" ino=672 ioctlcmd=0x970a scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=0
+14,3816,262168738,-,caller=T1;init: Service 'vendor.keymaster-3-0' (pid 1076) exited with status 1
+14,3817,262168981,-,caller=T1;init: Sending SIGKILL to service 'vendor.keymaster-3-0' (pid 1076) process group...
+14,3818,262171486,-,caller=T1;libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_9999/pid_1076
+14,3819,262344834,-,caller=T1;init: starting service 'vendor.keymaster-3-0'...
+14,3820,262517335,-,caller=T1;libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_9999/pid_1079
