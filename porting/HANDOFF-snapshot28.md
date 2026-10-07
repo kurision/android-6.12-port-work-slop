@@ -412,3 +412,19 @@
   guard, rebuild kernel+DTB), stage to `~/snapshot31-build`, scp all six
   files. Decisive boot marker: `ION heap qsecom created at <addr>`
   followed by keymaster surviving its first transaction.
+
+## Snapshot31 image packaged (carveout kernel)
+- VM artifacts in repo checkout `porting/artifacts/snapshot31/`: all six
+  SHA256SUMS entries verify (this time the VM concatenation is correct:
+  Image.gz-dtb == Image.gz + DTB exactly). Source 2f5c7e101, `out`,
+  6.12.93-4k-g2f5c7e1017e4.
+- Image.gz 16,938,780 bytes SHA256
+  `323ed240...9250f6a18`; DTB 40,915 bytes SHA256 `66bcc25e...168d9e7c6b7352026`
+  with heaps 27/19/25 and 16+8 MiB regions confirmed in the transferred DTB.
+- Ready image (parent workspace):
+  `../porting/artifacts/boot-ack-snapshot31-qsee-carveout-tail-sd-screen.img`
+  35,964,928 bytes, SHA256
+  `d9768151...9ff4457aceb`. Re-read verified against the validated base.
+- Packaged only, not booted. Decisive marker stays: `ION heap qsecom
+  created at <addr>` (with address this time), then keymaster surviving
+  its first transaction, keystore publish, enablefilecrypto exit 0.
