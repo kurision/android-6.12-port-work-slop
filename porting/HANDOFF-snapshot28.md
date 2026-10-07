@@ -163,3 +163,34 @@
 - Required next action: enable CONFIG_QSEECOM=y in the SAME output directory
   used for the next VM make, olddefconfig, verify the setting, rebuild and
   transfer fresh artifacts. See `porting/BUILD-snapshot29.md`.
+
+## Snapshot29 rebuilt inputs accepted and image packaged
+- Corrected VM artifacts are in the parent workspace
+  `../porting/artifacts/snapshot29-build/`. All five SHA256SUMS entries
+  verify; Image.gz passes gzip integrity. Build provenance:
+  d770048e78add360585bdaaeda9c0eb14658a357, output directory `out`,
+  6.12.93-4k-gd770048e78ad, Fedora Clang/LLD 22.1.8.
+- Embedded IKCONFIG matches transferred kernel.config byte-for-byte.
+  CONFIG_QSEECOM=y is present, along with built-in SCM/TZMEM, 4K pages,
+  touchscreen, VFAT/F2FS/EXT4, devtmpfs and configfs ACM/FunctionFS.
+  QSEE listener-registration diagnostic code is present in the kernel.
+- Image.gz: 16,896,113 bytes, SHA256
+  `d79ec66db8163903eca47ec444e736edc4740f408d90eae1473e1e6ae87734e4`.
+  Board DTB is the same verified 40,462-byte L6-supply-fixed DTB as above.
+  Image.gz-dtb: 16,936,575 bytes, SHA256
+  `b5ee31a5117fc2a68959d1dbac895e5b370a003a7828f107798a38e12e16db6f`;
+  exact compressed kernel plus raw board DTB concatenation verified.
+- Ready image (parent workspace):
+  `../porting/artifacts/boot-ack-snapshot29-qsee-compat-tail-sd-screen.img`
+  35,964,928 bytes, SHA256
+  `6817bb32b85de1f254a1ef9abc92c10624f2049983534e12497c5c8be139b748`.
+- Re-read/parsed output: exact new kernel/DTB; snapshot28 ramdisk unchanged,
+  SHA256 `380088e3343072c8a9a39f88d3b84bb0346136e30c5c663694d7ab1e2312bffe`.
+  Valid gzip/newc, 664 entries, exactly one ARM64 ELF init. Policy and
+  ramdisk metadata are preserved by retaining the entire compressed blob.
+  Only kernel size and regenerated boot-header SHA1 changed; command line,
+  load addresses, other header bytes, total image size and zero tail retained.
+- Packaged only: no snapshot29 phone boot or flash performed yet. Next run
+  must capture actual listener/FBE/zygote outcomes, not infer success from
+  this packaging check. Retained logger still names its SD file
+  `snapshot28-kmsg.log`; a next run overwrites that card file.
