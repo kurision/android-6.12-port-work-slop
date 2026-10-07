@@ -1,4 +1,4 @@
-# Handoff: snapshot28 (capture the 355s reset)
+# Handoff: tissot 6.12 port boot bringup (snapshots 28-32)
 
 ## State (2026-10-07, phone on installed ROM, snapshot28 backups recovered, nothing flashed)
 - Commits in: `7bea83f` policy fix, `c3179f5` evidence, `c0c2406` findings doc.
@@ -455,3 +455,31 @@
   partition prefix == SD exactly). All three channels end together at
   t=94.7s during the keystore2 lookup; pid 335 never exited. Record
   complete; still awaiting spill-fix approval.
+
+## Snapshot32 implemented: carveout spill + tzbuf + locking (awaiting VM build)
+- `HANDOFF-snapshot28.md` renamed to `porting/HANDOFF.md` (all snapshot
+  history lives here now).
+- `drivers/firmware/qcom/qcom_scm-smc.c`: optional spill allocator hook
+  (`qcom_scm_set_spill_mem`, default NULL = native tzmem for all other
+  clients). Override branch fills the identical 7-u64 layout, passes the
+  carveout phys in x5, logs `qcom_scm: spilled %d args to carveout %pad`
+  (the confirm/refute probe, permanent), frees on every exit path.
+- `drivers/misc/qseecom.c`: probe attaches the shared carveout
+  (`of_reserved_mem_device_init`, warn-and-continue) and registers a
+  `dma_alloc_coherent(qseecom.dev)` spill pair; tzbuf follows automatically
+  through the same device. Listener probe now treats `-EOPNOTSUPP` and
+  `-EIO` as unsupported (site-local, replaces the blanket shim remap).
+  Four `dma_buf_*_unlocked` calls converted to locked versions (6.12 has no
+  `dma_buf_kmap`; locked `vmap` is the donor-faithful equivalent).
+- `include/soc/qcom/scm.h`: blanket `-EIO -> -EOPNOTSUPP` reverted (pass
+  through); spill struct mirrored with sync comment; kept errno.h (driver
+  still needs E-codes) and added gfp.h.
+- Board DT: `&qcom_seecom { memory-region = <&qseecom_mem>; };` (label
+  verified against upstream `qcom_seecom:`). DT compiles; device phandle
+  == pool phandle (0x79).
+- NOT compiled on this Mac (no kernel toolchain here): VM build is the
+  compile check. DT binding already proven in the compiled DTB.
+- VM: pull, same section-1 flow, stage to `~/snapshot32-build`, scp six.
+  Decisive markers: `qseecom: SMC spill buffers use the shared carveout`
+  then `qcom_scm: spilled 7 args to carveout ...` then keymaster surviving
+  its first transaction.
