@@ -145,3 +145,21 @@
   cause remains unproven; display/WLED, RCU/latency, diagnostic SELinux and
   ROM baseline warnings are not claimed fixed by this patch set.
 - No watchdog enablement, encryption/fstab changes, formatting or flashing.
+
+## Next-build input rejected: QSEECOM disabled
+- Uploaded `porting/artifacts/Image.gz` is 16,814,477 bytes, SHA256
+  `76a7f246749cda730003eed0657793782cf17f166c194801c02000d76dcec402`.
+  Banner identifies 6.12.93-4k-ga17c54c4fea0, Fedora Clang/LLD 22.1.8,
+  built Oct 7 at 15:44:42 +0545. Source commit alone is insufficient:
+  its embedded IKCONFIG explicitly says `# CONFIG_QSEECOM is not set`,
+  and the listener-registration diagnostic string is absent.
+- Uploaded DTB is 40,462 bytes, SHA256
+  `2900c1bfa7b58ca1abf7bd324c84b6a8ea62d16c492fc26aa1dc37ed5508f1c3`;
+  its touchscreen I/O supply correctly resolves to L6 at 1.8 V.
+- Repack preserved snapshot28 ramdisk/header fields and regenerated SHA1,
+  but embedded-config verification rejected the kernel. The generated
+  snapshot29 boot image and concatenation were removed; uploaded inputs
+  and the validated snapshot28 base are untouched. No device boot or flash.
+- Required next action: enable CONFIG_QSEECOM=y in the SAME output directory
+  used for the next VM make, olddefconfig, verify the setting, rebuild and
+  transfer fresh artifacts. See `porting/BUILD-snapshot29.md`.

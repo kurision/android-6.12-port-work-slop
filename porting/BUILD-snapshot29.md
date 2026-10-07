@@ -77,6 +77,29 @@ printf '\nReady for scp: %s\n' "$DEST"
 Stop if any command fails. Do not package a previous build after a failed make.
 The directory contains **kernel payloads, not a boot.img**.
 
+### Recovery: uploaded kernel has QSEECOM disabled
+
+The first uploaded kernel identifies commit `a17c54c4fea0`, but its embedded
+config says `# CONFIG_QSEECOM is not set`. It cannot test the listener fixes.
+In the VM checkout, enable the driver in the **same output directory that make
+will use**, without resetting the rest of the config:
+
+```bash
+set -euo pipefail
+OUT="${OUT:-out-qseecom}"
+test -f "$OUT/.config"
+cp "$OUT/.config" "$OUT/.config.before-qsee-enable"
+scripts/config --file "$OUT/.config" --enable QSEECOM
+export ARCH=arm64 LLVM=1 LLVM_IAS=1
+make O="$OUT" olddefconfig
+grep -qx 'CONFIG_QSEECOM=y' "$OUT/.config"
+```
+
+Then run section 1 again to rebuild and stage the fresh outputs, followed by
+section 2 to copy **all six files**, including `kernel.config` and checksums.
+If yesterday's actual output directory is not `out-qseecom`, change `OUT`
+before running either block. The disabled-QSEE kernel must not be booted.
+
 ## 2. Mac: copy the VM outputs
 
 Run this in a Mac terminal. `kurision@omarchy` uses the builder identity from the
