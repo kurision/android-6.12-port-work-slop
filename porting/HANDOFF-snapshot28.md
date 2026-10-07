@@ -448,3 +448,10 @@
   in s31) and secondarily sb phys (#2). The reserved-window spill+tzbuf
   fix designed earlier is now the forced next change. AWAITING USER
   CONFIRMATION before source edits (repo rule).
+
+## Snapshot31 on-device logs recovered
+- SD `snapshot31-sd.log` (126,757 bytes, 1,177 lines, private ro mount),
+  logdump `snapshot31-logdump.bin` (SHA256 `22fc3db9...5ba175`,
+  partition prefix == SD exactly). All three channels end together at
+  t=94.7s during the keystore2 lookup; pid 335 never exited. Record
+  complete; still awaiting spill-fix approval.
