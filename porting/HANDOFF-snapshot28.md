@@ -226,3 +226,26 @@
   buffer dumped to SD/logdump, or run the HAL's startup by hand from a
   recovery/root shell against /dev/qseecom). Touchscreen iovcc fix still
   unverified on device (no input events this far into boot).
+
+## Snapshot30 plan review: ION confirmed, policy/logcat parts dropped
+- Verified against the running artifacts, not taken on trust:
+  `# CONFIG_ION is not set` in the snapshot29 kernel.config;
+  `libQSEEComAPI.so` contains `ion_open` + `Error::Cannot open ION device`;
+  `keystore.msm8953.so` references `libQSEEComAPI.so` + `QSEECom_start_app`;
+  all four ION Kconfig symbols exist with satisfiable dependencies
+  (STAGING already y, DMA_CMA already y).
+- The plan's `arch/arm64/configs/tissot_gki.fragment` does not exist.
+  Implemented in the canonical `scripts/tissot-ack.config` instead
+  (STAGING/ION/ION_LEGACY/ION_SYSTEM_HEAP/ION_CMA_HEAP), plus
+  `porting/BUILD-snapshot30.md` with the VM enable/rebuild/scp recipe.
+- SELinux CIL edit DROPPED: `porting/artifacts/fedora-build/*.cil` is never
+  loaded onto the device (no init/build reference), so editing it changes
+  nothing. Live policy already covers the need:
+  `system_ext_sepolicy.cil` has
+  `(allow hal_keymaster ion_device (chr_file (... open ...)))`.
+  Snapshot29's 24 denials (none on secure services) are consistent.
+- Logcat streamer in init.c DEFERRED: the capture child runs as
+  u:r:kernel:s0 with no stock-policy path to the logd socket, so it would
+  likely be SELinux-denied; and kmsg alone can verify the ION fix
+  (keymaster stays alive, keystore publishes, exec 5 exits 0). Revisit only
+  if keymaster still crashes with ION present.
