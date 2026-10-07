@@ -350,3 +350,38 @@
 - Next: the TA image itself. Identify what `QSEECom_start_app` loads for
   keymaster on this device and verify that image is reachable/valid under
   the new kernel's storage/firmware view. No kernel-option guessing.
+
+## Listener-callback audit: spill buffer has no TZ-shared backing (fix design)
+- Read-only audit (port `drivers/misc/qseecom.c` vs donor) returned one
+  mechanism that fits all evidence. Everything working on device is a
+  <=4-arg SMC (register-passed: REGISTER_LISTENER 3, APP_START 3,
+  probes 1-2, responses 2-4). The first TA data calls spill: 5-arg
+  SEND_DATA and 7-arg WHITELIST copy args[3..] (rsp_ptr/len/sglistinfo)
+  to a buffer TZ was never granted.
+- Donor put that spill buffer in TZ-registered shmbridge memory + cache
+  flushes. Our modern transport (`qcom_scm-smc.c`) spills to tzmem
+  (CPU-coherent, fine for HLOS) but this device has no shmbridge
+  (heaps 19/26/27 unavailable, port stubs it to no-op), so nothing
+  programs TZ-side permission. TZ reads unpermitted phys -> secure
+  abort/hang -> the SMC never returns, zero kernel lines. Exactly observed.
+- Same defect class covers tzbuf itself: port `__qseecom_alloc_tzbuf`
+  is plain `dma_alloc_coherent`, donor's was shmbridge-registered. The only
+  memory TZ is known to share on this device is the reserved window
+  `qseecom@84a00000` (25 MiB). Fix direction: back BOTH the legacy-shim
+  >4-arg spill path and tzbuf from that window (shim accepts an optional
+  spill allocator registered by qseecom at probe; native tzmem path for
+  other clients untouched). Only qseecom uses the legacy shim (verified by
+  grep), so the blast radius is one driver.
+- Second item: port uses `dma_buf_*_unlocked` without the resv lock the
+  variants require (donor uses locked versions). Same first-callback wedge
+  shape via torn sb phys. Fix: match donor (locked variants).
+- Self-correction: narrow our snapshot29 `-EIO -> -EOPNOTSUPP` remap
+  (audit #3: masks real transport failures as 'unsupported'; currently only
+  a triage-killer, not the wedge). Scope it to the listener probe or log
+  the pre-remap value.
+- #4 (clock livelock) refuted by absence: no `Unable to enable`/CLK lines
+  in any stream (weak refutation only). #5 (dmac clean-only) closed, no action.
+- Confirm/refute probe for #1 on next boot (no fix needed to run it):
+  one `pr_info` on the >4-arg spill path logging smc_id/arglen/x5-phys;
+  the wedge is confirmed if a spilled SEND_DATA is the last qseecom SMC.
+  AWAITING USER CONFIRMATION before any source edit (repo rule).
