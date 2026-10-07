@@ -102,25 +102,25 @@ before running either block. The disabled-QSEE kernel must not be booted.
 
 ## 2. Mac: copy the VM outputs
 
-Run this in a Mac terminal. `kurision@omarchy` uses the builder identity from the
-captured kernel log; hostname resolution/SSH access is not verified here. Set
-`VM` to your VM's reachable SSH alias or `user@IP` if that hostname does not work.
-Keep normal SSH host-key verification enabled.
+Run this in a Mac terminal (Bash or zsh). The VM address below is the one supplied
+for this build. Keep `${VM}` braced before the colon: zsh treats `$VM:...` as a
+parameter modifier. Keep each trailing backslash so scp receives all six source
+files and the destination in one command. Normal SSH host-key verification stays enabled.
 
 ```bash
 set -euo pipefail
 
-VM=kurision@omarchy
+VM=sneha@192.168.4.114
 DEST=/Users/anilkumal/Documents/Anil/AI/kernel/porting/artifacts/snapshot29-build
 mkdir -p "$DEST"
 
 scp \
-    "$VM:snapshot29-build/Image.gz" \
-    "$VM:snapshot29-build/Image.gz-dtb" \
-    "$VM:snapshot29-build/msm8953-xiaomi-tissot.dtb" \
-    "$VM:snapshot29-build/kernel.config" \
-    "$VM:snapshot29-build/build-info.txt" \
-    "$VM:snapshot29-build/SHA256SUMS" \
+    "${VM}:snapshot29-build/Image.gz" \
+    "${VM}:snapshot29-build/Image.gz-dtb" \
+    "${VM}:snapshot29-build/msm8953-xiaomi-tissot.dtb" \
+    "${VM}:snapshot29-build/kernel.config" \
+    "${VM}:snapshot29-build/build-info.txt" \
+    "${VM}:snapshot29-build/SHA256SUMS" \
     "$DEST/"
 
 # Run these only after scp succeeds.
