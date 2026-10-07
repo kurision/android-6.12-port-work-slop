@@ -301,3 +301,32 @@
   recovery reboot. Mechanism still unknown; single sample, re-run needed
   before concluding ION regressed anything (more likely run-to-run variance
   of the same FBE-launch killer seen in s28).
+
+## Snapshot30 run 2: same FBE-window death (90s), keymaster never execs
+- Re-ran the identical image: `fastboot boot` OKAY, but USB captured
+  0 bytes (gadget matched, stream never started). On-device channels are
+  authoritative: SD `snapshot30-run2-sd.log` (117,459 bytes, 1,117 lines),
+  logdump `snapshot30-run2-logdump.bin` (SHA256 `5a360da0...66047a3`).
+- Genuine run-2 stream (SD file): exec5 launched (pid 345), installkey
+  dispatched, vdc reached vold, vold->keystore2 fails (not published),
+  cutoff at t=90.0s. Zero QSEE errors. `starting service
+  vendor.keymaster-3-0` logged at 88s but no pid/exit follows: cutoff came
+  ~2s after the keymaster start request (run 1: ~1s after). ION still
+  unproven in action on both runs.
+- TOOLING LESSON: the logdump partition has no O_TRUNC. A fresh pull after
+  run 2 contains run-2's prefix OVER run-1's remainder (two exec5 launches
+  at 89s and 149s in one image). Never analyze the partition tail past the
+  SD file's length; the SD file is the length authority. (`cmp` confirmed
+  partition[:117459] == run-2 SD exactly.)
+- No tombstones in /data/tombstones: no native crash was recorded.
+- Battery ruled out: 98%, 4.29V, health Good, 33.7C on the ROM after.
+- Timing table (fsck variance explains the speedup, not the kernel):
+  mount_all --early at s29=138s, s30r1=65s, s30r2=79s; the gap sits between
+  SD-ready and mount_all, i.e. userdata fsck after each unclean cutoff.
+  Early kernel boot is identical across runs.
+- Standing interpretation: alive-and-logging one instant, silent the next,
+  no shutdown sequence, no panic, no recovery reason, good battery. Fits a
+  secure-world-initiated reset during FBE-window TA activity (both s30
+  cutoffs land 1-2s after keymaster start is requested) better than any
+  Linux-side cause, but still unproven. s29's 326s death mid-retry-loop
+  remains the out-of-pattern sample.
