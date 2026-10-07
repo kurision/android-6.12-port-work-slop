@@ -1,9 +1,11 @@
 # Handoff: snapshot28 (capture the 355s reset)
 
-## State (2026-10-07, phone on stock, rooted adb, nothing flashed)
+## State (2026-10-07, phone on installed ROM, snapshot28 backups recovered, nothing flashed)
 - Commits in: `7bea83f` policy fix, `c3179f5` evidence, `c0c2406` findings doc.
-- Boot image: `porting/artifacts/boot-ack-snapshot27-init-relabel-screen.img`
-  (35,964,928 bytes, sha256 `3ef09286…f2e1dfb`). Reuse its kernel + policy.
+- Base boot image (parent workspace, not this checkout):
+  `../porting/artifacts/boot-ack-snapshot27-init-relabel-screen.img`
+  (35,964,928 bytes, SHA256
+  `3ef09286cb11d88eab0560fd35dba4e833733ecdad15f027273621990f2e1dfb`).
 - Verdict so far (`porting/findings/09-*.md`, `snapshot27-analysis.log`):
   guard installs, `mount_all --early` succeeds, `checkpoint markBootAttempt`
   exits 0. Phone resets at exactly ~355s; loggers stop ~300s after start,
@@ -11,26 +13,93 @@
   fits, unproven). qseecomd starts ~319s; its fate + keymaster/boot-qti +
   zygote all unobserved.
 - Prepped: logdump partition (mmcblk0p48) zeroed + verified; SD card
-  (mmcblk1p1, vfat, user-donated, kernel has VFAT+EXFAT=y) ready as log disk.
+  (vfat, user-donated, kernel has VFAT+EXFAT=y) ready as log disk. Block
+  numbering swaps: stock SD is mmcblk1, snapshot27 ACK SD is mmcblk0.
 
-## Next step (user-approved, NOT built)
-`scripts/initramfs-diag/init.c`:
-1. `dump_log(kin, out, 300, 0)` (capture_usb, ~line 791) → `900`.
-2. `dump_log(in, out, 300, 1)` (durable child, ~line 903) → `900`.
-   (`DUMP_SECONDS` macro is only used by the non-capture path; leave it.)
-3. SD file sink: poll `/dev/mmcblk1p1` (devtmpfs name, NOT /dev/block),
-   `mkdir /sdlog`, mount vfat, open fixed-name file O_WRONLY|O_CREAT|O_TRUNC.
-   Open it in the durable child only (single writer); promote to primary if
-   the logdump open fails; pass as mirror fd to `dump_log` and disable on
-   write error. `dump_log` needs the extra param at all 3 call sites.
-- Checks: `gcc -std=gnu11 -Os -Wall -Wextra -Werror` all 4 variants
-  (default/capture/heartbeat/guard-test) + guard selftest PASS + NDK r29
-  android24 static ARM64 init.
-- Repack ramdisk-only (kernel + policy + cmdline byte-identical; cmdline
-  keeps `console=tty0 loglevel=8`; drop the duplicate `init` cpio entry like
-  snapshot27 did). Temp `fastboot boot` only; deadline-free host capture
-  (`timeout: 0`) matching USB identity 18d1:9008 serial tissot-diag @115200
-  until `DIAG: EOF Android USB kmsg dump complete`; pull mmcblk0p48 as backup.
+## Snapshot28 built and temporarily booted
+- Image (parent workspace):
+  `../porting/artifacts/boot-ack-snapshot28-tail-sd-screen.img`
+  (35,964,928 bytes, SHA256
+  `90c2a9a046e3c7436697b63a3d7c3afbb5eb3c262875ecd245bccff712b6fe39`).
+- `scripts/initramfs-diag/init.c`: both Android capture calls now use
+  900 seconds; non-capture `DUMP_SECONDS` is unchanged. All three
+  `dump_log` call sites supply the new optional mirror pointer.
+- Durable child discovers the card via `/sys/class/block/mmcblk*/device/type`
+  equal to `SD`, polls its first `/dev/mmcblkNp1` partition, mounts vfat
+  privately at `/sdlog`,
+  opens `snapshot28-kmsg.log` with O_WRONLY|O_CREAT|O_TRUNC, and fsyncs
+  each mirrored chunk. Failed mirror writes/fsyncs close and disable the
+  mirror without terminating the primary. Missing logdump promotes SD to
+  the durable primary. Mount/open failure leaves partition+USB available.
+- SD open happens after the guard/USB forks (single writer), but before
+  the Android handoff, so policy cannot deny the mount/open. Missing SD
+  can add up to 60 seconds before the handoff; boot timing is not assumed
+  identical. No card format or partition changes.
+- Checks exercised: NDK r29 Clang, android24 static ARM64,
+  `-std=gnu11 -Os -Wall -Wextra -Werror`, all four variants
+  (default/capture/heartbeat/guard-test). Guard selftest ran on stock
+  phone `2819f2320604`: PASS. Throwaway on-device logger smoke: exact
+  mirrored records, mirror write-error isolation, durable primary and
+  primary error propagation PASS. The mirror case failed before the change.
+- Safety correction before boot: hard-coded mmcblk1p1 was unsafe because
+  snapshot27 logs identify mmcblk1 as eMMC, mmcblk0 as SD. Swapped-numbering
+  smoke failed before and passed after sysfs-based selection. Mount attempts
+  were intercepted in that smoke; no real partition was mounted or written.
+- Linux GCC check from the original plan remains unrun: this host only
+  provides Apple Clang as `gcc`. SD capture survived reboot and matches the
+  recovered durable partition stream byte-for-byte.
+- Repack verified by parsing the produced image: kernel, cmdline, every
+  non-init cpio entry and its metadata byte-identical to snapshot27.
+  Exactly one `init`; static ARM64 ELF with no PT_INTERP. Header changes
+  limited to ramdisk size and regenerated boot-image SHA1.
+
+## Current device run
+- `fastboot -s 2819f2320604 boot` accepted corrected snapshot28:
+  Sending OKAY, Booting OKAY. No flash or kernel build.
+  Stock logdump PARTNAME verified and its first 64 bytes all zero before boot.
+- Deadline-free host reader was waiting before boot; matched 18d1:9008,
+  serial tissot-diag, `/dev/cu.usbmodemtissot_diag1` @115200.
+- Capture: `porting/artifacts/snapshot28-usb.log`, 156,996 bytes, SHA256
+  `48e7beabc8f0d1aeb5b47dae996cc68cc64c9faa5f5313a7b267228c37c9966c`;
+  1,439 records, sequence 0–1438 with no gaps, final timestamp 422.288489s.
+  `snapshot28-usb-capture.status`: host elapsed 486.356s from reader start;
+  that is NOT device uptime. Reader ended on device-not-configured error,
+  not a host deadline. No EOF, panic/oops/BUG/lockup/restart message captured.
+- SD capture ready at 23.262598s; guard installed at 23.889276s; no SD mirror
+  failure message in USB. This run eMMC is mmcblk0, SD is mmcblk1: numbering
+  changed again, confirming sysfs selection is necessary.
+- `mount_all --early` succeeds at 359.863563s. `markBootAttempt` exits 0 at
+  362.413689s. QSEE listener registration has eight failures at 381–399s:
+  SCM error -5, ioctl reported -12. The listeners property wait then completes;
+  that does NOT prove the SCM registration succeeded.
+- boot-qti and keymaster start around 415.8s; boot-qti reports its AIDL
+  service running. No keymaster exit captured. `prepareCheckpoint` exits 0
+  at 422.036869s. Final action launches `vdc --wait cryptfs enablefilecrypto`
+  (PID 364); command dispatch succeeds, but its process completion is NOT
+  captured. No zygote service start captured.
+- Verdict: captured beyond the former 355s window, but cause of disconnect
+  remains unknown. Timing changed; do not claim a fixed 355s reset or blame
+  cryptfs from a truncated tail. Panic remains unproven.
+- Backups recovered after the phone returned to installed 4.19.325:
+  `snapshot28-logdump.bin` is exactly 67,108,864 bytes, SHA256
+  `96e73a4c56ddadf46d74507774346e02992d391e5238ade0bd5eaa27aa0d3ed0`.
+  Pulled via `by-name/logdump`, resolved/verified as mmcblk0p48 on stock.
+  Remote dd status was separated into `snapshot28-logdump-pull.status`.
+- `snapshot28-durable.log`: 157,329-byte text prefix; all remaining partition
+  bytes are zero. `snapshot28-sd.log` recovered by a private read-only vfat
+  mount is byte-identical. Both SHA256:
+  `3c59f1f2705f3891f7c6a3e9215700220d453b2ade16005f7106ad32e7cb88f2`.
+  Stock vold had not mounted the card; recovery helper unmounted/removed its
+  temporary directory. No SD filesystem repair or writes.
+- Both backups contain records 0–1440, extending USB by exactly two:
+  1439 at 422.660621s: vdc binder service-name=vold message;
+  1440 at 422.699903s: `vdc: Waited 0ms for vold`.
+  Still no cryptfs process exit, logger EOF or panic/restart message.
+  Thus USB-only loss does not explain the missing later kmsg records;
+  the reason logging/device progress stopped is still unknown.
+- `/sys/fs/pstore` empty on stock; `/proc/last_kmsg` absent.
+- SD and Android vold must not write the same vfat filesystem concurrently;
+  the private mount namespace alone does not provide filesystem isolation.
 
 ## Gotchas
 - `AGENTS.md`: explain change + wait for confirmation before editing; no
@@ -39,4 +108,40 @@
   detach USB (that's what killed run1's capture, not a device crash).
 - Partition logger has no O_TRUNC: analyze only up to the FIRST EOF.
 - A `permissive=1` AVC alone never identifies the failing logger syscall.
-- Open todos: Snapshot28 phase (4 items) + TailCapture verify item.
+- Open work: identify why all three streams end at ~422.7s without a panic/EOF.
+
+## Approved kernel/DT fixes for the next VM build
+- `include/soc/qcom/scm.h`: restore the donor meaning of generic secure
+  return -1 for legacy normal/atomic callers: modern -EIO becomes
+  -EOPNOTSUPP. Native `drivers/firmware/qcom/` errno mapping is unchanged.
+  This lets qseecom's existing SMCInvoke listener fallback attempt the
+  legacy command; it does not establish that the next secure call succeeds.
+- `drivers/misc/qseecom.c`: preserve DMA-buffer mapping and SCM failure
+  errno through shared-buffer setup and listener registration. Keep
+  failed-registration cleanup and pending-state rollback; actual allocation
+  failures still return -ENOMEM and failed secure responses return -EPERM.
+- `msm8953-xiaomi-tissot.dts`: connect touchscreen `iovcc-supply` to
+  `pm8953_l6` (1.8 V), matching the donor's `vcc_i2c-supply`. Stock reports
+  FocalTech IC 0x5422; no speculative compatible/protocol change was made.
+- Verification: throwaway C smoke failed before each errno fix and passed
+  afterward. The actual shim and extracted listener functions were compiled
+  with kernel/SCM dependency stubs, then exercised on host and as static
+  ARM64 NDK r29 binaries on stock phone 2819f2320604. Covered generic
+  error translation, unchanged other errors/success, normal/retry/atomic
+  wrappers, listener errno, mapped-buffer cleanup, pending rollback and
+  genuine allocation failure. This is not a live TrustZone registration test.
+- Board DTS preprocessing and standalone dtc compilation passed; compiled
+  `iovcc-supply` resolves to the L6 regulator with min/max 1800000 uV.
+  dtc emitted three unique-unit-address warnings for existing I2C/SPI
+  alternate nodes in msm8953.dtsi (78b7000, 7af5000, 7af6000).
+- Full Linux kernel/object build and next-kernel boot are NOT performed on
+  this Mac. Pull on the VM and use the existing build configuration to
+  rebuild the kernel AND board DTB. Repack with the newly built payload,
+  retaining the validated snapshot28 diagnostic ramdisk; reusing the old
+  kernel payload cannot incorporate these fixes.
+- Next capture must establish successful listener fallback/registration,
+  enablefilecrypto exit status 0, init_user0 and zygote/boot completion.
+  Missing error messages alone are not proof. The ~422.7s cutoff/reset
+  cause remains unproven; display/WLED, RCU/latency, diagnostic SELinux and
+  ROM baseline warnings are not claimed fixed by this patch set.
+- No watchdog enablement, encryption/fstab changes, formatting or flashing.
