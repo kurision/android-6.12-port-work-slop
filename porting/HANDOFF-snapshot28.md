@@ -194,3 +194,35 @@
   must capture actual listener/FBE/zygote outcomes, not infer success from
   this packaging check. Retained logger still names its SD file
   `snapshot28-kmsg.log`; a next run overwrites that card file.
+
+## Snapshot29 boot outcome: listener fix verified, keymaster now blocks FBE
+- Booted via `fastboot boot` (RAM only, no flash). USB capture failed:
+  this Mac lacked pyserial, so the reader thread died with
+  ModuleNotFoundError while the main thread continued through reboot and
+  boot. Fixed in e440ac640 (top-level serial import = fail fast before
+  touching the phone; pyserial installed). No snapshot29 USB log exists.
+- Recovered from OrangeFox (temporary `fastboot boot`, no flash) using
+  `su` root: SD file `snapshot28-kmsg.log` (435,954 bytes, overwritten this
+  run) pulled as `porting/artifacts/snapshot29-sd.log`; 64 MiB logdump
+  partition streamed via dd as `porting/artifacts/snapshot29-logdump.bin`
+  (SHA256 `a8393ed875e1acfcb36101026187da983e2e6f3df263f479541958aad2856345`).
+  SD stream = 2,893 records to t=326.3s, no EOF marker; device left USB
+  with black screen (no adb/fastboot/EDL), same abrupt-cutoff shape as
+  snapshot28 but ~96s earlier. Reset mechanism still unproven.
+- SCM compatibility fix VERIFIED: zero `qseecom_scm_call failed` /
+  `failed qseecom_register_listener` lines (snapshot28 had 8x -5/-12).
+  `vendor.sys.listeners.registered=true` wait completed in 3,257 ms
+  (was 18,735 ms). Legacy fallback path is exercised and succeeding.
+- Boot progressed 1,440 -> 2,893 records, 149s -> 326s of init timeline:
+  `installkey /data` dispatched, vdc reached vold, prepareCheckpoint exit 0.
+- New blocker: `vendor.keymaster-3-0` exits status 1 within ~0.5 s on every
+  start (pids 335, 353, 355, ... 840). keystore2 starts (pid 333) but
+  `IKeystoreService/default` never publishes; vold's FBE waits on it and
+  lazy-start fails. No `exec 5` exit, no init_user0, no zygote.
+  Only 24 AVC denials total, none on keymaster/keystore/tee/qsee/vold/hal,
+  so this is not a policy denial on current evidence. Keymaster stderr goes
+  to logd (not kmsg), so the crash reason is not in this stream.
+- Next discriminating step: capture the keymaster HAL's own error (logd
+  buffer dumped to SD/logdump, or run the HAL's startup by hand from a
+  recovery/root shell against /dev/qseecom). Touchscreen iovcc fix still
+  unverified on device (no input events this far into boot).
