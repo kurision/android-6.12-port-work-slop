@@ -723,3 +723,43 @@ the stall).
 ### Device state
 Phone on installed ROM 4.19.325, root via Magisk `su`. Nothing flashed, slot
 untouched, SD card untouched.
+
+## Snapshot41 prep — widened SCM gate + live `selinux=0` (awaiting VM build)
+
+Two changes, no DT, no ramdisk, no config-fragment change:
+
+* `drivers/firmware/qcom/qcom_scm-smc.c`: `trace_send` is now
+  `owner == 48 && svc == 0`, was `cmd == 1 || cmd == 6`. The snapshot35 gate
+  excluded cmd `0x3` — the exact call keymaster stalls in. `__scm_smc_do_quirk`'s
+  `__ratelimit(HZ, 8)` still bounds `scm_pre` volume; `scm_send_desc` is not
+  rate-limited and is therefore the reliable indicator.
+* `scripts/build-ack-tissot.sh`: `CONFIG_SECURITY_SELINUX` and
+  `CONFIG_SECURITY_SELINUX_BOOTPARAM` added to the required-symbol assertion,
+  so a build that loses either fails before burning a boot.
+
+Verified locally: `make O=out drivers/firmware/qcom/qcom_scm-smc.o` compiles
+clean (NDK-independent, host clang 22.1.8, `ARCH=arm64 LLVM=1 LLVM_IAS=1`);
+both trace templates survive in the object. `bash -n` on the build script
+passes. No kernel `Image.gz` built on this host — the VM owns that.
+
+### The inert `selinux=0`, now explained
+
+The snapshot38 `Image.gz` embedded config says:
+
+    CONFIG_SECURITY_SELINUX=y
+    # CONFIG_SECURITY_SELINUX_BOOTPARAM is not set
+    CONFIG_SECURITY_SELINUX_DEVELOP=y
+
+`scripts/tissot-ack.config:137` has requested `BOOTPARAM=y` all along, so the
+VM builds are not running the fragment: they reuse an existing output
+directory seeded from the baseline config. That is why build14 saw the token
+consumed yet enforcing anyway, and why `current-port-progress.md` §14 listed
+three exhausted fork paths. The fix is not a rebuild-from-scratch, it is
+enabling the symbol in the SAME `out` directory. Full recipe, transfer list,
+six acceptance checks and the run-1 decision table:
+`porting/BUILD-snapshot41.md`.
+
+Expected decision table for the next boot is recorded there; short version:
+`scm_send_desc cmd=3` present → the driver sent it and TZ never answered;
+`scm_send_desc` absent → the stall is above `__scm_smc_call` and the ioctl
+never reached SCM at all.
