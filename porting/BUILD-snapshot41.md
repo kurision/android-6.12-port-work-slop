@@ -34,48 +34,88 @@ keymaster start — all with `enforcing=1`. Permissive mode is built here as a
 
 No other driver, no DT, no config fragment, no ramdisk change.
 
-## VM build recipe
+## Build host
 
-Same flow as snapshot38/39, **same output directory** (`out`), because the
-point is to fix the existing config rather than start a new tree:
+This machine builds it. The config is seeded from the **embedded IKCONFIG of
+the shipping `Image.gz`** (`porting/artifacts/snapshot38/Image.gz`), not from
+the local `out/` tree: `out/` is the older Fedora/build14 lineage and carries
+`DRM_MSM`, `DRM_PANEL_OTM1911`, `DRM_FBDEV_EMULATION`, `VT` and
+`SECURITY_SELINUX_BOOTPARAM`, none of which are in the shipping config.
+Building there would change the display stack and the SELinux knob in one
+step and make the run uninterpretable.
+
+## Local build recipe
 
 ```sh
-cd ~/ack-android16-6.12
-git fetch && git checkout port-work && git pull        # revision: see below
+cd ~/<path>/ack-android16-6.12
+export ARCH=arm64 LLVM=1 LLVM_IAS=1
 
-# 1. turn the knob on in the SAME output dir
-./scripts/config -e SECURITY_SELINUX_BOOTPARAM --file out/.config   # or:
-#    scripts/config --file out/.config -e SECURITY_SELINUX_BOOTPARAM
-./scripts/config --file out/.config -d SECURITY_SELINUX_DEVELOP
-make O=out olddefconfig
+# 1. seed from the shipping kernel's own embedded config
+mkdir -p out-snapshot41
+gunzip -c porting/artifacts/snapshot38/Image.gz > /tmp/s38-image
+python3 - <<'PY'
+import zlib
+d = open('/tmp/s38-image', 'rb').read()
+i = d.find(b'IKCFG_ST')
+open('out-snapshot41/.config', 'w').write(
+    zlib.decompressobj(31).decompress(d[i+8:]).decode())
+PY
 
-# 2. assert before building — both must be =y
-grep -x CONFIG_SECURITY_SELINUX=y           out/.config
-grep -x CONFIG_SECURITY_SELINUX_BOOTPARAM=y out/.config
+# 2. the knob, then resolve
+./scripts/config --file out-snapshot41/.config -e SECURITY_SELINUX_BOOTPARAM
+make O=out-snapshot41 olddefconfig
 
-# 3. build
-make O=out -j"$(nproc)" Image.gz
-make O=out qcom/msm8953-xiaomi-tissot.dtb
-cat out/arch/arm64/boot/Image.gz \
-    out/arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dtb \
-    > out/arch/arm64/boot/Image.gz-dtb
+# 3. assert before building
+grep -x CONFIG_SECURITY_SELINUX=y          out-snapshot41/.config
+grep -x CONFIG_SECURITY_SELINUX_BOOTPARAM=y out-snapshot41/.config
+
+# 4. build
+make O=out-snapshot41 -j"$(nproc)" Image.gz
+make O=out-snapshot41 qcom/msm8953-xiaomi-tissot.dtb
+cat out-snapshot41/arch/arm64/boot/Image.gz \
+    out-snapshot41/arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dtb \
+    > out-snapshot41/arch/arm64/boot/Image.gz-dtb
 ```
 
-`CONFIG_SECURITY_SELINUX_DEVELOP` is dropped on purpose: it only prints
-additional denial detail and is not needed once the bootparam works.
+`CONFIG_SECURITY_SELINUX_DEVELOP` is left `y` (its shipping value) rather
+than dropped: the config is otherwise held identical to what shipped, and one
+flipped symbol is easier to reason about than two.
 
-## What to transfer
+### Verified config delta against the shipping kernel
 
-Six files into `porting/artifacts/snapshot41/` plus a `SHA256SUMS`:
+Five values differ, four of them toolchain bookkeeping:
 
-    out/arch/arm64/boot/Image.gz
-    out/arch/arm64/boot/Image.gz-dtb
-    out/arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dtb
-    out/.config
-    out/include/generated/banner          # release string, for provenance
-    out/.config.old                       # pre-change config, for the diff
+| symbol | shipping | snapshot41 |
+|---|---|---|
+| `CONFIG_SECURITY_SELINUX_BOOTPARAM` | not set | `y` |
+| `CONFIG_AS_VERSION` | 210000 | 220108 |
+| `CONFIG_CLANG_VERSION` | 210000 | 220108 |
+| `CONFIG_LLD_VERSION` | 210000 | 220108 |
+| `CONFIG_CC_VERSION_TEXT` | Android 21.0.0 | clang 22.1.8 |
 
-## Acceptance checks before packaging
+The other 4,352 symbols are byte-identical. No display, storage, QSEE, ION
+or security symbol changes.
+
+### Known confound
+
+The shipping kernel was built with Android clang 21.0.0; this host has clang
+22.1.8. Codegen is not guaranteed identical across LLVM majors. The *config*
+is the variable under test and it is held fixed; the toolchain difference is
+an accepted, recorded unknown, not a silent one.
+## Artifacts and packaging
+
+From `out-snapshot41/`:
+
+| file | purpose |
+|---|---|
+| `arch/arm64/boot/Image.gz` | compressed kernel |
+| `arch/arm64/boot/Image.gz-dtb` | `Image.gz` + raw board DTB, the stock ROM layout |
+| `arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dtb` | board DTB, must be byte-identical to snapshot38's |
+| `.config` | resolved config, the acceptance-check reference |
+
+Stage them under `porting/artifacts/snapshot41/` with a `SHA256SUMS`.
+
+### Acceptance checks before packaging
 
 1. `Image.gz-dtb == Image.gz + board.dtb` byte-for-byte.
 2. `gzip -t Image.gz` exit 0.
@@ -84,17 +124,16 @@ Six files into `porting/artifacts/snapshot41/` plus a `SHA256SUMS`:
    that would have caught the previous 14 builds.
 4. Embedded `IKCONFIG` still contains `CONFIG_QSEECOM=y`, `CONFIG_ION=y`,
    `CONFIG_SECURITY_SELINUX=y`.
-5. `strings Image.gz | grep -c 'snapshot35 scm_pre'` > 0 and the new gate is
-   present: the binary must still carry the scm trace templates.
+5. `strings` on the decompressed `Image` still carries the `scm_send_desc` and
+   `scm_pre` templates.
 6. `board.dtb` SHA256 unchanged from snapshot38's `18a1081e…7aae8` — this
    build touches no device tree.
 
-## Packaging
+### Packaging
 
 Copy `porting/artifacts/snapshot40/package.py` into the new directory and
-point `IMAGE` at `boot-ack-snapshot41-scm-all-selinux.img`. Keep snapshot40's
-base ramdisk (it carries the `DIAG: pidns` probe, already exercised on device
-— run 1 emitted one line successfully, so it stays).
+point `IMAGE` at `boot-ack-snapshot41-scm-all.img`. Keep snapshot40's base
+ramdisk: its `DIAG: pidns` probe fired correctly on device in run 1.
 
 Do **not** add `selinux=0` to the packaged cmdline for the default run. Two
 runs are wanted, in this order:
@@ -104,6 +143,7 @@ runs are wanted, in this order:
   entered and whether a return ever arrives.
 - **run 2, `selinux=0` appended.** Only after run 1, and only to prove the
   knob is live (`enforcing=0` in the audit line). One image, two boots.
+
 
 ## Expected outcome of run 1
 

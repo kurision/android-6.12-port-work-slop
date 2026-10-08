@@ -763,3 +763,38 @@ Expected decision table for the next boot is recorded there; short version:
 `scm_send_desc cmd=3` present → the driver sent it and TZ never answered;
 `scm_send_desc` absent → the stall is above `__scm_smc_call` and the ioctl
 never reached SCM at all.
+
+## Snapshot41 built locally (this machine) and packaged
+
+Built here with host clang/LLD 22.1.8, seeded from the shipping kernel's own
+embedded `IKCONFIG`, not from `out/`. See `porting/BUILD-snapshot42.md` for why
+`out/` must not be used.
+
+| check | result |
+|---|---|
+| `Image.gz-dtb == Image.gz + dtb` | PASS |
+| `gzip -t` | PASS |
+| embedded `IKCONFIG` has `SECURITY_SELINUX_BOOTPARAM=y`, no "not set" | **PASS — the gate that would have caught 14 builds** |
+| `QSEECOM` / `ION` / `SELINUX` / F2FS / VFAT / EXT4 / FunctionFS all `=y` | PASS |
+| `scm_send_desc` + `scm_pre` + `qsee_set_mem` + spill templates in the binary | PASS |
+| board DTB vs shipping `18a1081e…7aae8` | byte-identical |
+
+Config delta vs the shipping kernel: **5 symbols**, four toolchain bookkeeping
+and one functional —
+
+    # CONFIG_SECURITY_SELINUX_BOOTPARAM is not set
+    -> CONFIG_SECURITY_SELINUX_BOOTPARAM=y
+
+Release `6.12.93-4k-g51fb88d9cdcf-dirty`. `Image.gz` 16,991,737 B,
+`Image.gz-dtb` 17,032,668 B, dtb 40,931 B.
+
+Image `porting/artifacts/boot-ack-snapshot41-scm-all.img`, 35,964,928 bytes,
+SHA256 `67c2887def1ae464b9da32b1d7e1ca1fb62662739b463e5bd8e915564c25200f`.
+665 ramdisk records, only `init` differs from the validated snapshot40 base,
+header diff limited to kernel size + regenerated SHA1, zero tail. Re-read from
+the finished image: kernel payload byte-identical, ramdisk decodes to
+45,170,104 B, `DIAG: pidns` probe present.
+
+The experiment is now clean: one functional config symbol and one source
+change (the widened trace gate) separate this kernel from the one that produced
+snapshot40 run 1.
