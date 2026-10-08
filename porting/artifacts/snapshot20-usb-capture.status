@@ -1,2 +1,0 @@
-SERIAL=/dev/ttyACM0
-READ-DONE rc=124

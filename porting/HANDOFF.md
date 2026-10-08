@@ -504,3 +504,139 @@
   all channels. Spill-to-carveout confirmed working; death persists at the
   FBE transaction. Next: listener-roundtrip pr_info tracing (proposed,
   awaiting approval).
+
+## Snapshot39 — per-daemon liveness probe (complete, with one open question)
+
+### What was built
+
+`scripts/initramfs-diag/init.c` only. No kernel change. The snapshot38 kernel
+image is reused byte-for-byte (packaged payload verified identical; snapshot38's
+whole-image SHA256 still `e797646f707c9b727224bb339070498c5427d6939c305257d7ff1b5eea9ceb27`).
+
+* `daemon_watch[]`: keymaster@3.0, keystore2, vold, vdc, servicemanager, logd,
+  matched by prefix against `/proc/<pid>/comm` (comm truncates to 15 bytes, so
+  full-string equality would never fire).
+* `/proc/<pid>/stat` parsed by locating the **last** `)` and splitting after it,
+  because field 2 (comm) may itself contain spaces or parentheses. state=token0,
+  ppid=token1, utime=token11, stime=token12, threads=token17.
+* `wchan` read best-effort; EACCES/short read emits `-`, never fatal.
+* Emission on change OR a **1 s** heartbeat. Probe lines go straight to the
+  capture fd via `write_capture`, never through `/dev/kmsg`, so they survive a
+  wedged printk. Confirmed present in both logdump and the SD mirror.
+* Runs in the existing durable recorder child, same thread as `dump_log`, gated
+  on `sampler != NULL` so the USB child never writes it.
+
+### Defects found and fixed by the runs
+
+1. **20 s heartbeat was too coarse.** Run 1's ticks landed at 23.6/43.6/63.6 s
+   while keystore2 started at 65.2 s — no tick existed inside the stall window.
+   Now 1 s (~600 KB of a 64 MiB partition).
+2. **Uninitialised fields.** `daemon_probe_collect` reset pid/state/wchan but not
+   ppid/threads/utime/stime, so absent daemons printed stack garbage.
+3. **`state` assigned before the field count was validated**, so a truncated stat
+   reported a real state with garbage pids.
+4. **`errno` sampled on success**, reporting a stale value. Caught by the self-test.
+5. **First-tick sentinel never set** — `daemon_probe_init` memset `comm_errno` to
+   0 while the guard tests for −1, so the comm census never fired (run 4).
+6. **Ramoops self-test was flaky** (10/25 failures) because it asserted the kmsg
+   records were the *last* bytes of the capture; with a 1 s heartbeat a second
+   boundary can land inside `dump_log`'s loop. Now position-independent.
+
+### The finding
+
+The probe is mechanically correct — the host self-check resolves all six names
+against real processes, and the on-device census proves every `comm` read
+succeeds (`comm_errno=0`). But **the recorder's `/proc` does not contain
+Android's service processes.**
+
+Run 5's one-shot census (`run5-proccomm-census.txt`) of the recorder's own
+`/proc`: 161 entries, ~156 kernel threads, and exactly five userspace processes —
+pid 1 `init` and pids 154/158/159/160, the ramdisk-init lineage the recorder
+itself forks. Highest pid visible: **162**.
+
+Android's init, in the same boot, reports:
+
+    started service 'keystore2' has pid 334
+    started service 'vendor.keymaster-3-0' has pid 336
+    servicemanager ... Caller(pid=291 ...)
+    vold ... Caller(pid=302 ...)
+
+Entry count stays at 161 → 162 for the whole run while Android allocates pids
+to 350, then collapses to 5 at teardown. So every `DIAG: daemon` line reads
+`pid=0`: the daemons are **invisible**, not idle, blocked or crashed.
+
+### What is ruled out
+
+| hypothesis | verdict | evidence |
+|---|---|---|
+| watch names never match this kernel's comm | ruled out | census proves comm reads succeed; host resolves all six |
+| SELinux denies the reads | ruled out | `comm_errno=0` on every tick, 161/161 reads succeeded |
+| heartbeat too coarse | **was real, fixed** | run 1 ticks vs 65.2 s daemon start |
+| `/proc` unmounted | ruled out | `opendir` succeeds, entries nonzero |
+| probe lost with the printk path | ruled out | present in logdump *and* SD mirror |
+| mount-namespace boundary | ruled out (run 6) | PID 1's mount namespace shows the same ~168 ceiling |
+| PID-namespace boundary | **not confirmed** (run 7) | `setns` via `/proc/1/ns/pid` returns ENOENT |
+
+### Open question
+
+Why does the recorder's `/proc` ceiling at ~168 while Android allocates pids to
+350, given PID 1 shares the mount namespace view and exposes no `ns/pid`?
+
+**Next discriminating probe (one boot):** from the durable child, at the end of
+the run, emit `ns_last_pid` (`/proc/sys/kernel/ns_last_pid`), the highest pid
+in `/proc`, and `readlink` of `/proc/1/ns/pid` and `/proc/self/ns/pid`.
+
+* `ns_last_pid` ≫ highest pid in `/proc` ⇒ the view is restricted or frozen and
+  the probe must move to another source entirely.
+* `ns_last_pid` ≈ highest pid ⇒ the recorder's `/proc` is correct and Android's
+  reported pids are namespaced elsewhere; chase `ns_last_pid` instead.
+
+If the probe cannot be fixed cheaply, `snapshot39/FINDINGS.md` option 2 avoids
+`/proc` entirely: ask `servicemanager`/`hwservicemanager` whether
+`android.system.keystore2.IKeystoreService/default` is registered, which proves
+publication without process state.
+
+### Two plan items that were wrong
+
+* Probe lines can **never** appear in the kernel snapshot slots: the snapshotter
+  copies the console ring, the probe writes the logdump block device. Disjoint
+  channels.
+* Run 2's SD logs are unrecoverable — the recorder opens
+  `/sdlog/snapshot28-kmsg.log` with `O_TRUNC` each boot, so each run overwrites
+  the last.
+
+### Artifact hygiene
+
+`porting/artifacts` went 4.4 G → 537 M: all snapshot ≤37 logs/dumps/images
+deleted, and the 64 MiB `*-preboot-*` / zero-readback payloads pruned after
+their sha256 were recorded in `snapshot39/manifest.json`.
+
+Two new tools, both self-pruning:
+
+* `porting/logging/clear-logdump.sh <tag>` — clears the partition, proves it is
+  all zeros, records the verdict and pre-clear sha256, then **deletes the 64 MiB
+  readback**.
+* `porting/logging/pull-run-evidence.sh <run> <image>` — pulls logdump, SD card
+  and both kernel snapshot slots, names everything `<tag>-run<N>-…`, prints the
+  probe summary.
+
+Every run's evidence is named and hashed in `snapshot39/manifest.json` (runs 1–7).
+Full write-up in `snapshot39/FINDINGS.md`.
+
+### Device state
+
+Phone returned to ROM after every run; `sys.boot_completed=1`, slot `_a`, root
+via Magisk `su`, battery 96%. The SD card is healthy this round — vold mounted
+it normally at `/mnt/media_rw/5483-0F14`, no `mmc1: error -110`.
+
+### Reproducing a run
+
+    cd porting/artifacts/snapshot39
+    ../../logging/pull-run-evidence.sh <n> boot-ack-snapshot39-daemon-probe.img
+    ../../logging/clear-logdump.sh snapshot39-run<n>
+    /tmp/snapshot33-capture-venv/bin/python ../../logging/usb-boot-capture.py \
+        --image ../boot-ack-snapshot39-daemon-probe.img \
+        --log snapshot39-run<n>-usb.log --adb-serial 2819f2320604 \
+        --status snapshot39-run<n>-usb-capture.status
+
+`fastboot boot` only; nothing is ever flashed and the slot is never changed.
