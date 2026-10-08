@@ -894,3 +894,90 @@ decodes to 45,170,104 B, all trailing bytes zero.
 
 Expected on the next boot, for the first time in this port: a panel that comes
 up, plus `qsee_send`/`qsee_ret` pairs around every qseecom SMC.
+
+## Snapshot42 run 1 — ROOT CAUSE FOUND: keymaster's third SMC never returns
+
+First run in this port with a **working display** and the **first correctly
+placed SCM trace**. Both long-running mysteries closed, and the stall is now
+pinned to a single instruction.
+
+### Evidence intact, both channels
+
+| artifact | bytes | note |
+|---|---|---|
+| `snapshot42-run1-logdump.bin` | 67108864 | content ends 65015811, zero tail |
+| `snapshot42-run1-sd-snapshot28-kmsg.log` | 431158 | mirror, starts at `DIAG: Android capture ready` |
+| `snapshot42-run1-kernel-snapshot-slot{0,1}.bin` | 1048576 each | both valid `DBGC` |
+
+Nothing was pruned. USB capture was **missed, not disabled**: pyserial was
+absent on this host so no reader was started; the gadget did enumerate
+(`18d1:9008`, `/dev/ttyACM0`, by-id `tissot-diag`) and was gone by the time the
+venv was built. USB symbols were `=y` in the shipping kernel too.
+
+### Display works
+
+```
+[    3.257893] msm_mdp 1a01000.display-controller: [drm:mdp5_kms_init] MDP5 version v1.16
+[    3.287049] [drm] Initialized msm 1.12.0 for 1a01000.display-controller on minor 0
+[    4.079267] mipi_dsi_attach / otm1911_probe
+[    4.154269] panel-otm1911: panel status 0x9c (downstream expects 0x9c)
+[   29.149916] panel-otm1911 1a94000.dsi.0: 1080x1920@60 24bpp dsi 4dl - ready
+```
+
+The fragment bug is confirmed on hardware. Panel status reads the expected
+`0x9c`, so the DSI link trains. A `drm_atomic_bridge_chain_pre_enable` trace
+appears at 4.07 s but the panel still reaches `ready`, so the modeset error is
+not fatal and its cause is **not** established.
+
+### Boot progression
+
+| | s41 run 1 | s42 run 1 |
+|---|---|---|
+| run length | 67.8 s | **393 s** |
+| keymaster started | never | pid 356 at 310.86 s |
+| `enablefilecrypto` | — | pid 383 at 349.23 s, still waiting |
+| zygote | no | **no** |
+| `scm 30000006` returns | n/a | 2 of 3 |
+
+### The stall, exactly
+
+`0x30000006` is **owner 48, svc 0, cmd 6** — precisely the call the *old*
+gate traced, which is why snapshot38's "13 sends, 12 returns" looked
+plausible. qseecom issues it three times:
+
+```
+[319.733076] smc 30000006 argc 7 call
+[320.555530] smc 30000006 -> 0            <-- returns
+[324.335398] smc 30000006 argc 7 call
+[327.554930] smc 30000006 -> 0            <-- returns
+[352.739763] smc 30000006 argc 7 call     <-- THIRD, never returns
+[357.843434] qcom_scm: spilled 7 args to carveout 0x00000000ff011000
+```
+
+The last line in the entire capture is the spill log for that third call. The
+SMC is issued, the 7 args are spilled to the carveout, and **no return is ever
+printed**. 41 s later the device is gone.
+
+Note the spill allocation succeeded — `0xff011000` — so this is not an
+allocation failure. The call reaches the hypervisor and TrustZone does not
+answer.
+
+### Why every earlier fix failed, in one line
+
+Each was applied to *getting the call out*. Loader, carveout spill, tzbuf,
+dma-buf locking, listener fallback — all proven working by these logs. The
+failure is on the way **back**.
+
+### What is established, and what is not
+
+Established: keymaster's third `0x30000006` never returns; the two identical
+preceding calls do; the spill succeeds; there is no panic, no oops, no
+`Call trace` in either snapshot slot; SELinux is not involved (zero denials
+name keymaster, tee or qsee).
+
+**Not established**: why TrustZone does not answer the third call. It may be
+a timeout inside TZ, a listener handshake that needs the compat ioctl path we
+have not exercised, or a secure-side resource leak across the first two
+transactions. Distinguishing those needs either a TZ-side trace or an
+experiment that varies what keymaster sends — not another observation of the
+same stall.
