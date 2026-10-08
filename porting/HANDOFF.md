@@ -852,3 +852,45 @@ Whether snapshot41's earlier cutoff is a behaviour change or run-to-run
 variance. Snapshot38 already recorded the endpoint varying 72.1–101.5 s, and
 keymaster simply had not started yet at 67.79 s — so this is most likely the
 same stall, reached before keymaster. **No new stall mechanism is claimed.**
+
+## Snapshot42 — display stack restored, qseecom trace relocated, packaged
+
+Built locally with `OUT_DIR=out-snapshot42 ./scripts/build-ack-tissot.sh`,
+which merges `scripts/tissot-ack.config` for the first time since snapshot25.
+
+**Config: 70 of the fragment's 80 built-ins now satisfied** (was 63 of 80).
+Verified gained vs the shipping kernel: `DRM_MSM`, `DRM_PANEL_OTM1911`,
+`DRM_MSM_{MDSS,MDP5,DPU,DSI,DSI_*_PHY,GPU_STATE}`, `DRM_FBDEV_EMULATION`,
+`FB_CORE`, `FB_SYSMEM_*`, `FONT_8x8`, `FRAMEBUFFER_CONSOLE`, `VT`,
+`VT_CONSOLE`, `DUMMY_CONSOLE`, `SECURITY_SELINUX_BOOTPARAM`, plus
+`MODULE_SIG_SHA1`. In the binary: `panel-otm1911`, `orisetech,otm1911`,
+`msm_drm` ×9, `fbcon` ×61.
+
+**The 10 still unmet are upstream-accurate, not regressions:**
+
+| symbol(s) | why |
+|---|---|
+| 8× `SND_SOC_QDSP6_*` | need parent `SND_SOC_QDSP6`, which `depends on QCOM_APR` — not in ACK 6.12. Audio is a separate porting project. |
+| `BT_QCOMSMD=y` | resolves to `=m`; both deps (`RPMSG`, `QCOM_WCNSS_CTRL`) are `=y`, so it is satisfiable as a module |
+| `USB_U_SERIAL_CONSOLE` | no Kconfig symbol exists in this tree at all |
+
+**SCM trace relocated.** Per snapshot41's finding, the trace now lives in
+`scm_call2_noretry()` (`include/soc/qcom/scm.h`) keyed on
+`SCM_OWNER_ID(smc_id) == 50` — the real qseecom chokepoint. Both
+`qsee_send` and `qsee_ret` templates verified present in the packaged kernel.
+This replaces the useless owner-48 gate in `__scm_smc_call`.
+
+**Packaging note.** The image is 35,969,024 bytes, 4,096 over the
+35,964,928 figure every earlier snapshot used. That number was a snapshot27
+convention, not a device limit: `boot_a` is 131072 sectors = 67,108,864 bytes
+(`tissot_backup_20261003/partitions.txt`). `package.py` now pads to the page
+grid above the payload and asserts against the real partition size.
+
+Image `porting/artifacts/boot-ack-snapshot42-display-scm.img`,
+35,969,024 bytes, SHA256
+`6b02892098ecb2c91f3267d130325473448d8ebfc4612a8bfe86507a023b6674`.
+Re-read from the finished file: kernel payload byte-identical, ramdisk
+decodes to 45,170,104 B, all trailing bytes zero.
+
+Expected on the next boot, for the first time in this port: a panel that comes
+up, plus `qsee_send`/`qsee_ret` pairs around every qseecom SMC.
