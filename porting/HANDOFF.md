@@ -798,3 +798,57 @@ the finished image: kernel payload byte-identical, ramdisk decodes to
 The experiment is now clean: one functional config symbol and one source
 change (the widened trace gate) separate this kernel from the one that produced
 snapshot40 run 1.
+
+## Snapshot41 run 1 — the trace gate was in the wrong function (answer found)
+
+The kernel booted and got **further** than snapshot40 in some ways and stopped
+**earlier** in others, but the decisive result is structural, not behavioural.
+
+| | snapshot40 run 1 | snapshot41 run 1 |
+|---|---|---|
+| stream ends | t=100.418822 | t=67.790712 |
+| last actor | keymaster pid 339 in ioctl `0xc0209703 nr 3` | `qseecom_canary_fn` tick 55, idle |
+| `keymaster` reached | started 99.976 s | **never started** |
+| `scm_send_desc` lines | 0 | **0** |
+| `/data` f2fs mount | succeeded | succeeded (65.108 s) |
+| listener register | took 1035 ms | `listener 4352 registered` 67.397 s |
+
+### Why zero trace lines: the gate never sees a qseecom call
+
+`trace_send` was widened in `__scm_smc_call()` — `qcom_scm-smc.c:203`. But
+**qseecom does not use `__scm_smc_call()`**. It calls `scm_call2()` /
+`scm_call2_noretry()` (`include/soc/qcom/scm.h:141,168`), which are
+`static inline` shims that build a `struct qcom_scm_desc` and call
+`scm_smc_call()` (`scm.h:155`) — a *different* entry point.
+
+So every snapshot35/38/40/41 `scm_send_desc` and `scm_pre` line in this port
+came from **remoteproc/IPA/RPM**, never from keymaster. The snapshot38 table
+("13 traced sends, 12 returned") was measuring the wrong subsystem the whole
+time. The `owner == 48` predicate was equally wrong: observed qseecom calls
+are **owner 50** (`0x32`), and `smc 32000206 -> -5` is 16× `-5` in this run.
+
+Corrected decode of what qseecom actually issues:
+
+| fnid | owner | svc | cmd | meaning |
+|---|---|---|---|---|
+| `0x32000201` | 50 | 2 | 1 | listener registration (returns 0) |
+| `0x32000206` | 50 | 2 | 6 | **returns −5, 16 times** |
+| `0x02000603` | 2 | 6 | 3 | non-QSEE (SCM owner 2) |
+
+`-5` on `0x32000206` is the same class of failure as snapshot28's "SCM error
+-5, ioctl reported -12", except that snapshot29's fix made it *silent*: the
+legacy fallback now absorbs it instead of logging. This run proves the -5 is
+still there and still 16×.
+
+### The fix, correctly placed
+
+Trace inside `scm_call2_noretry()` (the actual chokepoint for every qseecom
+call), keyed on `SCM_OWNER_ID(smc_id) == 50`, not on `__scm_smc_call()`'s
+owner-48 gate. That is a one-function change in `include/soc/qcom/scm.h`.
+
+### Not established
+
+Whether snapshot41's earlier cutoff is a behaviour change or run-to-run
+variance. Snapshot38 already recorded the endpoint varying 72.1–101.5 s, and
+keymaster simply had not started yet at 67.79 s — so this is most likely the
+same stall, reached before keymaster. **No new stall mechanism is claimed.**
