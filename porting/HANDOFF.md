@@ -1280,3 +1280,34 @@ dma-buf imports, `dcache_clean_inval_poc`, and the exported
 Next boot watch order: ION heap addresses, keymaster `sb_phys` in
 0xff000000+, then whether request 3 yields `callback listener` and a
 `listener ... response ... sglistinfo` line with a carveout PA.
+
+### Snapshot44 run 1 (2026-10-09, this Mac)
+
+Image `porting/artifacts/snapshot44/boot.img` (35145728 bytes, SHA256
+`5acb20a0…a925d0c`): Linux-built kernel `6.12.93-4k-g13a9c029e079`
+(Image.gz-dtb == Image.gz + DTB) + snapshot32 ramdisk with only `init`
+replaced (HEAD `init.c`, NDK r29, android35 static, `-DANDROID_CAPTURE`;
+665 cpio records, all others field/data identical) + run-11 cmdline
+(`console=ttynull`). Details in `package-verification.json`. Logdump cleared
+first (pre-clear hash == archived `run11-logdump.bin`). RAM-only
+`fastboot boot`; nothing flashed. Phone returned to ROM 4.19.325, slot _a,
+boot reason `bootloader`.
+
+- ION fix confirmed: `ION heap qsecom created at 0x00000000ff000000 with
+  size 1000000`, qsecom_ta at 0xfe800000; keymaster `sb_phys=0xff030000`
+  (run 11: 0xf9370000). Spill page now 0xff02f000.
+- Keymaster requests 1 and 2 (4/24 B) succeed exactly as in run 11
+  (interrupted once, resumed with returned registers, `attempts=2`).
+- No listener callback and no `listener … response` line; no third
+  keymaster ioctl captured.
+- Endpoints: USB last record 86.237836 s (`vdc: Waited 0ms for vold`, 1.34 s
+  after request 2); DBGC slot1 header 86.225 s, last printk 86.011 s; SD
+  545435 bytes, common extent matches logdump; witness canary 64, raw jiffies
+  4294913664 (≈85.47 s at HZ250), quiet 0. USB reader ended with
+  `[Errno 6] Device not configured` at host 114.7 s. No panic/WARN/lockup.
+- Same death window as runs 10/11: right after `vdc cryptfs enablefilecrypto`
+  connects to vold. Run 10 captured request 3 ~0.3 s after vdc reached vold;
+  this run's logs stop before that point.
+- New, unexplained: early kernel init is ~11 s slower than run 11 (gaps
+  after `Freeing initrd memory` 5.1 s and after `fuse: init` 3.9 s); qseecom
+  probes at 13.9 s vs 1.68 s. Not investigated.
