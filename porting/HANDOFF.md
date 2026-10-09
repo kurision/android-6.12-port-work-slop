@@ -616,12 +616,13 @@ Two new tools, both self-pruning:
 * `porting/logging/clear-logdump.sh <tag>` — clears the partition, proves it is
   all zeros, records the verdict and pre-clear sha256, then **deletes the 64 MiB
   readback**.
-* `porting/logging/pull-run-evidence.sh <run> <image>` — pulls logdump, SD card
-  and both kernel snapshot slots, names everything `<tag>-run<N>-…`, prints the
-  probe summary.
+* `porting/logging/pull-run-evidence.sh <run> <image>` — retains raw logdump,
+  its readable prefix and validated SD evidence as `run<N>-*`; slot validity
+  is reported without separate slot exports.
 
-Every run's evidence is named and hashed in `snapshot39/manifest.json` (runs 1–7).
-Full write-up in `snapshot39/FINDINGS.md`.
+Current snapshot38–42 folders retain only `boot.img` and `run<N>-*` logs.
+Former manifests, findings and separate slot exports were removed during cleanup;
+binary slots remain recoverable from each raw logdump.
 
 ### Device state
 
@@ -632,12 +633,12 @@ it normally at `/mnt/media_rw/5483-0F14`, no `mmc1: error -110`.
 ### Reproducing a run
 
     cd porting/artifacts/snapshot39
-    ../../logging/pull-run-evidence.sh <n> boot-ack-snapshot39-daemon-probe.img
-    ../../logging/clear-logdump.sh snapshot39-run<n>
-    /tmp/snapshot33-capture-venv/bin/python ../../logging/usb-boot-capture.py \
-        --image ../boot-ack-snapshot39-daemon-probe.img \
-        --log snapshot39-run<n>-usb.log --adb-serial 2819f2320604 \
-        --status snapshot39-run<n>-usb-capture.status
+    ../../logging/pull-run-evidence.sh <n> boot.img
+    # Run clear-logdump.sh from host scratch only after retaining prior evidence.
+    /tmp/ack-usb-venv/bin/python ../../logging/usb-boot-capture.py \
+        --image boot.img \
+        --log run<n>-usb.log --adb-serial 2819f2320604 \
+        --status /tmp/snapshot39-run<n>-usb-capture.status
 
 `fastboot boot` only; nothing is ever flashed and the slot is never changed.
 
@@ -724,45 +725,18 @@ the stall).
 Phone on installed ROM 4.19.325, root via Magisk `su`. Nothing flashed, slot
 untouched, SD card untouched.
 
-## Snapshot41 prep — widened SCM gate + live `selinux=0` (awaiting VM build)
+## Snapshot41 prep — widened SCM gate and SELinux boot parameter
 
-Two changes, no DT, no ramdisk, no config-fragment change:
+Historical changes: owner48/svc0 transport tracing was widened beyond cmd1/6;
+the build wrapper gained assertions for SELinux and its boot parameter.
+Cmd3 was not established as keymaster's missing secure transaction. An ioctl
+number is not an SMC command ID; snapshot42 actually captured owner48/cmd6.
 
-* `drivers/firmware/qcom/qcom_scm-smc.c`: `trace_send` is now
-  `owner == 48 && svc == 0`, was `cmd == 1 || cmd == 6`. The snapshot35 gate
-  excluded cmd `0x3` — the exact call keymaster stalls in. `__scm_smc_do_quirk`'s
-  `__ratelimit(HZ, 8)` still bounds `scm_pre` volume; `scm_send_desc` is not
-  rate-limited and is therefore the reliable indicator.
-* `scripts/build-ack-tissot.sh`: `CONFIG_SECURITY_SELINUX` and
-  `CONFIG_SECURITY_SELINUX_BOOTPARAM` added to the required-symbol assertion,
-  so a build that loses either fails before burning a boot.
-
-Verified locally: `make O=out drivers/firmware/qcom/qcom_scm-smc.o` compiles
-clean (NDK-independent, host clang 22.1.8, `ARCH=arm64 LLVM=1 LLVM_IAS=1`);
-both trace templates survive in the object. `bash -n` on the build script
-passes. No kernel `Image.gz` built on this host — the VM owns that.
-
-### The inert `selinux=0`, now explained
-
-The snapshot38 `Image.gz` embedded config says:
-
-    CONFIG_SECURITY_SELINUX=y
-    # CONFIG_SECURITY_SELINUX_BOOTPARAM is not set
-    CONFIG_SECURITY_SELINUX_DEVELOP=y
-
-`scripts/tissot-ack.config:137` has requested `BOOTPARAM=y` all along, so the
-VM builds are not running the fragment: they reuse an existing output
-directory seeded from the baseline config. That is why build14 saw the token
-consumed yet enforcing anyway, and why `current-port-progress.md` §14 listed
-three exhausted fork paths. The fix is not a rebuild-from-scratch, it is
-enabling the symbol in the SAME `out` directory. Full recipe, transfer list,
-six acceptance checks and the run-1 decision table:
-`porting/BUILD-snapshot41.md`.
-
-Expected decision table for the next boot is recorded there; short version:
-`scm_send_desc cmd=3` present → the driver sent it and TZ never answered;
-`scm_send_desc` absent → the stall is above `__scm_smc_call` and the ioctl
-never reached SCM at all.
+`scm_send_desc` is emitted after argument packing but before mutex acquisition
+and the raw instruction (`qcom_scm-smc.c:283–298`). Its presence does not prove
+SMC entry, and its absence in a finite capture does not prove no call occurred.
+The snapshot43 experiment keeps the packaged snapshot42 config/cmdline unchanged,
+including existing SELinux behavior; it does not add `selinux=0`.
 
 ## Snapshot41 built locally (this machine) and packaged
 
@@ -788,8 +762,9 @@ and one functional —
 Release `6.12.93-4k-g51fb88d9cdcf-dirty`. `Image.gz` 16,991,737 B,
 `Image.gz-dtb` 17,032,668 B, dtb 40,931 B.
 
-Image `porting/artifacts/boot-ack-snapshot41-scm-all.img`, 35,964,928 bytes,
-SHA256 `67c2887def1ae464b9da32b1d7e1ca1fb62662739b463e5bd8e915564c25200f`.
+Image `porting/artifacts/snapshot41/boot.img` (former root name
+`boot-ack-snapshot41-scm-all.img`), 35,964,928 bytes, SHA256
+`67c2887def1ae464b9da32b1d7e1ca1fb62662739b463e5bd8e915564c25200f`.
 665 ramdisk records, only `init` differs from the validated snapshot40 base,
 header diff limited to kernel size + regenerated SHA1, zero tail. Re-read from
 the finished image: kernel payload byte-identical, ramdisk decodes to
@@ -799,185 +774,448 @@ The experiment is now clean: one functional config symbol and one source
 change (the widened trace gate) separate this kernel from the one that produced
 snapshot40 run 1.
 
-## Snapshot41 run 1 — the trace gate was in the wrong function (answer found)
+## Snapshot41 run1 — preserved raw capture, SD retrieval failed
 
-The kernel booted and got **further** than snapshot40 in some ways and stopped
-**earlier** in others, but the decisive result is structural, not behavioural.
+`snapshot41/run1-logdump.log` decodes the raw text prefix: 221740 bytes,
+ending at seq1578/t=68.846442s with a binder service-manager message.
+`run1-sd-error.log` is only the 80-byte error
+`cat: /system/vendor/firmware_mnt/snapshot28-kmsg.log: No such file or directory`;
+it is not kmsg and supplies no independent corroboration.
 
-| | snapshot40 run 1 | snapshot41 run 1 |
-|---|---|---|
-| stream ends | t=100.418822 | t=67.790712 |
-| last actor | keymaster pid 339 in ioctl `0xc0209703 nr 3` | `qseecom_canary_fn` tick 55, idle |
-| `keymaster` reached | started 99.976 s | **never started** |
-| `scm_send_desc` lines | 0 | **0** |
-| `/data` f2fs mount | succeeded | succeeded (65.108 s) |
-| listener register | took 1035 ms | `listener 4352 registered` 67.397 s |
+No anchored shim `qsee_send` entries appear in this raw capture. The outer
+wrapper records two info-query pairs, eight `0x32000206` pairs and eight
+`0x32000201` pairs. The former returning mapped `-EIO` then successfully
+falling back to the latter is supported listener-registration behavior
+(`drivers/misc/qseecom.c:854–865`), not a newly discovered transport fault.
 
-### Why zero trace lines: the gate never sees a qseecom call
+The former bypass explanation was incorrect: `scm_smc_call` is a macro
+expanding directly to `__scm_smc_call` (`include/soc/qcom/scm.h:109–114`).
+Owner48 is the app transport, owner50 includes listener/session operations.
+Owner48 tracing is relevant to QSEE, not restricted to remoteproc/RPM.
+Snapshot41's earlier endpoint does not establish a new stall mechanism.
 
-`trace_send` was widened in `__scm_smc_call()` — `qcom_scm-smc.c:203`. But
-**qseecom does not use `__scm_smc_call()`**. It calls `scm_call2()` /
-`scm_call2_noretry()` (`include/soc/qcom/scm.h:141,168`), which are
-`static inline` shims that build a `struct qcom_scm_desc` and call
-`scm_smc_call()` (`scm.h:155`) — a *different* entry point.
+## Snapshot42 — preserved display-config baseline
 
-So every snapshot35/38/40/41 `scm_send_desc` and `scm_pre` line in this port
-came from **remoteproc/IPA/RPM**, never from keymaster. The snapshot38 table
-("13 traced sends, 12 returned") was measuring the wrong subsystem the whole
-time. The `owner == 48` predicate was equally wrong: observed qseecom calls
-are **owner 50** (`0x32`), and `smc 32000206 -> -5` is 16× `-5` in this run.
-
-Corrected decode of what qseecom actually issues:
-
-| fnid | owner | svc | cmd | meaning |
-|---|---|---|---|---|
-| `0x32000201` | 50 | 2 | 1 | listener registration (returns 0) |
-| `0x32000206` | 50 | 2 | 6 | **returns −5, 16 times** |
-| `0x02000603` | 2 | 6 | 3 | non-QSEE (SCM owner 2) |
-
-`-5` on `0x32000206` is the same class of failure as snapshot28's "SCM error
--5, ioctl reported -12", except that snapshot29's fix made it *silent*: the
-legacy fallback now absorbs it instead of logging. This run proves the -5 is
-still there and still 16×.
-
-### The fix, correctly placed
-
-Trace inside `scm_call2_noretry()` (the actual chokepoint for every qseecom
-call), keyed on `SCM_OWNER_ID(smc_id) == 50`, not on `__scm_smc_call()`'s
-owner-48 gate. That is a one-function change in `include/soc/qcom/scm.h`.
-
-### Not established
-
-Whether snapshot41's earlier cutoff is a behaviour change or run-to-run
-variance. Snapshot38 already recorded the endpoint varying 72.1–101.5 s, and
-keymaster simply had not started yet at 67.79 s — so this is most likely the
-same stall, reached before keymaster. **No new stall mechanism is claimed.**
-
-## Snapshot42 — display stack restored, qseecom trace relocated, packaged
-
-Built locally with `OUT_DIR=out-snapshot42 ./scripts/build-ack-tissot.sh`,
-which merges `scripts/tissot-ack.config` for the first time since snapshot25.
-
-**Config: 70 of the fragment's 80 built-ins now satisfied** (was 63 of 80).
-Verified gained vs the shipping kernel: `DRM_MSM`, `DRM_PANEL_OTM1911`,
-`DRM_MSM_{MDSS,MDP5,DPU,DSI,DSI_*_PHY,GPU_STATE}`, `DRM_FBDEV_EMULATION`,
-`FB_CORE`, `FB_SYSMEM_*`, `FONT_8x8`, `FRAMEBUFFER_CONSOLE`, `VT`,
-`VT_CONSOLE`, `DUMMY_CONSOLE`, `SECURITY_SELINUX_BOOTPARAM`, plus
-`MODULE_SIG_SHA1`. In the binary: `panel-otm1911`, `orisetech,otm1911`,
-`msm_drm` ×9, `fbcon` ×61.
-
-**The 10 still unmet are upstream-accurate, not regressions:**
-
-| symbol(s) | why |
-|---|---|
-| 8× `SND_SOC_QDSP6_*` | need parent `SND_SOC_QDSP6`, which `depends on QCOM_APR` — not in ACK 6.12. Audio is a separate porting project. |
-| `BT_QCOMSMD=y` | resolves to `=m`; both deps (`RPMSG`, `QCOM_WCNSS_CTRL`) are `=y`, so it is satisfiable as a module |
-| `USB_U_SERIAL_CONSOLE` | no Kconfig symbol exists in this tree at all |
-
-**SCM trace relocated.** Per snapshot41's finding, the trace now lives in
-`scm_call2_noretry()` (`include/soc/qcom/scm.h`) keyed on
-`SCM_OWNER_ID(smc_id) == 50` — the real qseecom chokepoint. Both
-`qsee_send` and `qsee_ret` templates verified present in the packaged kernel.
-This replaces the useless owner-48 gate in `__scm_smc_call`.
-
-**Packaging note.** The image is 35,969,024 bytes, 4,096 over the
-35,964,928 figure every earlier snapshot used. That number was a snapshot27
-convention, not a device limit: `boot_a` is 131072 sectors = 67,108,864 bytes
-(`tissot_backup_20261003/partitions.txt`). `package.py` now pads to the page
-grid above the payload and asserts against the real partition size.
-
-Image `porting/artifacts/boot-ack-snapshot42-display-scm.img`,
-35,969,024 bytes, SHA256
+Authoritative image: `porting/artifacts/snapshot42/boot.img` (former root name
+`boot-ack-snapshot42-display-scm.img`), 35969024 bytes, SHA256
 `6b02892098ecb2c91f3267d130325473448d8ebfc4612a8bfe86507a023b6674`.
-Re-read from the finished file: kernel payload byte-identical, ramdisk
-decodes to 45,170,104 B, all trailing bytes zero.
+Its embedded compiler is Android Clang/LLD21.0.0, not host22.1.8
+(`run1-logdump.log:13` and extracted IKCONFIG).
 
-Expected on the next boot, for the first time in this port: a panel that comes
-up, plus `qsee_send`/`qsee_ret` pairs around every qseecom SMC.
+The packaged kernel carries owner50 shim markers named `snapshot41 qsee_send`
+and `qsee_ret`; owner48 transactions use the existing outer wrapper and lower
+transport trace. The lower gate was not bypassed. The current snapshot43
+source adds owner48/50 shim coverage and explicitly places entry before the
+call; marker presence in a binary alone cannot establish placement.
 
-## Snapshot42 run 1 — ROOT CAUSE FOUND: keymaster's third SMC never returns
+DRM/panel/config and panel-ready/DCS observations are driver evidence.
+No directly observed visible screen/rendered Android content is retained.
+The image remains the baseline; cancelled partial host relink output was not used.
 
-First run in this port with a **working display** and the **first correctly
-placed SCM trace**. Both long-running mysteries closed, and the stall is now
-pinned to a single instruction.
+## Snapshot42 run1 — capture cutoff during spill/descriptor preparation
 
-### Evidence intact, both channels
+**Verdict: no proven TrustZone root cause or permanent SMC nonreturn.**
+The fresh raw text prefix ends before the third app transaction's descriptor,
+mutex and raw-instruction markers. No raw entry is captured for that transaction.
 
-| artifact | bytes | note |
-|---|---|---|
-| `snapshot42-run1-logdump.bin` | 67108864 | content ends 65015811, zero tail |
-| `snapshot42-run1-sd-snapshot28-kmsg.log` | 431158 | mirror, starts at `DIAG: Android capture ready` |
-| `snapshot42-run1-kernel-snapshot-slot{0,1}.bin` | 1048576 each | both valid `DBGC` |
+### Preserved streams, analyzed separately
 
-Nothing was pruned. USB capture was **missed, not disabled**: pyserial was
-absent on this host so no reader was started; the gadget did enumerate
-(`18d1:9008`, `/dev/ttyACM0`, by-id `tissot-diag`) and was gone by the time the
-venv was built. USB symbols were `=y` in the shipping kernel too.
+Raw partition is exactly 67108864 bytes. Its first NUL is at431158; the
+431158-byte readable prefix equals SD byte-for-byte and ends in a complete
+LF-terminated record. Binary slots begin at62914560/63967232; later nonzero
+bytes are not an extension of the fresh text stream. The disputed byte
+at65015812 is zero and lies inside slot1's binary payload.
 
-### Display works
+| stream | bytes of readable text | kmsg records | owner50 shim sends/returns | outer app `30000006` sends/returns | final seq/time |
+|---|---:|---:|---:|---:|---|
+| `snapshot42/run1-logdump.log` | 431158 | 2416 | 17/17 | 3/2 | 2415 / 357.843434s |
+| `snapshot42/run1-sd.log` | 431158 | 2416 | 17/17 | 3/2 | 2415 / 357.843434s |
 
+Each stream's 17 chronological shim pairs, keyed by PID/fnid, comprise eight
+`32000206`, eight `32000201` and one `32000103`; no orphan shim return.
+No owner48 shim pair is claimed from this baseline's owner50-only shim gate.
+The outer wrapper has22 entries/21 returns including two info-query pairs.
+`qsee_send_desc` is never counted as a shim `qsee_send`.
+USB was not retained for snapshot42, so no USB endpoint/count is available.
+Equal durable streams share `write_capture`/`dump_log`; they are not proof
+that all CPUs stopped or that later records could never have been committed.
+
+Chronology below was paired inside each stream independently; identical
+bytes yield the same observations, not a merged trace.
+
+| stream | request length | outer entry seq/time | outer return seq/time |
+|---|---:|---|---|
+| raw prefix | 4 | 2307 / 319.733076s | 2314 / 320.555530s, errno0 |
+| raw prefix | 24 | 2328 / 324.335398s | 2339 / 327.554930s, errno0 |
+| raw prefix | 1164 | 2411 / 352.739763s | not captured |
+| SD | 4 | 2307 / 319.733076s | 2314 / 320.555530s, errno0 |
+| SD | 24 | 2328 / 324.335398s | 2339 / 327.554930s, errno0 |
+| SD | 1164 | 2411 / 352.739763s | not captured |
+
+Descriptors (`run1-logdump.log:3895,3946,4191`, same SD lines) use request
+PA0xf9370000 and response PA0xf9370004/0xf9370018/0xf937048c;
+response lengths40956/40936/39796. SG PA0xff010000, length32/count0,
+app65537 and argc7 recur, but the requests are not identical.
+Both streams show independent later kmsg progress after the unpaired outer
+entry: canary PID382 at353.764080s/355.492056s and init PID1 at354.444971s
+(seq2412–2414). No later progress is retained after the final spill record:
+`qcom_scm: spilled 7 args to carveout 0x00000000ff011000 (svc 0 cmd 6)`.
+The 5.103671s entry-to-spill interval includes setup, allocation, packing,
+scheduling and printk; it is not a measured coherent-allocation duration.
+357.843434s is a device-log timestamp, not host capture duration or a393s boot.
+
+Warning traces do exist: seq196 at0.455484s in `ramoops_snap`, RCU stalls
+seq597 at14.858718s and seq641 at28.995986s, plus display/IRQ traces.
+No panic/reset conclusion follows from absence of panic text in the final
+transaction window. Panel status0x9c and ready at29.149916s establish driver
+activity only; visual Android display success remains unobserved.
+
+### Source comparison and unresolved boundary
+
+`include/soc/qcom/qseecomi.h:685–694` defines `0x30000006` as
+`TZ_APP_QSAPP_SEND_DATA_WITH_WHITELIST_ID`, seven args with arginfo0x8887.
+`drivers/misc/qseecom.c:978–1007` maps app ID, request PA/length,
+response PA/length, SG PA/length in that order.
+The first two captured `scm_send_desc` records show64-bit spill width,56-byte
+allocation and raw function0x70000006 (SMC64 convention bit on top of
+logical0x30000006); the second also shows an interrupted resume with
+a0=1/a6=1 (`run1-logdump.log:3907–3909,3958–3960`).
+
+Current `qcom_scm-smc.c:221–254` passes args0–2 in a2–a4 and spill PA in a5,
+packing args3 onward as little-endian32/64 values according to convention.
+The donor `../kernel_xiaomi_msm8953/drivers/soc/qcom/scm.c:315–348,375–386`
+uses the same register/extra-argument split and selected32/64 width.
+It allocates PAGE_ALIGN(sizeof extra args), explicitly flushes its cached
+shared allocation, then serializes the synchronous instruction under
+`scm_lock` and retries only returned EBUSY (`:351–410`).
+Current coherent DMA allocation (`qseecom.c:9753–9761`) writes the packed
+buffer before lock/raw call and frees only after transport completion
+(`qcom_scm-smc.c:298–311`). Its56-byte requested allocation differs from
+the donor's page-sized request; a numeric difference alone is not an ABI
+failure or permission to copy cached-memory flushes into coherent DMA.
+
+Captured shared pool0xff000000..0xffffffff contains SG0xff010000 and
+spill0xff011000; TA pool is0xfe800000..0xfeffffff
+(`run1-logdump.log:21–26`). Request/response occupy0xf9370000..0xf937a000,
+outside those named pools and below4GiB, within the captured generic16MiB
+CMA range starting0xf9200000. This is an observed placement difference,
+not established XPU rejection: secure accessibility policy is not captured
+and the first two transactions completed with the same request base.
+No captured source-supported register-width, argument-order or physical-range
+violation establishes the third cutoff's cause.
+
+Raw a0 is transport status; current remap uses -1→-EIO, -5→-ENOMEM,
+-12→-EBUSY (`qcom_scm.h:169–194`). Returned a1–a3 become desc.ret0–2 and
+QSEOS result/type/data (`qcom_scm-smc.c:305–311`, `qseecom.c:1316–1324`).
+The outer errno0 is not by itself listener/application success.
+WAITQ_SLEEP raw a0=2 enters IRQ-driven completion handling
+(`qcom_scm-smc.c:127–160`, `qcom_scm.c:1864–1913`), distinct from
+post-return QSEOS incomplete-result callbacks/listener-response waits
+(`qseecom.c:2193–2215,2251–2285,2341–2348`). No WAITQ or final-transaction
+listener traversal is proven by this finite capture; absent ratelimited
+markers remain inconclusive. Existing `32000206` mapped-EIO→`32000201`
+success is the supported fallback, not an unexplained listener fault.
+
+Whitelist detection remains unchanged (`qseecom.c:9328–9346,9594`).
+Transport failure leaves version0 and enabled0; threshold1.0.0 is0x400000.
+0x1001000 in feature format is4.1.0 and legitimately exceeds the threshold.
+Equal base/feature numbers cannot establish firmware ignoring feature IDs.
+The new probe logs actual transport/version/decision; none is measured in a
+snapshot43 boot yet. Do not disable whitelist to manufacture agreement.
+
+`porting/findings/05-prior-art.md` and
+`porting/upstream-refs/prior-art-msm8953-mainline-6.12-tissot.dts` remain
+hardware/display/USB/SD wiring references, not proprietary-QSEE protocol proof.
+Secure-call nonreturn, reset loss and logger/storage loss remain unresolved.
+No cancellation, concurrent secure probe, cache hack, encryption change,
+singleton spill or watchdog experiment was introduced.
+
+## Snapshot43 — local build verified; one controlled boot captured
+
+`porting/artifacts/snapshot43/boot.img`:35969024 bytes, SHA256
+`02ca18c4e9bfdab3d8b23d40cff2bcb20c913cc9dd1991aafb463b053315e455`.
+Fresh `out-snapshot43`, NDK29 Clang/LLD21, exact6803 parsed config values
+equal packaged snapshot42 after olddefconfig and both make targets.
+Release `6.12.93-4k-gc77450356be7-dirty`. gzip integrity passes.
+DTB40931 bytes remains byte-identical, SHA256
+`18a1081e6ed523e174e9070814dade0b1425c490996f7d2e325a7a7a9947aae8`.
+Static Android35 init compiled with -Wall/-Wextra/-Werror.
+Packaging gates passed:665 cpio records, exactly one executable init,
+all non-init records/tail unchanged, only init data/filesize replaced,
+v0/page2048 header changes confined to sizes/ID, recomputed SHA1+12 zeros,
+exact payloads and zero padding. Only boot.img was published.
+Build/packaging/analysis records are under `out-snapshot43/diagnostics`.
+Build completed with duplicate BTF-ID warnings; no build error.
+
+Collector trust regression passed through the real collector with isolated adb
+fixtures: matching text, valid/corrupt slots, cat-error stdout/status, stale SD,
+short/oversized raw, failed remote SD despite valid text, both-channel failure
+and refusal before any remote action when outputs exist. It requires shell-v2
+`adb shell -T`; legacy exec-out merges dd stderr and loses remote exit status
+([AOSP shell transport](https://android.googlesource.com/platform/system/adb/+/master/shell_service.cpp?format=HTML)).
+Host daemon/ramoops checks both PASS. A throwaway raw-helper smoke preserved
+A6 across interrupted resumes and emitted one first entry/return/done despite
+suppressed ratelimit. Actual compiled Image contains all eight new templates;
+source placement, not strings alone, was checked.
+
+Initial preflight found no phone; USB subsequently returned and the authorized
+run proceeded. Before reboot, USB device2819f2320604, Magisk root, installed
+ROM4.19.325, boot_completed=1, slot_a and sysfs card typeSD were verified.
+Prior raw and historical SD text were archived under
+`out-snapshot43/diagnostics/run1-preboot-a8759dpk`; raw SHA256
+`d26a27b2e499c60d907b30dc6568256573cdd783e8bf68d46c5721a772995864`.
+Prior SD text equals retained snapshot42 SD. The clear script ran from build
+scratch and proved all64MiB zero before the boot.
+
+Executed once, with the existing USB reader started before the reboot/fastboot
+sequence; host1020s deadline was not reached:
+```sh
+timeout --signal=INT --kill-after=5s 1020s /tmp/ack-usb-venv/bin/python \
+  porting/logging/usb-boot-capture.py \
+  --image porting/artifacts/snapshot43/boot.img \
+  --log porting/artifacts/snapshot43/run1-usb.log \
+  --status out-snapshot43/diagnostics/run1-usb-capture.status \
+  --adb-serial 2819f2320604
+# Executed after USB returned to the installed ROM; no second temporary boot:
+(cd porting/artifacts/snapshot43 && \
+  ADB_SERIAL=2819f2320604 ../../logging/pull-run-evidence.sh 1 boot.img)
 ```
-[    3.257893] msm_mdp 1a01000.display-controller: [drm:mdp5_kms_init] MDP5 version v1.16
-[    3.287049] [drm] Initialized msm 1.12.0 for 1a01000.display-controller on minor 0
-[    4.079267] mipi_dsi_attach / otm1911_probe
-[    4.154269] panel-otm1911: panel status 0x9c (downstream expects 0x9c)
-[   29.149916] panel-otm1911 1a94000.dsi.0: 1080x1920@60 24bpp dsi 4dl - ready
-```
 
-The fragment bug is confirmed on hardware. Panel status reads the expected
-`0x9c`, so the DSI link trains. A `drm_atomic_bridge_chain_pre_enable` trace
-appears at 4.07 s but the panel still reaches `ready`, so the modeset error is
-not fatal and its cause is **not** established.
+Fastboot reported successful35126KB RAM download and boot (1.843s total).
+USB opened `/dev/ttyACM0`; capture ended on the reader error
+`device reports readiness to read but returned no data (device disconnected or multiple access on port?)`.
+The reason string does not distinguish hardware disconnection from another
+port reader. No EOF marker was captured; host elapsed461.9s, not a kernel
+timestamp. A bounded USB-device wait then completed and root ROM4.19.325,
+boot_completed=1 and unchanged slot_a were verified. Nothing was flashed.
 
-### Boot progression
+### Run1 evidence and chronological boundary
 
-| | s41 run 1 | s42 run 1 |
-|---|---|---|
-| run length | 67.8 s | **393 s** |
-| keymaster started | never | pid 356 at 310.86 s |
-| `enablefilecrypto` | — | pid 383 at 349.23 s, still waiting |
-| zygote | no | **no** |
-| `scm 30000006` returns | n/a | 2 of 3 |
+The collector read only the new `ack-kmsg.log` on the verified SD card.
+Raw retrieval passed the exact 64MiB/status gate; SD and its entire 421971-byte
+common extent matched without merging streams. No stale snapshot28 fallback
+was used.
+Both binary slots validate in memory: slot0 seq193/t432.704478584s;
+slot1 seq192/t430.576493116s. Slot exports/status/intermediates remain out of
+the snapshot folder.
 
-### The stall, exactly
+| stream | retained bytes | kmsg records | all shim entries/returns | app `30000006` entries/returns | last seq/time |
+|---|---:|---:|---:|---:|---|
+| `run1-usb.log` | 227148 | 2007 | 20/19 | 3/2 | 2006 / 433.958900s |
+| `run1-logdump.bin` + `run1-logdump.log` | 67108864 + 421971 | 2007 | 20/19 | 3/2 | 2006 / 433.958900s |
+| `run1-sd.log` | 421971 | 2007 | 20/19 | 3/2 | 2006 / 433.958900s |
 
-`0x30000006` is **owner 48, svc 0, cmd 6** — precisely the call the *old*
-gate traced, which is why snapshot38's "13 sends, 12 returns" looked
-plausible. qseecom issues it three times:
+Each stream was paired independently by PID/fnid: eight `32000206` pairs,
+eight successful `32000201` fallback pairs, one `32000103` pair and two
+completed `30000006` pairs. The sole unpaired shim entry is PID371/app cmd6;
+there are no orphan returns. All2007 kmsg records match byte-for-byte between
+USB, raw text and SD, contiguous seq0–2006. Raw text and SD also match their
+additional DIAG samples exactly; USB is not a byte-identical whole-file copy.
+Every final record is complete and LF-terminated.
 
-```
-[319.733076] smc 30000006 argc 7 call
-[320.555530] smc 30000006 -> 0            <-- returns
-[324.335398] smc 30000006 argc 7 call
-[327.554930] smc 30000006 -> 0            <-- returns
-[352.739763] smc 30000006 argc 7 call     <-- THIRD, never returns
-[357.843434] qcom_scm: spilled 7 args to carveout 0x00000000ff011000
-```
+| stream | request bytes | corrected shim entry | corrected shim return | raw first return / completion |
+|---|---:|---|---|---|
+| USB | 4 | seq1869 / 380.923896s | seq1883 / 383.280771s, errno0 | a0=0, attempts1 |
+| USB | 24 | seq1896 / 384.820372s | seq1909 / 387.184275s, errno0 | a0=1, attempts2, final a0=0 |
+| USB | 1164 | seq1985 / 424.531546s | not captured | a0=1; completion not captured |
+| raw prefix | 4 | seq1869 / 380.923896s | seq1883 / 383.280771s, errno0 | a0=0, attempts1 |
+| raw prefix | 24 | seq1896 / 384.820372s | seq1909 / 387.184275s, errno0 | a0=1, attempts2, final a0=0 |
+| raw prefix | 1164 | seq1985 / 424.531546s | not captured | a0=1; completion not captured |
+| SD | 4 | seq1869 / 380.923896s | seq1883 / 383.280771s, errno0 | a0=0, attempts1 |
+| SD | 24 | seq1896 / 384.820372s | seq1909 / 387.184275s, errno0 | a0=1, attempts2, final a0=0 |
+| SD | 1164 | seq1985 / 424.531546s | not captured | a0=1; completion not captured |
 
-The last line in the entire capture is the spill log for that third call. The
-SMC is issued, the 7 args are spilled to the carveout, and **no return is ever
-printed**. 41 s later the device is gone.
+Descriptors retain the differing4/24/1164-byte requests and their corresponding
+response PA/lengths; seven-argument order,64-bit spill width and0xff011000
+spill PA match the snapshot42 source mapping above.
+For the1164-byte request, all three streams capture allocation/descriptor,
+mutex wait at426.243299s, acquisition at426.263971s, first raw entry
+at426.305357s, and first raw return at427.128261s with
+a0=1/a1=0x8887/a2=0x10001/a3=0xf9370000.
+`QCOM_SCM_INTERRUPTED` is1 (`qcom_scm.h:176`), not WAITQ_SLEEP2 or mapped
+errno. Eight later `scm_pre` records show a0=1/a6=1 between427.949173s and
+433.771896s, establishing continued interrupted-resume preparation.
+Source `qcom_scm-smc.c:66–87` only reaches each subsequent resume after the
+preceding instruction returned INTERRUPTED, preserving A6. Ratelimiting
+means these eight prints are a lower bound, not a total attempt counter;
+the last pre-print alone does not prove that next instruction executed.
+No final `scm_raw_done`/shim return is captured for this transaction.
 
-Note the spill allocation succeeded — `0xff011000` — so this is not an
-allocation failure. The call reaches the hypervisor and TrustZone does not
-answer.
+After the first raw return, independent canary PID387 advances at427.206930,
+428.966919,430.630900,432.294943 and433.958900s. The last complete record
+is `snapshot35 qsee_canary tick=281 state=2`, later than the final resume
+preparation record. No independent progress is retained after that endpoint.
+No WAITQ or QSEOS listener-callback marker was captured; absence of
+ratelimited WAITQ prints alone remains inconclusive. The observed boundary
+is before final interrupted-resume completion, not a listener-response wait.
 
-### Why every earlier fix failed, in one line
+Whitelist probe completes exactly once per stream at18.120308s:
+`pid=1 ret=0 version=0x401000 enabled=1` (feature1.1.0).
+This measured feature version differs from base/app version0x1001000;
+detection was not forced off. No visual screen observation was available;
+panel/DCS logs remain driver evidence, not visual Android success.
 
-Each was applied to *getting the call out*. Loader, carveout spill, tzbuf,
-dma-buf locking, listener fallback — all proven working by these logs. The
-failure is on the way **back**.
+**Verdict: capture cutoff during interrupted-resume handling.** The first raw
+SMC did return, and independent progress continued afterward. There is no proof
+of EL3 permanently spinning, an indefinitely blocked individual instruction,
+an all-CPU freeze, or a particular reset cause. No speculative fix/second boot.
+Detailed per-stream chronology and capture status are under
+`out-snapshot43/diagnostics/run1-stream-analysis.json` and
+`run1-capture-summary.json`; all three requested channels are retained.
 
-### What is established, and what is not
 
-Established: keymaster's third `0x30000006` never returns; the two identical
-preceding calls do; the spill succeeds; there is no panic, no oops, no
-`Call trace` in either snapshot slot; SELinux is not involved (zero denials
-name keymaster, tee or qsee).
+## Snapshot43 findings through run 11 (2026-10-09) — observations and proof limits
 
-**Not established**: why TrustZone does not answer the third call. It may be
-a timeout inside TZ, a listener handshake that needs the compat ioctl path we
-have not exercised, or a secure-side resource leak across the first two
-transactions. Distinguishing those needs either a TZ-side trace or an
-experiment that varies what keymaster sends — not another observation of the
-same stall.
+Authoritative reports:
+`porting/findings/10-snapshot43-console-abi-capturedeath-20261009.md` and
+`porting/findings/11-session-report-spill-blocker-20261009.md`.
+This current summary supersedes the conclusions in earlier historical
+narratives above; those narratives are preserved as run-era accounts.
+
+**Artifact retention:** only snapshot43 run10/run11 logs and evidence are
+tracked in Git. Earlier-run measurements below were previously verified
+before repository pruning; older evidence remains local and ignored, not
+part of the committed evidence set. The reports record that earlier review,
+not a claim that pruned artifacts can be freshly checked from this checkout.
+
+### ABI, console timing, and third-request coverage
+
+- The two small requests (4 and 24 bytes) in each of runs 3 and 11 preserve
+  x1–x5 on their first interrupted returns. ACK original-argument and donor
+  returned-register feedback agree for the next resume's x0–x6 in those
+  four observations. Success changes x1–x5, including zeroing x4/x5.
+  Returned x4/x5 for the repeatedly interrupted 1164-byte request remain
+  unobserved: this is not firmware-wide ABI closure.
+- `scm_capture_result_regs()` captures x0–x7 for the first three attempts
+  per traced owner-48/service-0 invocation, not exclusively keymaster by
+  name. Both resume loops repeat while the interrupted return is 1;
+  their full call environments are not established as equivalent.
+- Run-3 interrupted-return→success log intervals are 376/2626 µs for
+  4/24 bytes; resume-pre→success intervals are 234/2541 µs. Run-11 pairs
+  are 360/364 µs and 262/271 µs. These include instrumentation and possible
+  scheduling, not isolated firmware latency or a timing of command 3.
+- Console-associated slowdown is real: matched first-request
+  `qsee_send_desc` markers are 396.269012 s in run 2 and 77.403896 s in
+  run 3 (318.865116 s difference). This is not boot completion, a universal
+  per-print cost, or proof of a DSI-clock mechanism. The packaged cmdline
+  omits tty0; ramoops/ttynull consoles remain.
+- Run 1 captures repeated third-request SMC interruptions. Run 2 reaches
+  spilling at 423.164424 s; no-tty0 run 8 reaches the 1164-byte send path
+  at 94.610903 s and ends at `qsee_send` 94.611040 s. Run 10 reaches
+  `req_len=1164` at 77.354949 s and ends at `qsee_send` 77.358032 s,
+  without a retained spill log or raw entry/return for that request.
+  Run 11 has no captured 1164-byte request. Preparation does not prove
+  raw SMC entry, and a cutoff does not prove the request never returned.
+
+### Runs 10–11: lazy spill reuse, not a demonstrated root cause
+
+Matched `qsee_send`→`qsee_ret` printk-site intervals for the 4/24-byte
+requests are **49.397/122.971 ms in run 10** and **6.860/3.330 ms in run 11**.
+Run 10 uses 9/7 raw attempts versus run 11's 2/2. These whole-call
+intervals include spill preparation, instrumentation, scheduling and SCM
+execution/resumes; they do not isolate allocation or establish causality.
+
+Current `qseecom_spill_alloc()` lazily allocates a persistent coherent page
+with `dma_alloc_coherent(..., GFP_KERNEL)` on first use and reuses it.
+The mutex remains held until free after SCM returns; atomic/non-reclaim
+or oversized requests retain the allocator path. Run 11 logs first
+allocation at 97.697850 s and reuses PA 0xff011000 for the second small
+send. First-use allocation still occurs in the SMC path. The run-era
+direct-reclaim/eMMC source-comment assertion was corrected before commit;
+upstream pool motivations do not prove this board's failure.
+
+Run 11 boots `boot-ack-snapshot43-spillfix.img`, build #8, build ID
+`64c446eb679a208effab5d2376a9a58f98de52b3`. Its USB tail ends after
+`installkey /data` succeeds, not inside an observed third SMC. Neither
+the image name nor the endpoint establishes boot completion or a resolved
+firmware issue. Suspected eMMC/logdump blockage, allocation/reclaim delay,
+TZ behavior and subsequent kernel state remain open.
+
+### Witness and capture endpoints
+
+| run | USB last kernel record (s) | durable-prefix last record (s) | DBGC header timestamps (s; slot 0 / slot 1) |
+|---|---:|---:|---|
+| 10, targeted comparison | 77.358032 | 74.574141 | 73.845639711 / 75.893972054 |
+| 11 | 98.625345 | 94.713096 | 97.234002879 / 95.187535015 |
+
+Run-11 SD mirror last record is 94.712899 s; DBGC payload last-printk
+times are 97.123422/95.181923 s. Headers precede payload writes, so they
+do not prove payload completion. Last records are not measured recorder
+stop instants, and simultaneous channel termination is not established.
+Host capture elapsed time (121.0 s in run 11) is a different clock.
+
+Historical RAM witnesses and the current partition witness are distinct:
+runs 5–7 show ioremap WARNs; runs 8–9 show arming at 0x868f7000, not
+per-write confirmation or retained previous-record readback. ROM overwrite,
+reset clearing and other writes remain hypotheses. Zero-byte USB reader
+errors do not identify host, gadget, disconnect or competing-access cause.
+
+The saved run-11 partition record at `0x3f00000` decodes as magic
+`0x5354414c4c574751`, canary 85, jiffies 4294915776, quiet 0, realtime
+138394. The field called `boot_id` is per-write realtime, not a stable
+run ID; the changed run-10 record and run-11 audit realtime support
+run-11 attribution **[INFERENCE]**. Conditional on the binary matching the
+inspected HZ250 config and nonzero INITIAL_JIFFIES baseline, elapsed ticks
+are **93.920 s**. Image-matched config provenance remains unverified.
+
+That witness precedes the durable cutoff by about 0.793 s. USB directly
+shows later execution, including canary tick 94 at 97.989529 s, through
+98.625345 s. The next witness opportunity after its five-second sleep is
+no earlier than 98.920 s, beyond the USB tail: there is no blocked-write
+or frozen-witness proof, nor witness evidence after all captures end.
+The watchdog records the previous canary/quiet sample before updating it,
+allowing one polling interval plus I/O latency of lag. It synchronously
+writes before checking the canary and ignores write errno; a blocked write
+could prevent its detection/dump, but that possibility is not observed here.
+Plain witness writes have no own flush/FUA and are not a general reset-
+durability guarantee. Old/missing records cannot distinguish storage
+failure, scheduling/canary failure or kernel-wide halt.
+
+Run-11 probe read errno=-19 at 1.688388 s is unavailable early block-device
+readback, not proof of an empty/lost witness; probe does not retry.
+The early block-class warning recovers, with snapshotter ready at
+4.678810 s, and does not explain the late cutoff. No relevant late failure
+diagnostic is retained: detector execution, qualifying conditions, output
+retention and subsequent reset cause remain unobserved. Panic flags request
+behavior; they do not prove a panic occurred.
+
+USB is independent after fork: its child closes durable input/output and
+runs its own dump loop. Startup still opens logdump before forking USB.
+Nonfatal durable-write handling therefore does not inherently preserve
+the already-separate USB stream or guarantee retained stack dumps.
+
+### Next-session follow-ups — all unexecuted
+
+Use the already-decoded witness and separate endpoint clocks above.
+Any separately authorized readback experiment must account for block
+readiness after early `-ENODEV`. Require independent execution-progress
+and storage-path evidence before choosing storage blockage versus a
+kernel-wide stall; obtain third-request raw entry/returns and later
+progress keyed to command markers, not a borrowed 420 s wall time.
+
+The user's three follow-ups remain:
+
+1. Re-run `boot-ack-snapshot43-spillfix.img` for a full capture window;
+   determine whether boot proceeds through keymaster/keystore2 and
+   completes, without assuming command 3 succeeds.
+2. Investigate suspected eMMC/SDHCI write-path blockage (`7824900.mmc`,
+   HS400/ADMA, late-fs); establish blocked requests/stacks rather than
+   assume a measured 66–98 s stall window.
+3. Investigate recorder behavior when logdump writes fail/block; assess
+   nonfatal handling without promising preservation of independent USB.
+
+These are handoff items, not authorization here to boot, flash, write
+partitions, change drivers/recorder, tune timeouts or add instrumentation.
+
+### Commit preparation safety review
+
+ARM64-only assembly capture and built-in/BLOCK-only partition diagnostics
+are now guarded; ordinary ARM32 SCM and modular/block-disabled ramoops
+remain available. Witness allocation failure closes its temporary file and
+leaves cached state unset, with a failing-before/passing-after standalone
+retry/cleanup check. Scratch object builds covered the alternative configs.
+Saved run-10/run-11 images predate these fixes; neither was repacked or booted.
+
+The canary diagnostic remains boot-only: observing SUSPEND stops its work
+rearming, and resume does not restart it. A subsequent quiet-canary dump
+can be a false stall; suspend-aware lifecycle handling remains deferred.

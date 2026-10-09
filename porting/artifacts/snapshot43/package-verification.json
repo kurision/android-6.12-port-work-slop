@@ -1,0 +1,12 @@
+{
+  "image": "porting/artifacts/boot-ack-snapshot43-regs.img",
+  "size": 35917824,
+  "sha256": "5e44c183923fc750ef3b8b8a0e7a1fc6a9f49299f569d656c5479f10dc5a01c5",
+  "kernel_payload_sha256": "594a274462de243c0128a7511743751c1501374a90d13ccc3c96f2365736f47b",
+  "ramdisk_identical_to_run1": true,
+  "header_identical_outside_authorized_fields": true,
+  "kernel_size": 17761041,
+  "kernel_size_run1": 17811666,
+  "ramdisk_size": 18151770,
+  "change": "bounded post-SMC register capture (x0..x7, 3 attempts, owner-48 svc-0)"
+}

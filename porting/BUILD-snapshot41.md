@@ -46,6 +46,12 @@ step and make the run uninterpretable.
 
 ## Local build recipe
 
+Historical recipe below: deleted `Image.gz`/`package.py` paths are former
+scratch inputs, not current executable instructions. Extract preserved inputs
+from `porting/artifacts/snapshot38/boot.img`; stage all intermediates in build
+scratch. Current snapshot41 image is `porting/artifacts/snapshot41/boot.img`
+(former root name `boot-ack-snapshot41-scm-all.img`); logs use `run<N>-*`.
+
 ```sh
 cd ~/<path>/ack-android16-6.12
 export ARCH=arm64 LLVM=1 LLVM_IAS=1

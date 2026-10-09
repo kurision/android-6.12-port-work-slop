@@ -1,72 +1,155 @@
 #!/usr/bin/env bash
-# Pull every diagnostic channel after one temporary boot and name it for the
-# snapshot and run. Run from the snapshot artifact directory:
-#   ../../logging/pull-run-evidence.sh 5 boot-ack-snapshot39-daemon-probe.img
-#
-# The 64 MiB payloads that carry no verdict are deleted as they are verified;
-# their sha256 and the verdict itself are what get archived.
+# From snapshot<number>: ../../logging/pull-run-evidence.sh <run> boot.img
+# Capture status and failed pulls stay in scratch, never in the snapshot folder.
 set -euo pipefail
-
-RUN="${1:?usage: pull-run-evidence.sh <run-number> <image-name>}"
-IMG="${2:?usage: pull-run-evidence.sh <run-number> <image-name>}"
-TAG="snapshot${SNAPSHOT:-39}-run${RUN}"
-DIR="$(pwd)"
-SERIAL="${ADB_SERIAL:-2819f2320604}"
-MIB=1048576
-
-echo "== $TAG ($IMG)"
-sha256sum "$(dirname "$DIR")/$IMG"
-
-echo "-- logdump partition (evidence, kept)"
-adb -s "$SERIAL" exec-out "su -c 'dd if=/dev/block/by-name/logdump bs=$MIB count=64'" \
-	> "${TAG}-logdump.bin.raw" 2>/dev/null
-python3 - "${TAG}-logdump.bin.raw" "${TAG}-logdump.bin" <<'EOF'
-import sys
+exec python3 - "$@" <<'PY'
+import hashlib
+import os
 from pathlib import Path
-raw, out = Path(sys.argv[1]), Path(sys.argv[2])
-data = raw.read_bytes()[:67108864]
-assert len(data) == 67108864, f'short pull: {len(data)}'
-out.write_bytes(data)
-raw.unlink()
-print(f'   {out.name}: {len(data)} bytes')
-EOF
-
-echo "-- SD card"
-adb -s "$SERIAL" shell 'su -c "mkdir -p /data/local/tmp/sdpull"' >/dev/null
-SDROOT=""
-if adb -s "$SERIAL" shell 'su -c "mount -t vfat -o ro /dev/block/mmcblk1p1 /data/local/tmp/sdpull"' >/dev/null 2>&1; then
-	SDROOT=/data/local/tmp/sdpull
-elif adb -s "$SERIAL" shell 'su -c "grep vfat /proc/mounts"' | grep -q vold; then
-	SDROOT="$(adb -s "$SERIAL" shell 'su -c "grep vfat /proc/mounts"' | awk '{print $2; exit}')"
-fi
-if [ -n "$SDROOT" ]; then
-	for f in snapshot28-kmsg.log ramoops-a.bin ramoops-b.bin; do
-		adb -s "$SERIAL" exec-out "su -c 'cat $SDROOT/$f'" > "${TAG}-sd-$f" 2>/dev/null || true
-		[ -e "${TAG}-sd-$f" ] && printf '   %s %s bytes\n' "${TAG}-sd-$f" "$(wc -c < "${TAG}-sd-$f")"
-	done
-	adb -s "$SERIAL" shell 'su -c "umount /data/local/tmp/sdpull; rmdir /data/local/tmp/sdpull"' >/dev/null 2>&1 || true
-else
-	echo "   SD card unavailable; logdump remains the authoritative channel" >&2
-fi
-
-echo "-- kernel snapshot slots"
-python3 - "${TAG}-logdump.bin" "$TAG" <<'EOF'
+import re
+import shlex
+import subprocess
+import struct
 import sys
-from pathlib import Path
-blob = Path(sys.argv[1]).read_bytes()
-tag = sys.argv[2]
-for idx, off in ((0, 62914560), (1, 63967232)):
-    magic = int.from_bytes(blob[off:off + 4], 'little')
-    payload = blob[off + 4096:off + 4096 + 1048576]
-    valid = magic == 0x52414d4f and payload[:4] == b'DBGC'
-    print(f'   slot{idx}: magic=0x{magic:08x} console_sig={payload[:4]!r} valid={valid}')
-    if valid:
-        Path(f'{tag}-kernel-snapshot-slot{idx}.bin').write_bytes(payload)
-        continue
-    raise SystemExit(f'slot{idx} invalid: refusing to treat it as evidence')
-EOF
+import tempfile
 
-echo "-- summary"
-printf '   probe lines: %s\n' "$(grep -ac 'DIAG: daemon' "${TAG}-logdump.bin" || true)"
-grep -a 'DIAG: procdir' "${TAG}-logdump.bin" | sed 's/^/   /' || true
-grep -a 'DIAG: proccomm' "${TAG}-logdump.bin" | cut -c1-2000 | sed 's/^/   /' || true
+if len(sys.argv) != 3 or not re.fullmatch(r'[1-9][0-9]*', sys.argv[1]):
+    sys.exit('usage: pull-run-evidence.sh <positive-run-number> <image-path>')
+folder = Path.cwd()
+if not re.fullmatch(r'snapshot[0-9]+', folder.name):
+    sys.exit('working directory must be named snapshot<number>')
+tag = 'run' + sys.argv[1]
+image = Path(sys.argv[2])
+if not image.is_file():
+    sys.exit(f'image unavailable: {image}')
+owned = [folder / (tag + suffix) for suffix in
+         ('-logdump.bin', '-logdump.log', '-sd.log', '-sd-unverified.log')]
+if any(p.exists() or p.is_symlink() for p in owned):
+    sys.exit(f'refusing to overwrite existing {tag} evidence before touching phone')
+scratch = Path(tempfile.mkdtemp(prefix='ack-evidence-', dir=os.environ.get('TMPDIR', '/tmp')))
+adb = ['adb', '-s', os.environ.get('ADB_SERIAL', '2819f2320604')]
+print(f'== {folder.name}/{tag} image={image} sha256={hashlib.sha256(image.read_bytes()).hexdigest()}')
+print(f'scratch retained: {scratch}')
+# shell-v2 raw transport separates stderr and propagates remote exit status.
+# exec-out does neither: dd statistics can contaminate the 64MiB payload.
+try:
+    features = subprocess.run(adb + ['features'], capture_output=True)
+except OSError as exc:
+    sys.exit(f'raw/SD unavailable: adb features failed: {exc}; scratch={scratch}')
+(scratch / 'adb-features.stdout').write_bytes(features.stdout)
+(scratch / 'adb-features.stderr').write_bytes(features.stderr)
+if features.returncode or b'shell_v2' not in features.stdout.split():
+    sys.exit(f'raw/SD unavailable: shell_v2 required for binary data and remote status; scratch={scratch}')
+
+
+def pull(command, name):
+    path = scratch / name
+    with path.open('xb') as out, (scratch / (name + '.stderr')).open('xb') as err:
+        try:
+            result = subprocess.run(adb + ['shell', '-T', 'su -c ' + shlex.quote(command)], stdout=out, stderr=err)
+            return result.returncode == 0, path
+        except OSError as exc:
+            err.write(str(exc).encode())
+            return False, path
+
+
+def publish(name, data):
+    with (folder / (tag + name)).open('xb') as out:
+        out.write(data)
+
+
+def readable(data):
+    try:
+        text = data.decode('utf-8')
+    except UnicodeError:
+        return False
+    return all(c.isprintable() or c in '\n\r\t' for c in text)
+
+
+record = re.compile(rb'^[0-9]+,[0-9]+,[0-9]+,[^;\r\n]*;[^\r\n]*\n', re.M)
+banner = re.compile(rb'^[0-9]+,[0-9]+,[0-9]+,[^;\r\n]*;Linux version [^\r\n]+\n', re.M)
+header = b'DIAG: Android capture ready; handing PID 1 to Android init\n'
+
+
+def capture_format(data):
+    return readable(data) and header in data and record.search(data) is not None
+
+
+raw_ok, raw_path = pull('dd if=/dev/block/by-name/logdump bs=1048576 count=64', 'logdump.bin')
+size = raw_path.stat().st_size
+raw_ok = raw_ok and size == 67108864
+prefix = b''
+if raw_ok:
+    blob = raw_path.read_bytes()
+    publish('-logdump.bin', blob)
+    candidate = blob[:62914560].split(b'\0', 1)[0]
+    if readable(candidate):
+        prefix = candidate
+        publish('-logdump.log', prefix)
+        print(f'raw success: {size} bytes; readable prefix: {len(prefix)} bytes')
+    else:
+        print(f'raw success: {size} bytes; readable prefix unavailable (nontext)')
+    for idx, off in ((0, 62914560), (1, 63967232)):
+        magic, seq, index, timestamp, offset, length, phys, slot, *reserved = struct.unpack_from('<QQQQ8I', blob, off)
+        console = blob[off + 4096:off + 4100]
+        valid = (magic == 0x52414d4f and seq > 0 and index == seq
+                 and timestamp > 0 and offset == 4096 and length == 1048576
+                 and phys == 0x86800000 and slot == idx and not any(reserved)
+                 and console == b'DBGC')
+        print(f'slot{idx}: magic=0x{magic:08x} seq={seq} timestamp_ns={timestamp} console={console!r} valid={valid}')
+else:
+    print(f'raw error: retrieval or exact-size validation failed ({size} bytes); retained {raw_path}')
+
+# One root shell owns discovery, any temporary mount, cat, and trap cleanup.
+# Compare block device identities as vold may use another node for the same SD.
+sd_command = r'''
+set -eu
+card=''
+for node in /sys/class/block/mmcblk*; do
+    name=${node##*/}
+    case "$name" in mmcblk*[!0-9]*|mmcblk) continue;; esac
+    [ "$(cat "$node/device/type" 2>/dev/null)" = SD ] || continue
+    [ -z "$card" ] || { echo 'SD unavailable: ambiguous cards' >&2; exit 1; }
+    card=$name
+done
+[ -n "$card" ] || { echo 'SD unavailable: no SD card' >&2; exit 1; }
+partition=/dev/block/${card}p1
+[ -b "$partition" ] || { echo 'SD unavailable: no first partition' >&2; exit 1; }
+identity=$(stat -c '%t:%T' "$partition")
+root=''
+while read -r source target fs options rest; do
+    [ -b "$source" ] || continue
+    [ "$(stat -c '%t:%T' "$source")" = "$identity" ] || continue
+    [ "$fs" = vfat ] || { echo 'SD unavailable: non-vfat mount' >&2; exit 1; }
+    [ -z "$root" ] || { echo 'SD unavailable: ambiguous mounts' >&2; exit 1; }
+    root=$target
+done < /proc/mounts
+if [ -z "$root" ]; then
+    root=$(mktemp -d /data/local/tmp/ack-sdpull.XXXXXX)
+    mounted=0
+    trap '[ "$mounted" = 0 ] || umount "$root"; rmdir "$root"' EXIT
+    trap 'exit 1' HUP INT TERM
+    mount -t vfat -o ro,nosuid,nodev,noexec "$partition" "$root"
+    mounted=1
+fi
+cat "$root/ack-kmsg.log"
+'''
+sd_ok, sd_path = pull(sd_command, 'sd.log')
+sd = sd_path.read_bytes()
+sd_ok = sd_ok and capture_format(sd)
+if sd_ok:
+    common = min(len(prefix), len(sd))
+    shared = prefix[:common]
+    verified = (bool(common) and shared == sd[:common] and capture_format(shared)
+                and banner.search(shared) is not None)
+    publish('-sd.log' if verified else '-sd-unverified.log', sd)
+    if verified:
+        print(f'SD success: {len(sd)} bytes; common extent matches ({common} bytes including banner/kmsg)')
+    else:
+        reason = 'mismatch' if common and shared != sd[:common] else 'raw unavailable or common prefix too short'
+        print(f'SD unverified: {len(sd)} bytes; {reason}; independent freshness not established')
+else:
+    print(f'SD unavailable/error: {len(sd)} bytes; command failed or invalid diagnostic capture; retained {sd_path}')
+print('USB independently captured; collector does not modify USB evidence')
+sys.exit(0 if raw_ok or sd_ok else 1)
+PY

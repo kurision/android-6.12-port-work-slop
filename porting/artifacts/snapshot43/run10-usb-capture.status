@@ -1,0 +1,3 @@
+reason=reader-error: device reports readiness to read but returned no data (device disconnected or multiple access on port?)
+bytes=442886
+host_elapsed=102.3

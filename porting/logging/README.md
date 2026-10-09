@@ -98,3 +98,35 @@ snapshots and `meta.txt`. Keep one directory per boot attempt; they are small
    names the driver; check whether that driver's DT node exists in your port.
 4. `pstore_ftrace-*` entries (only with `CONFIG_PSTORE_FTRACE`) are also
    deflate-compressed and contain a function graph — decode them the same way.
+
+## Android temporary-boot evidence
+
+From `porting/artifacts/snapshot<number>`, run
+`ADB_SERIAL=2819f2320604 ../../logging/pull-run-evidence.sh <run> boot.img`
+after the installed ROM returns. The collector refuses existing run outputs
+before touching the phone. It retains exact 64MiB `runN-logdump.bin`, decodes
+only the text prefix before NUL/60MiB, and reports binary slot validity in memory.
+Failed pulls and stderr remain in the printed unique host scratch directory.
+Transport requires `shell_v2` and uses `adb shell -T`, preserving binary stdout,
+separate stderr and remote exit status. `exec-out` merges stderr and loses remote
+status ([ADB shell service](https://android.googlesource.com/platform/system/adb/+/master/shell_service.cpp?format=HTML));
+transfer statistics must not be truncated off to pass the exact-size gate.
+
+SD discovery requires an unambiguous card with sysfs type `SD` and a vfat first
+partition. Only `ack-kmsg.log` is read; any mount created by the collector is
+read-only and unmounted by its root shell. Error stdout is not a kernel log.
+Format-valid SD is named `runN-sd.log` only when its common raw-text extent
+matches and contains the capture header, kernel banner and a kmsg record;
+otherwise it is `runN-sd-unverified.log`. Streams are never merged.
+USB capture remains independent; give `usb-boot-capture.py` an explicit status
+path in build scratch, not the snapshot folder. Retain prior raw/SD evidence
+before clearing logdump or booting again.
+
+Run the isolated collector regression with
+`python3 porting/logging/test_pull_run_evidence.py`; it never contacts a phone.
+
+`python3 -B porting/logging/test_ramoops_witness_open.py` compiles and runs
+the real witness-open function with host-side allocation failure injection.
+It checks retry cleanup and cached success without contacting hardware.
+Git retains only snapshot43 run-10/run-11 capture evidence; older logs stay
+ignored locally. Raw capture bytes are not whitespace-normalized.
