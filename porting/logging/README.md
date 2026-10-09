@@ -130,3 +130,13 @@ the real witness-open function with host-side allocation failure injection.
 It checks retry cleanup and cached success without contacting hardware.
 Git retains only snapshot43 run-10/run-11 capture evidence; older logs stay
 ignored locally. Raw capture bytes are not whitespace-normalized.
+
+`package-diag-boot.py --base-image IMG --kernel-dir DIR --init BIN --out OUT
+--report JSON` builds a RAM-boot image from a base boot image: new kernel,
+only the ramdisk `init` record replaced, cmdline console set to `ttynull`. It
+asserts every other cpio record and header byte is unchanged.
+
+Since snapshot45 qseecom writes one FUA record per SMC send/return and listener
+wake/response to a 128-slot ring at logdump offset 0x3f10000.
+`python3 porting/logging/decode-qsee-trace.py runN-logdump.bin` prints the
+records by boot and seq, then a `LAST=` line naming where the run died.
