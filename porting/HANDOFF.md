@@ -1219,3 +1219,64 @@ Saved run-10/run-11 images predate these fixes; neither was repacked or booted.
 The canary diagnostic remains boot-only: observing SUSPEND stops its work
 rearming, and resume does not restart it. A subsequent quiet-canary dump
 can be a false stall; suspend-aware lifecycle handling remains deferred.
+
+## Snapshot44 — qseecom/SCM/ION review fixes (source only; not packaged or booted)
+
+Review of the port against the donor
+(`../kernel_xiaomi_msm8953_fork`, 4.19) after run 11. Run 11 shows no
+listener callback (`INCOMPLETE`) anywhere; the 1164-byte third keymaster
+request is not captured. The fixes below are code defects, not a proved
+cause of the run-10/11 reset.
+
+1. **Wrong sglistinfo PA to TZ** (`drivers/misc/qseecom.c`). Donor tzbuf was
+   `__get_free_pages` (linear map), so `virt_to_phys(table)` was valid. The
+   port's `qtee_shmbridge_allocate_shm()` uses `dma_alloc_coherent()` on a
+   non-coherent arm64 device (`DMA_DIRECT_REMAP`, `kernel/dma/direct.c:245,285`),
+   which returns a vmalloc-range alias; `virt_to_phys()` on it is garbage.
+   Listener responses (legacy and reentrant) and GP-TEE open/invoke now pass
+   the stored `sglistinfo_shm.paddr`, like the client send path already did.
+   New marker before each listener response:
+   `qseecom: listener <id> response status <s> cmd <cmd> sglistinfo <pa>`;
+   the PA must be inside `qseecom_region` (0xff000000-0xffffffff).
+2. **dma-buf locking** — snapshot32 replaced `dma_buf_*_unlocked` with the
+   variants that require the caller to hold the dma_resv lock
+   (`dma-buf.c:1833,2291`) without taking it. The snapshot32 rationale was
+   inverted. Reverted to the `_unlocked` variants.
+3. **ION heaps ignored their `memory-region`** (`msm_ion_of.c`).
+   `of_dma_configure()` does not attach shared-dma-pool regions, so
+   `dev_get_cma_area()` fell back to the default CMA area: run 11's keymaster
+   and listener buffers are at 0xf93xxxxx inside `cma: Reserved 16 MiB at
+   0xf9200000`. This corrects snapshot31's "bound by of_dma_configure"
+   claim. Heap devices now call `of_reserved_mem_device_init()`. Expected
+   marker: `ION heap qsecom created at 0x00000000ff000000 with size 1000000`
+   (likewise qsecom_ta at 0xfe800000/800000); keymaster `sb_phys` should
+   move into 0xff000000+.
+4. **`dmac_flush_range` shim** cleaned only; donor `__dma_flush_area` cleans
+   and invalidates and is also used after TZ writes. Now
+   `dcache_clean_inval_poc`.
+5. **SCM legacy path** (`qcom_scm-smc.c`, `include/soc/qcom/scm.h`). The shim
+   now calls the new `__scm_smc_call_legacy()`; `__scm_smc_call()` callers are
+   back to upstream behavior. Legacy calls only:
+   - carveout spill (the override no longer applies to every >4-arg SMC);
+   - donor `__scm_call_armv8_64` resume: x6 starts at 0, INTERRUPTED
+     re-issues with the returned x0..x6 (disassembly of the built object
+     shows the untraced resume `smc` issued with x1..x6 as left by the
+     previous return);
+   - no WAITQ handling (a0 == 2 previously meant an uninterruptible wait on
+     a completion this firmware never signals, under `qcom_scm_lock`);
+   - donor errno: only negative x0 is an error.
+   The snapshot43 register/send markers are unchanged in text and now live
+   in the legacy loop.
+
+Verification: scratch arm64 config on this Mac (`gki_defconfig` +
+`scripts/tissot-ack.config`; GENDWARFKSYMS/MODVERSIONS/SELINUX disabled only
+so host tools build; glibc `elf.h` plus endian/byteswap shims in a scratch
+host include dir, since deleted; `HOSTCFLAGS=-D_UUID_T -D__GETHOSTUUID_H`;
+GNU sed first in PATH; NDK r29 clang). `qseecom.o`, `qcom_scm.o`, `qcom_scm-smc.o`,
+`msm_ion_of.o` compile without warnings; `llvm-nm` shows the `_unlocked`
+dma-buf imports, `dcache_clean_inval_poc`, and the exported
+`__scm_smc_call_legacy`. No full image link, no boot.
+
+Next boot watch order: ION heap addresses, keymaster `sb_phys` in
+0xff000000+, then whether request 3 yields `callback listener` and a
+`listener ... response ... sglistinfo` line with a carveout PA.
