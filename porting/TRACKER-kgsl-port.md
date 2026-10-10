@@ -48,7 +48,7 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
 
 ## Stages
 - [x] 0. Tracker + worktree `kgsl-port` created
-- [x] 1. DT glue: kgsl exclusive, DTB compiles
+- [x] 1. DT glue: kgsl exclusive, DTB compiles — booted 2026-10-10, PASS (display safe with no GPU component)
 - [ ] 2. Vendor driver + kernel links (CONFIG_QCOM_KGSL=y)
 - [ ] 3. Boot #1 diag capture: kgsl probes, pwrlevels parse, `/dev/kgsl-3d0`,
       display + evidence channels intact
@@ -72,24 +72,27 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
   (`priv->gpu == NULL`, `msm_drv.c:325-326`); flat-vs-`qcom/` firmware
   staging; the msm_bus/icc replacement.
 
-## Stage 1 boot package (2026-10-10, awaiting device verdict)
-- Worktree build `6.12.93-4k-gf3248eda0619` (`scripts/build-ack-tissot.sh`,
-  ACK_TREE=worktree), full kernel + dtb, required-symbol assertion passed.
-- Driver audit post-change: only new NOBIND node is
-  `/soc@0/gpu@1c00000 qcom,kgsl-3d0 qcom,adreno-506.0` — kgsl is not
-  vendored yet (Stage 2), so this image is the deliberate GPU-less test of
-  the exclusivity change. (`/ion qcom,msm-ion` NOBIND is pre-existing: the
-  ION backport registers as a misc device, same as snapshot58.)
-- Image: `porting/artifacts/snapshot59/boot-run1.img`, 36,763,648 B,
-  sha256 `e9254bddaa2cf6be712e50ee904bfd5036a04795f0181b29c3ea07eda2310ada`;
-  same base image, ramdisk (`b6ac160d…`) and diag init (`b852daf2…`) as
-  snapshot58 — only the kernel payload differs.
-- Pass criteria on boot: mdp5/dsi/panel come up as before (DSI panel
-  `0x9c`), no adreno/kgsl probe lines for the node, no new oops/WARN,
-  evidence channels (logdump/USB) capture.
-- Fail criteria: any display/DSI regression, or msm_drm master bind hang
-  (no `msm` drm device, no panel). Revert `f3248eda0` partially: keep the
-  driver-table edits if only the DT change is implicated, else whole commit.
+## Stage 1 boot verdict (2026-10-10, PASS)
+- Booted `porting/artifacts/snapshot59/boot-run1.img` via `fastboot boot`
+  (serial 2819f2320604); logdump pre-cleared and readback verified zero.
+- Durable log `run1-logdump.log` (37,847 B, both ramoops slots valid;
+  `run1-sd.log` byte-identical):
+  - `msm_mdp 1a01000.display-controller: bound 1a94000.dsi (ops dsi_ops)`
+    — **KMS binds with no GPU component**, the Stage 1 hypothesis
+    (`msm_drv.c:325-326` `priv->gpu == NULL` path) holds.
+  - `panel-otm1911 …: panel status 0x9c (downstream expects 0x9c)` —
+    display unaffected.
+  - No kgsl/adreno probe lines: the GPU node is claimed by nobody, which
+    is exactly the designed state until Stage 2 vendors the driver.
+  - 0 × Oops/panic/WARNING/BUG/Call trace; `clk-rcg2` WARN count 0
+    (same as snapshot58 run1 — the `CLK_OPS_PARENT_ENABLE` fix holds).
+  - Evidence channels all live: SD capture, USB capture, ramoops sampler;
+    diag init handed PID 1 to Android init successfully.
+- The RAM-only boot then fell back to the installed 4.19 ROM
+  (`uname_r=4.19.325-cip136-st20-perf-mglru-next-…`, `boot_completed=1`)
+  — expected for `fastboot boot` after the diag window.
+- Verdict: **Stage 1 CLOSED** — exclusivity change is display-safe.
+  Committed as `f3248eda0` + `904b29167` on `kgsl-port`.
 
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
