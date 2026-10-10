@@ -49,7 +49,11 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
 ## Stages
 - [x] 0. Tracker + worktree `kgsl-port` created
 - [x] 1. DT glue: kgsl exclusive, DTB compiles — booted 2026-10-10, PASS (display safe with no GPU component)
-- [ ] 2. Vendor driver + kernel links (CONFIG_QCOM_KGSL=y)
+- [ ] 2. Vendor driver + kernel links — **WIP, ~85%**: committed as `7ba68117a`;
+      compile loop stopped after the last gmu compat fix. Next command:
+      `make -s O=out drivers/gpu/msm/ 2>&1 | grep error: | head`.
+      Full state, first command, and the remaining list:
+      `porting/HANDOFF-kgsl-port.md`.
 - [ ] 3. Boot #1 diag capture: kgsl probes, pwrlevels parse, `/dev/kgsl-3d0`,
       display + evidence channels intact
 - [ ] 4. EGL/SF unlock (`EGL_BAD_ALLOC` gone)
