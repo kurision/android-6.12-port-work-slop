@@ -65,12 +65,31 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
   `drivers/gpu/drm/msm/adreno/adreno_device.c` (dt_match) **and**
   `drivers/gpu/drm/msm/msm_drv.c` (component table). The component one is
   the load-bearing edit: with the node present msm_drm waits forever for a
-  GPU component nobody binds, and display would die with the port.
+  GPU component that never binds, and display would die with the port.
 - Verified: `make qcom/msm8953-xiaomi-tissot.dtb` builds; decompiled node
   shows the new compatible; zero `kgsl-3d0` matches left in drm/msm.
 - Not yet verified (needs a boot): KMS binds with no GPU component
   (`priv->gpu == NULL`, `msm_drv.c:325-326`); flat-vs-`qcom/` firmware
   staging; the msm_bus/icc replacement.
+
+## Stage 1 boot package (2026-10-10, awaiting device verdict)
+- Worktree build `6.12.93-4k-gf3248eda0619` (`scripts/build-ack-tissot.sh`,
+  ACK_TREE=worktree), full kernel + dtb, required-symbol assertion passed.
+- Driver audit post-change: only new NOBIND node is
+  `/soc@0/gpu@1c00000 qcom,kgsl-3d0 qcom,adreno-506.0` — kgsl is not
+  vendored yet (Stage 2), so this image is the deliberate GPU-less test of
+  the exclusivity change. (`/ion qcom,msm-ion` NOBIND is pre-existing: the
+  ION backport registers as a misc device, same as snapshot58.)
+- Image: `porting/artifacts/snapshot59/boot-run1.img`, 36,763,648 B,
+  sha256 `e9254bddaa2cf6be712e50ee904bfd5036a04795f0181b29c3ea07eda2310ada`;
+  same base image, ramdisk (`b6ac160d…`) and diag init (`b852daf2…`) as
+  snapshot58 — only the kernel payload differs.
+- Pass criteria on boot: mdp5/dsi/panel come up as before (DSI panel
+  `0x9c`), no adreno/kgsl probe lines for the node, no new oops/WARN,
+  evidence channels (logdump/USB) capture.
+- Fail criteria: any display/DSI regression, or msm_drm master bind hang
+  (no `msm` drm device, no panel). Revert `f3248eda0` partially: keep the
+  driver-table edits if only the DT change is implicated, else whole commit.
 
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
