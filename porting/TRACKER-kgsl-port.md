@@ -511,6 +511,47 @@ or IOMMU-probe changes into this diagnostic result.
   (the `platform_get_irq` -EPROBE_DEFER form, which unblocks the probe
   past the IRQ step into untested territory).
 
+## Run48-65: MDP silent-death bisection (2026-10-13, root cause found)
+
+- Re-applying only the 4-hunk `mdss_mdp.c` change (modern
+  `platform_get_irq` + defer-tolerant logging + splash-balance) on the
+  otherwise fully-reverted tree restores the silent death (run48,
+  fallback ~55 s, zero evidence). 13-run pattern is unanimous.
+- Checkpoint bisection path (bail = `rc=-ENOMEM; goto probe_done`):
+  run50 bail-after-IRQ boots; run51 after misc-IRQ boots; run52 after
+  `debug_init` dies; run53 before `splash(true)` boots; run54 after
+  `hw_rev_init` dies; run55 between `splash` and `hw_rev` dies;
+  run56 (skip `clk_ctrl`+bus in splash) boots; run57 (clocks on) dies;
+  run59 (all enables skipped) dies; run60 (also skip `pm_get_sync`)
+  dies; run61 (vote+spinlock only) dies; run62 (also skip
+  `idle_pc_restore`) boots.
+- Root cause: `mdss_mdp_clk_ctrl(ON)` ends in
+  `mdss_mdp_idle_pc_restore()` whose `mdss_hw_init()` register access
+  hangs the bus — the MDP power/clock domain is not established by our
+  genpd/clk bring-up (`res_init` itself succeeds silently; GDSC
+  definition matches the 6.18 port at `0x4d078`; `pm_resume` reports no
+  error). Keeping LK clocks/domains (`clk_ignore_unused
+  pd_ignore_unused`, run63) does NOT save it; the hang fires even with
+  everything held on. DT is also missing `vbif_nrt_phys` (non-fatal).
+- Workaround (kept, documented in code): skip `idle_pc_restore`; the
+  probe stays degraded-but-bootable like the run47 baseline. The full
+  probe minus that skip (run64) still dies later — power/clock
+  establishment is the real fix, still open.
+- Infrastructure: `pstore_blk` bounded retry (fires 5x, but eMMC
+  `/dev/block/*` nodes appear only after ~24-30 s in our ramdisk, so
+  retries extended to 6 s x 8, ~50 s coverage); `kmsg_dump_desc`
+  exported + attach-triggered dmesg dump (marker proves attach; never
+  yet observed because deaths precede attach). `oops=panic` dropped
+  from diag cmdline (death persists regardless → hang, not OOPS).
+- Run47-repeat and run51 notes: healthy boots die later from ORDERLY
+  userspace reboots (`vold-failed` at 749 s, `apexd-failed` at 266 s)
+  — a separate userspace-daemon class (vold/apexd never answer binder;
+  adsprpcd restart storm + missing battery nodes in logcat). Next after
+  MDP power.
+- Tooling notes: `su` on 4.19 is `/product/bin/su` (bare `su` flakes
+  with PATH); preclear needs 4.19 (no su on diag); always pull the
+  logdump even on success (run53's was wiped by the next preclear).
+
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
 with file+line evidence before any claim. Reverts are one-line documented.
