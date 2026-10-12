@@ -448,6 +448,69 @@ or IOMMU-probe changes into this diagnostic result.
   already applied (DMA ownership, clock map, DT closure). No boot until the
   cutover binds hardware.
 
+## Run41: cutover first light (2026-10-13, kernel #20 + DT overlay)
+
+- First image with MDSS+PLL+DT bound: `boot-run41.img` SHA256
+  `69b20f3d...` (package-run41.json; payload e6a1ca... rebuilt #20).
+  USB captured 469,822 bytes then adbd-handoff disconnect (expected).
+- PLL provider probes and registers both PLLs
+  (`run41-usb.log:214,217` "Registered DSI PLL ndx=0/1 clocks").
+- MDP probe still fails `-12` on `unable to get MDSS irq`
+  (`run41-usb.log:204,210`); DSI parent correctly defers forever
+  (`mdss_dsi_probe: MDP not probed yet!`); system still reaches userspace
+  with QSEE listeners + keymaster OK, 6.12 adb at ~212 s.
+- Lesson used later: an MDP probe FAILURE is survivable (system boots
+  degraded, composer SIGSEGVs as in run40). Only a hang/panic before diag
+  init (~35 s) loses the boot.
+
+## Run42/44/45: silent deaths + hybrid isolation (2026-10-13)
+
+- `boot-run42.img` (kernel #21+, same DT plus mainline disables and
+  `qcom,mdss-pref-prim-intf`): fastboot OKAY, then zero USB bytes, zero
+  ramoops slots, stale SD, 4.19 fallback at ~72 s. Same for the
+  `clk_ignore_unused pd_ignore_unused` variant (run45).
+- Hybrid isolation (no rebuilds, offline repackaging only):
+  run43 = kernel41 + DT42 boots to 6.12 adb; run44 = kernel42 + DT41
+  falls back silent. DT innocent (also verified by decompiled-DTB diff:
+  only intended disables/removals/additions). Killer is in kernel42's
+  driver delta.
+- `boot-run42.img` vs `boot-run41.img` are byte-identical sizes
+  (37,969,920); payload hashes chain cleanly
+  (img = kdir = out/ = `cee37da7...`). Gzip integrity verified.
+  Not an image-mechanics failure.
+- Evidence model correction: partition slots only update when diag init
+  runs (the "logdump snapshotter"); zeros after preclear prove death
+  before ~35 s, NOT before first printk. The 4.19 fallback then stomps
+  0x86800000 (unreserved in 4.19), destroying any ramoops the dead
+  session wrote. Pre-diag panics are therefore unrecoverable
+  post-fallback; catch them only via pstore_blk revival or by keeping
+  the failure past diag init.
+
+## Run46/47 bisection + hard hang (2026-10-13, phone stuck)
+
+- Reverted run42's six driver changes in two halves on branch
+  `mdss-bisect` (WIP `e1bc5fab6`, bisect `db5ddd4a4`): first half
+  (PLL handoff claim, DSI/rotator holds) still silent (run46);
+  full revert of all six also reverts to run41-equivalent behavior and
+  `boot-run47.img` reached 6.12 adb at ~170 s.
+- Run47 then wedged hard 5+ min later: adbd up but `adb shell` hangs,
+  `adb reboot` times out, USB stays enumerated (no re-enumeration, so no
+  reboot cycle). Host USB reset unavailable (permission). Requires
+  physical recovery (10 s power hold). A 30-min post-mortem adb watch
+  (bg_20) is armed in case the PMIC watchdog fires.
+- The wedge is new information: run41 stayed usable 250 s+ on nearly the
+  same kernel. Delta run47-vs-run41 is essentially DT42 (mainline
+  disables, pref-prim, labibb/pinctrl additions). Suspect the LABIBB
+  SPMI path or a deferred-probe + regulator interaction; NOT proven.
+- Resume plan once the phone answers: (1) pull run47 logdump/SD/USB
+  (stale content expected; still check); (2) re-apply the six reverts'
+  inverses one at a time ONLY if run47 proves stable — otherwise treat
+  the wedge as the next blocker and read its logs first; (3) revive
+  pstore_blk (fs/pstore/blk.c retry after eMMC appears) so future
+  pre-diag panics persist to eMMC; (4) then continue MDP bring-up
+  (the `platform_get_irq` -EPROBE_DEFER form, which unblocks the probe
+  past the IRQ step into untested territory).
+
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
 with file+line evidence before any claim. Reverts are one-line documented.
