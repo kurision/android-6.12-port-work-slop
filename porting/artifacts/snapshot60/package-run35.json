@@ -1,0 +1,15 @@
+{
+  "image": "boot-run35.img",
+  "size": 37115904,
+  "sha256": "5435f3b4a97117485f8000179fcea6ff3edd0594319003187242aa8049795a71",
+  "kernel_payload_sha256": "5619e6ac58f79741f14351928915e6219180393448dbd80c011f0ba62261b5d0",
+  "kernel_size": 19225252,
+  "ramdisk_size": 17885618,
+  "ramdisk_sha256": "c83e5de3ddda5c5d3ce740d6d2a8a804059a8e022effc891a495ee5509e42066",
+  "cpio_records": 661,
+  "init_sha256": "5e81abd3f98e3cc6691d330dc3666192eefaf6e022592df9819bcd3d33c89ed1",
+  "firmware": [],
+  "debuggable": false,
+  "base_image": "../snapshot59/base.img",
+  "cmdline": "androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 loop.max_part=7 androidboot.boot_devices=soc@0/7824900.mmc buildvariant=user ignore_loglevel printk.time=1 oops=panic panic=10 androidboot.force_normal_boot=1 rcupdate.rcu_cpu_stall_timeout=10 softlockup_panic=1 hung_task_panic=1 printk.devkmsg=on androidboot.bootdevice=../.. pstore_blk.blkdev=PARTLABEL=logdump pstore_blk.best_effort=1 pstore_blk.kmsg_size=32768 pstore_blk.pmsg_size=32768 console=ttynull"
+}

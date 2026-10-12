@@ -43,13 +43,15 @@ change log in `7ba68117a`'s message for the style). When the driver dir
 builds clean:
 
 ```
-JOBS=12 ./scripts/build-ack-tissol.sh
+ACK_TREE=/home/kurision/development/kernel/ack-kgsl JOBS=12 ./scripts/build-ack-tissot.sh
 nm out/vmlinux | grep -i kgsl | head
 ```
 
-Exit criteria for Stage 2: kernel links, `kgsl_init` present, `Image.gz-dtb`
-produced, and the driver audit still shows the GPU node NOBIND until the
-DT properties are converted.
+Exit criteria for Stage 2: kernel links, the driver entry symbols
+`kgsl_3d_init` (adreno.c:4219) and `kgsl_core_init` (kgsl.c:5615) present in
+vmlinux (there is no `kgsl_init` symbol in this driver), `Image.gz-dtb`
+produced, and the audit shows the GPU node **BUILT**
+(`CONFIG_QCOM_KGSL`, `/soc@0/gpu@1c00000`, `drivers/gpu/msm/adreno.c`).
 
 ## What stage 2 already did (don't redo it)
 
@@ -132,7 +134,7 @@ zap-shader region). Known items, in order:
   claiming anything; record the verdict in the tracker with file+line
   evidence.
 - The snapshot59 flow that just worked: kernel from
-  `scripts/build-ack-tissol.sh` → `kdir/` (`Image.gz`, `Image.gz-dtb`,
+  `scripts/build-ack-tissot.sh` → `kdir/` (`Image.gz`, `Image.gz-dtb`,
   dtb, `SHA256SUMS`) → `python3 porting/logging/package-diag-boot.py
   --base-image <snapshot58/base.img> --kernel-dir <kdir> --init
   out-snapshot58/diag/init --out boot-run1.img --report package-run1.json`

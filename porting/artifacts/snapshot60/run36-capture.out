@@ -1,0 +1,8 @@
++ adb -s 2819f2320604 reboot bootloader
+waiting for 18d1:9008 serial tissot-diag
++ fastboot -s 2819f2320604 boot boot-run36.img
+Sending 'boot.img' (36246 KB)                      OKAY [  0.794s]
+Booting                                            OKAY [  1.148s]
+Finished. Total time: 1.965s
+opening /dev/ttyACM0
+capture ended: reader-error: device reports readiness to read but returned no data (device disconnected or multiple access on port?); bytes=0

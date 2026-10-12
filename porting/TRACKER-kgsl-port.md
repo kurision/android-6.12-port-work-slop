@@ -6,7 +6,7 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, branch `kgsl-port` (from `driver-fix` a1e4992dc).
 The main tree stays untouched until this port has a boot verdict.
-Last update: 2026-10-10 — Stage 1 done (DT + exclusivity), dtb verified.
+Last update: 2026-10-10 — Stage 3 in progress; successful KGSL probe recorded, capture/IOMMU investigation remaining.
 
 ## Status key (same as FAILING-COMPONENTS.md)
 FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
@@ -49,11 +49,9 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
 ## Stages
 - [x] 0. Tracker + worktree `kgsl-port` created
 - [x] 1. DT glue: kgsl exclusive, DTB compiles — booted 2026-10-10, PASS (display safe with no GPU component)
-- [ ] 2. Vendor driver + kernel links — **WIP, ~85%**: committed as `7ba68117a`;
-      compile loop stopped after the last gmu compat fix. Next command:
-      `make -s O=out drivers/gpu/msm/ 2>&1 | grep error: | head`.
-      Full state, first command, and the remaining list:
-      `porting/HANDOFF-kgsl-port.md`.
+- [x] 2. Vendor driver + kernel links — **done 2026-10-10** (see Stage 2 log):
+      90-file donor compiles clean under clang 22.1.8, vmlinux links with
+      kgsl built in, audit shows the gpu node BUILT. No boot claimed.
 - [ ] 3. Boot #1 diag capture: kgsl probes, pwrlevels parse, `/dev/kgsl-3d0`,
       display + evidence channels intact
 - [ ] 4. EGL/SF unlock (`EGL_BAD_ALLOC` gone)
@@ -72,9 +70,9 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
   GPU component that never binds, and display would die with the port.
 - Verified: `make qcom/msm8953-xiaomi-tissot.dtb` builds; decompiled node
   shows the new compatible; zero `kgsl-3d0` matches left in drm/msm.
-- Not yet verified (needs a boot): KMS binds with no GPU component
-  (`priv->gpu == NULL`, `msm_drv.c:325-326`); flat-vs-`qcom/` firmware
-  staging; the msm_bus/icc replacement.
+- KMS binding with no GPU component: verified in the Stage 1 boot verdict below.
+- Not yet verified (needs a boot): flat-vs-`qcom/` firmware staging;
+  the msm_bus/icc replacement.
 
 ## Stage 1 boot verdict (2026-10-10, PASS)
 - Booted `porting/artifacts/snapshot59/boot-run1.img` via `fastboot boot`
@@ -97,6 +95,358 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
   — expected for `fastboot boot` after the diag window.
 - Verdict: **Stage 1 CLOSED** — exclusivity change is display-safe.
   Committed as `f3248eda0` + `904b29167` on `kgsl-port`.
+
+## Stage 2 log (2026-10-10, CLOSED for link; boot is Stage 3)
+**False start, root cause**: the handoff's compile claim was unproven — the
+driver had never been compiled in this worktree. `out/.config` was a stale
+**Linux/x86 6.12.93, gcc** config (14:49; last arm64 build predated
+vendoring), so `drivers/gpu/msm` was Kconfig-invisible and `make` reported
+nothing to do. Reset `out/` and regenerated via
+`ACK_TREE=$PWD JOBS=12 ./scripts/build-ack-tissot.sh`
+(the handoff's `build-ack-tissol.sh` is a typo; the real script defaults
+`ACK_TREE` to the unported `../ack-android16-6.12`, so `ACK_TREE=$PWD` is
+required). Both traps fixed in `porting/HANDOFF-kgsl-port.md`.
+
+**Config gate** (`out/.config`, final five lines): `CONFIG_ARCH_QCOM=y`
+(gki_defconfig:62) + `CONFIG_NVMEM_QCOM_QFPROM=y`, `CONFIG_ARM_SMMU=y`,
+`CONFIG_QCOM_KGSL=y`, `CONFIG_QCOM_KGSL_IOMMU=y` (tissot-ack.config final
+four lines).
+
+**Compile/link evidence**:
+- `scripts/build-ack-tissot.sh` exit 0; `out/vmlinux` (245,062,992 B).
+- 47 driver objects built; 48 `.c` sources minus `adreno_coresight.c`
+  (resolves n — `CORESIGHT_ADRENO` off; documented harmless, `adreno_coresight.o`
+  simply not compiled). `make -n drivers/gpu/msm/` = Nothing to be done.
+- Build string: `6.12.93-4k-g83b44102f24e-dirty (clang version 22.1.8,
+  LLD 22.1.8)` — toolchain is the system clang 22 (`scripts/build-ack-tissot.sh:21`
+  `llvm_bin=/usr/bin`, `CC="ccache clang"` at :24); NDK path is no longer the default.
+- Driver entry symbols in vmlinux: `kgsl_3d_init` (adreno.c:4219
+  `module_init`) and `kgsl_core_init` (kgsl.c:5615). **There is no
+  `kgsl_init` symbol in this driver** — the Stage-2 wording/handoff name
+  is wrong; the linked proof is those two symbols:
+  `nm out/vmlinux | grep -wE 'kgsl_3d_init|kgsl_core_init'`.
+- `out/arch/arm64/boot/Image.gz-dtb` = 19,221,571 B,
+  sha256 `eb5bd012e2d345c400ef8751687ced633a1fc907bdc55ef96ada791e5e0082ea`.
+- Audit (`scripts/ack-driver-audit.py --dtb ... --tree . --config out/.config`):
+  `BUILT   okay   /soc@0/gpu@1c00000   CONFIG_QCOM_KGSL   drivers/gpu/msm/adreno.c`
+  — of_match `qcom,kgsl-3d0` (adreno.c:923) via tissot override
+  (msm8953-xiaomi-tissot.dts:459-462). `--only-unbound` lists only the 4
+  pre-existing no-driver nodes (rpm-msg-ram, tcsr ×2, ion) — gpu absent.
+  Summary line: `98 device nodes: 94 have a driver (84 compiled in), 4 have none`.
+
+**Port adaptations (driver-private, all under `drivers/gpu/msm/`; uapi
+`msm_kgsl.h` untouched)**:
+- `kgsl_pool.c`: `kern_addr_valid`→`virt_addr_valid` (removed generic),
+  `NR_UNRECLAIMABLE_PAGES`→`NR_SLAB_UNRECLAIMABLE_B` (6.12 vmstat is
+  byte-scaled), `totalram_pages` var→fn, static shrinker→allocated
+  (`shrinker_alloc`/`shrinker_register`/`shrinker_free`).
+- `adreno_dispatch.c`: `strlcpy`→`strscpy`, kobj `default_attrs`→
+  `default_groups`, `__mutex_owner` re-entrancy guard dropped (6.12 keeps
+  it kernel-internal; idle-timeout WARN remains the backstop).
+- `kgsl_reclaim.c`: `pagevec`→`folio_batch` (`check_move_unevictable_pages`
+  deleted upstream), `reclaim_address_space`→`reclaim_shmem_address_space`,
+  `proc_reclaim_notifier_*` shimmed inert (a506 never sets
+  ADRENO_PROCESS_RECLAIM; a6xx-only).
+- `kgsl_iommu.c` + `gmu-iommu-compat.h`: 6.12 deleted the entire vendor
+  iommu domain-attr API. Live path now uses the sanctioned adreno-smmu
+  private interface (`include/linux/adreno-smmu-priv.h`): cb_num=0
+  (qcom_adreno_smmu_alloc_context_bank) and ttbr0/contextidr via
+  `get_fault_info()`; `adreno_smmu` priv is published on the platform
+  device before attach (adreno.c:1481). Inert paths (secure/per-process
+  pagetables, gpuhtw LLC) fail loudly via `-ENODEV` wrappers.
+  `iommu_map`/`iommu_map_sg` gained the gfp arg (`GFP_ATOMIC`).
+- `adreno_a6xx.c`/`adreno_a5xx.c`/`adreno_a3xx.c`: `<linux/clk/qcom.h>` and
+  `<soc/qcom/subsystem_restart.h>` gone — new `adreno-zap-compat.h`
+  (zap loader inert on a506: mmu->secured false), clk-flag + DDR-query
+  shims in `adreno.h` (a3xx/a540/a512/a508/a509/a650-only paths).
+- `msm-bus-compat.c`: wired into `drivers/gpu/msm/Makefile` (was in the
+  tree but never added — link would fail); prop-index port to
+  `of_property_read_u32_index`.
+- Duplicate-symbol link errors vs in-tree drm/msm renamed into the kgsl
+  namespace: `adreno_idle`→`kgsl_adreno_idle`, `a6xx_gmu_sptprac_is_on`→
+  `kgsl_a6xx_gmu_sptprac_is_on`.
+- `scripts/ack-driver-audit.py`: `symbol_table` now resolves composite
+  Makefiles (`foo-y += bar.o` + `obj-$(CONFIG_X) += foo.o`), so kgsl and
+  drm/msm objects report their real CONFIG symbol instead of `?`
+  (coverage went 77→84 compiled-in; audit output was under-reporting).
+
+**Environment warning**: any direct `make O=out ...` without the script's
+env (`ARCH=arm64 LLVM=1 LLVM_IAS=1`) re-syncs kconfig for host arch and
+silently destroys the merged config — observed once, fixed by re-running
+the script. The script always regenerates the config first.
+
+## Stage 3 log (2026-10-10, IN PROGRESS — kgsl boot #1 fault isolation)
+Recorded run tags span `snapshot60/run2..run36`; evidence per tag in
+`porting/artifacts/snapshot60/`. Full channel map + reasoning:
+`porting/REFERENCE-boot-testing.md`.
+
+| Run | Kernel | Result | Evidence |
+|---|---|---|---|
+| run2 | kgsl (NDK-era cfg reset) | DIES pre-userspace: reset to stock, empty logdump slots, 0-byte ACM | `run2-logdump.bin` 64 MiB, slots invalid |
+| run3 | CONTROL: run1 known-good image | PASS | slots seq 173/174 valid (DBGC), 37,471 B SD |
+| run4 | kgsl + `--keep-stock-console` | DIES (same as run2) | slots invalid |
+| run5 | kgsl + kgsl-iommu DT glue + `late_initcall(kgsl_3d_init)` | DIES | slots invalid |
+| run6 | CONTROL: same tree, `QCOM_KGSL=n` | PASS | slots seq 168/169 valid, 38,573 B SD log |
+| run7 | kgsl + ramoops read-back + earlycon/`console=ttyMSM0` | user observed stuck at fastboot splash; kernel start unproven | pending |
+| run8 | CONTROL re-boot (no-kgsl) to read ramoops | PASS; ACM 27,741 B; pstore read window missed (adb timeout) | `run8-usb.log` 27,741 B |
+| run9 | kgsl + `late_initcall` on BOTH kgsl initcalls | DIES, empty slots; initcall panic not excluded (finding 3) | `run9-logdump.log` 0 B |
+| run10 | CONTROL: run6 kernel + 378,677 zero-byte DTB pad (19,221,987 B) | **PASS** — size exonerated (29,215 B SD, slots 165/166) | `run10-sd.log` |
+| run11 | CONTROL (mislabelled): its log carries `#1 Sat Oct 10 21:24:39` — the same build as the run6/run10/run14 `QCOM_KGSL=n` kernels — and contains zero `kgsl` lines | diag reached first-stage init (422 B ACM); SD 37,107 B | `run11-sd.log`, `run11-usb.log` |
+| run12 | CONTROL re-boot (run10 image) | PASS; read window for ramoops missed | `run12-usb.log` |
+| run13 | kgsl + direct CB reg reads + `qcom,global_pt` + review NULL guard | DIES, empty slots (pre-P0-fix kernel) | `run13-usb.log` 0 B |
+| run14 | CONTROL: no-kgsl rebuilt on current DT (glue + stdout-path) | **PASS** — DT exonerated (slots 170/171, 37,025 B SD) | `run14-sd.log` |
+| run15 | kgsl + P0 NULL-pdev fallback + P1 sg-map sign fix | DIES, empty slots | `run15-logdump.log` 0 B |
+| run16 | CONTROL re-boot (run10 image) to read the record | PASS; **38,131 B ACM** — kernel log reached userspace; `sys.boot_completed=running` via adb after boot | `run16-usb.log`, `run16-sd.log` |
+| run17 | run15 image re-boot (P0 fix) | reset to stock before adb window; 0-byte ACM | `run17-usb.log` 0 B |
+| run25 | bus table + `interrupt-names`; the boot shipped a **stale** `kdir` (payload identical to run24), so only `init` + cmdline differed | DIED at the fastboot splash; unattributable, wasted cycle | `run25-logdump.log` 39,572 B |
+| run26 | first boot with the donor `qcom,msm-bus,*` bus table | `-22` gone (`kgsl_pwrctrl_init` passes); now fails `-6` at `kgsl_request_irq` — names the real next site | `run26-usb.log` 39,843 B |
+| run27 | kernel #11, which adds `interrupt-names = "kgsl_3d0_irq"` | **kgsl binds** — no `probe with driver failed`; `/dev/kgsl-3d0` opened by userspace (`kgsl_open` traces). Probe at `t=14.4 s` | `run27-usb.log` 42,447 B, `run27-sd.log` |
+| run29 | + `init`: denial loop stopped, `dump_log` survives denied kmsg reads | **full boot** — capture 3,071,879 B / 26,605 lines to `t=932 s`, clean `DIAG: EOF`. Probe at `t=4.56 s` (was 14.4 s: the SELinux denial loop cost ~10 s, not the console) | `run29-sd.log`, `run29-logdump.log` |
+| run31/32 | — | not booted: run numbers 30-33 already used by an earlier session | — |
+| run34 | + msm-bus handle fix, regulator fix, iommu clock rename | **DIES ~60 s, zero evidence** — diag init never wrote anything | `run34-usb.log` 0 B |
+| run35 | same, iommu clock rename reverted | **PASS** — 300 s+ Android. `GPU BW scaling failure` 0, `regulator 'vdd' disable timed out` 0, `supply vdd not found` 0, probe failures 0 | `run35-sd.log` 39,695 B, `run35-logdump.log` |
+| run36 | run35 + iommu rename again, with `of_dma_configure` guarded | **DIES again** — confirms the rename, not the DMA call, is fatal | `run36-usb.log` 0 B |
+
+**Findings (each backed by a run):**
+1. Control boot (run6): identical tree, clang 22, ccache, config reset, DT glue —
+   everything except `CONFIG_QCOM_KGSL=y` — **boots clean**. The vendored driver
+   is the fault; environment/toolchain are exonerated.
+2. **run10 (size A/B) exonerates size**: the *same* run6 control kernel, with only
+   378,677 zero bytes appended to the DTB so `Image.gz-dtb` = 19,221,987 B
+   (byte-identical to our kgsl images' size), **BOOTS FINE** — valid DBGC slots
+   (seq 165/166), 29,215 B SD log, `DIAG: Android init exec succeeded`.
+   Working boots: 18,843,310 B, 18,872,873 B, and 19,221,987 B (run10).
+   **The discriminator is the kgsl driver, not size.**
+3. **Invalidated — do not reuse.** The old claim "kgsl initcalls exonerated,
+   empty logdump means no panic" rested on `pstore_blk` being the recording
+   backend. It is not: `pstore_blk: failed to resolve 'PARTLABEL=logdump'!`
+   then `failed to open ...: -2!` fires in every log (run24 log line 290,
+   `t=2.756 s`), because the eMMC only appears ~1.2 s after `pstore_blk`'s
+   probe. The backend that survives is the level-2 ramoops node
+   (0x86800000, `msm8953-xiaomi-tissot.dts:118`), whose snapshotter is ready
+   at `t=5.06 s` (`run24-usb.log:422`). Any death before that leaves no
+   record at all, and the level ordering argument cannot be used to
+   exonerate any initcall. The four `pstore_blk.*` cmdline tokens are dropped
+   from run25: they never worked on this kernel and cost the console choice.
+   The separate UDC-handoff capture cutoff is finding 3a.
+4. **0-byte ACM capture ≠ failed boot** — run3/run6/run8/run10 all produced
+   0-byte ACM but booted fine (adbd handoff ends the CDC-ACM stream).
+   Truth = logdump slots + SD-log freshness (`pull-run-evidence.sh` prints
+   `SD success: common extent matches` on success; `SD unverified` with stale
+   byte counts means the diag userspace never ran).
+5. **P0 NULL-pdev deref (subagent review)** — the kgsl-iommu node nested under
+   `&gpu` (compatible matches no OF bus) never gets a platform device, so
+   `of_find_device_by_node` returns NULL in both `_kgsl_iommu_probe` and
+   `_kgsl_iommu_cb_probe`; the first `devm_clk_get(&pdev->dev)` / `ctx->dev =
+   &pdev->dev` oopses in probe on every boot — invisible (oops at level 7,
+   `pstore_blk` unresolved, `console=ttynull`) = the observed silent reset.
+   Fixed in the run15/run17 kernel: fall back to `&device->pdev->dev` (same
+   `iommus=<&gpu_iommu 0>` stream id). Still dies at run17, so the probe has
+   at least one more fatal path. P1 also fixed: `iommu_map_sg` negative
+   errno wrapped to success via `size_t mapped`; now `ssize_t` + `<= 0`.
+6. **UDC-handoff capture cutoff (tooling, not kgsl)** — the diag init's
+   `guard_usb_handoff` (`scripts/initramfs-diag/init.c:777-818`) unbinds the
+   ACM function at the vendor stack's configfs switch, so `write_all(out,…)`
+   fails; `write_capture` returned -1, which ended `dump_log` for **both**
+   sinks. Control boots cut off identically (run16: 491 lines, last
+   `seq=433, t=23.6 s`), so this was a capture defect masquerading as a
+   boot defect. Fixed by making the sinks independent — a dead primary is
+   retired (marked `-1`) while the SD mirror keeps running to the 900 s
+   `dump_log` deadline — and by the new
+   `sink_retirement_selftest` in `init.c`.
+7. The stock 4.19's pstore ramoops is a **different region** (`0x91400000`,
+   `su -c ls /sys/fs/pstore` works) than the port's (`0x86800000`), and its
+   `/dev/mem` is absent — so reading our panic record needs a control boot
+   with the same DT, pulled before that boot's own shutdown overwrites it.
+8. DT glue the vendored driver always needed (donor
+   `msm8953-gpu.dtsi`, `kgsl_msm_iommu`): `qcom,kgsl-smmu-v2` child under
+   `&gpu` with `gfx3d_user` `qcom,smmu-kgsl-cb` + `iommus=<&gpu_iommu 0>` —
+   added in Stage 3 (tissot dts:459-484). `kgsl_iommu_probe` returned
+   -ENODEV without it.
+9. pyserial for `usb-boot-capture.py`: `/tmp/diagvenv` (the system python has
+   no `pip`; recreate with `uv venv` + `uv pip install`).
+10. **`kgsl_get_bus_scale_table()` returned NULL** (run25 named it):
+    `kgsl_pwrctrl_init` bails with `-EINVAL` on its *first* statement
+    (`kgsl_pwrctrl.c:2267-2269`) when no bus table is found. The 6.12 tissot
+    DT had neither a `qcom,gpu-bus-table*` child nor the donor's
+    `qcom,msm-bus,*` properties on `&gpu`, so all three lookups failed.
+    Fixed by porting the donor's 11-case table onto `&gpu`
+    (`msm8953-gpu.dtsi:135-149`), which is exactly what the vendored
+    `msm-bus-compat.c` shim parses. Verified: run26 no longer reports `-22`.
+11. **msm-bus compat handle was decoded wrongly.** The vendor client handle is
+    a 1-based slot index (`msm_bus_arb_adhoc.c` `gen_handle()` /
+    `update_request_adhoc()` → `handle_list.cl_list[cl]`), but the shim's
+    `msm_bus_scale_client_update_request()` treated it as a tagged pointer
+    (`cl & ~1UL`). For the common `cl == 1` that yields NULL, so **every** GPU
+    bandwidth vote returned `-EINVAL` ("GPU BW scaling failure: -22", thousands
+    of times in run29). Fixed to index `clients[cl - 1]`; run35: 0 occurrences.
+    The return value is ignored by its only caller, so this fix is otherwise
+    inert.
+12. **No discrete GPU rail exists on 6.12** — the gpu node has only
+    `power-domains = <&gcc OXILI_GX_GDSC>` and the stock live DT has no
+    `vdd-supply` on it either, so `devm_regulator_get(dev, "vdd")` returned the
+    dummy regulator, which always reports itself enabled. `_regulator_disable()`
+    then polled for its full 5 s timeout and logged "regulator 'vdd' disable
+    timed out" on every GPU power-down. Fixed by not requesting a supply the DT
+    does not describe (`get_legacy_regulators()`), which leaves `reg` NULL so
+    the existing `IS_ERR_OR_NULL` guards short-circuit. run35: 0 occurrences.
+13. **Do NOT rename the kgsl-iommu `clock-names`.** They resolve against the
+    *gpu* device (no platform device exists for the node), so they legitimately
+    do not resolve; `_kgsl_iommu_probe` returns `-ENODEV` there and, being a
+    separate platform driver, that is non-fatal — the GPU binds and
+    `/dev/kgsl-3d0` opens. Making the probe succeed instead (run34, run36)
+    kills the phone ~60 s in, before the diag init writes anything, twice.
+    Guarding the suspicious `of_dma_configure(ctx->dev, node, true)` call did
+    **not** help (run36), so the fault is in the untested code past that early
+    return — `of_platform_populate()` over the CB children, most likely. That
+    needs its own evidence; do not retry it on a guess.
+14. **Every image packaged from `snapshot59/base.img` silently loses adb.**
+    The diag init needs `/ack-protected-fstab.qcom` and
+    `/ack-vendor-file-contexts` in the ramdisk; without them
+    `install_android_guard()` never runs, so `guard_usb_handoff()` never hands
+    the UDC to adb and adbd can never come online. `snapshot59/base.img` does
+    **not** carry them (verified by decompressing its ramdisk), and
+    `package-diag-boot.py` does not stage them. Runs 20-25+ all show
+    `DIAG: bootdevice guard inputs unavailable; alias not released`.
+    Use `scripts/stage-guard-inputs.py` first, or package from
+    `snapshot60/base-guard.img`, which carries both files. run39 does this and
+    the log shows `guard installed ... fstab and vendor contexts before policy
+    load`, `canonical alias and legacy wait path ready`, and
+    `USB handoff rc appended ... errno=0`.
+    **adb on 6.12 already worked** — see commit `fa37accb3` ("adb works on
+    6.12": host enumerated `18d1:4ee7` with adb reporting `device`) and
+    `f630f7c07`/`86cf5e369`, which also record the `+CONFIG_QRTR`,
+    `+CONFIG_QRTR_SMD`, `-CONFIG_USB_FUNCTIONFS(_ETH)` requirement. The current
+    `.config` satisfies that (QRTR=y, QRTR_SMD=y, QCOM_PD_MAPPER=y,
+    USB_FUNCTIONFS absent). A missing guard in the base is a *packaging* gap,
+    not a kernel defect — do not read "no adb" as a driver bug.
+
+**Next:** the kgsl probe now **succeeds** (run27/run35/run37/run38/run39) and
+the GPU is driven from userspace. Four driver bugs are fixed and verified by
+absence — findings 10-12 plus the `qcom,highest-bank-bit` port (run38: the
+`highest-bank-bit property is invalid` WARN is gone). Remaining:
+
+- **The kmsg capture truncates**, and by differing amounts: run29
+  (`run29-sd.log`) reached 932 s, run35 (`run35-sd.log`) 24.9 s, run39
+  (`run39-logdump.log`) 19.2 s. The capture now idles to its deadline instead
+  of aborting, but has no records left to write, and the *cause* of the lost
+  read is not established — do not attribute it to SELinux enforcement or to
+  fd lifetime without a cited denial line. This is what blocks any claim that
+  no runtime GPU bug exists after ~30 s.
+- **run39 has the guard inputs** (finding 14) and arms the USB handoff, but its
+  capture ends at 19.2 s — before adbd would start — so the handoff completing
+  is not yet confirmed. Re-check once the capture truncation is understood.
+- **`of_platform_populate()` in `_kgsl_iommu_probe`** (finding 13), which needs
+  its own evidence before it is touched again.
+
+
+## Run40: policy-bearing package and fresh QSEE evidence (2026-10-12)
+
+- Built the current tree with `build-ack-tissot.sh` (clang/LLD 22.1.8):
+  `6.12.93-4k-g83b44102f24e-dirty`, `CONFIG_QCOM_KGSL=y`,
+  `CONFIG_QCOM_KGSL_IOMMU=y`. Stock `msm_kgsl.h` still compares byte-identical
+  against the donor. No QSEE/SCM, KGSL, clock-name or policy edits in this run.
+- Packaged from the real `snapshot60/base-guard-debug-fw.img` (SHA256
+  `c08cf6b24ae5517b65ad0a6d50fb23b198bab90c706e4f5f983d7ac69cda49c7`)
+  and `init-run32`; all 664 non-init cpio records remained identical, including
+  both guard inputs, `force_debuggable` and the 3,304,475-byte debug policy.
+  `package-run40.json` records image SHA256
+  `69b20f3d7302a31cab2e2a99f393afc3cd5128c239d8705254fd7732b1617beb`
+  and freshly built Image.gz+DTB payload SHA256
+  `e6a1ca4f45b5f4f07cb2fb37540076c7b95a9f0f9b82373eba4bf817631432b6`.
+- Preceding logdump matched the already archived run39 binary; preclear
+  verified 64 MiB zero readback (`run40-preclear.status`). `fastboot boot`
+  succeeded; no flash or slot change. USB captured 472,292 bytes before
+  disconnect, not a boot-failure verdict (`run40-usb-capture.status`).
+- **6.12 adb and QSEE startup are observed.** Timeline lines 54–124 contain
+  port identity observations (host elapsed 212–489 s).
+  `run40-live1-logcat.log:139–154` records QISL activation and daemon running;
+  `run40-usb.log:1717` records listener-readiness completion.
+  The formerly stuck 1,164-byte keymaster request is sent at
+  `run40-usb.log:1844–1846` and returns at line 1859 (~7.6 ms).
+  PID 352 remains alive in `run40-live3-ps.log:266`.
+  Registration fallback `32000206 -> -5`, then `32000201 -> 0`
+  (`run40-usb.log:1629–1638`) matches run31, not a new QSEE failure.
+  No reproduced QSEE startup failure; this does not prove every secure operation.
+- **The reproduced graphics boundary is vendor composer, not QSEE.**
+  `run40-usb.log:3335,3568` records composer SIGSEGV at 112.8/120.6 s,
+  followed by SurfaceFlinger/zygote restarts. Live tombstones locate the null
+  fault at `sdm::HWInfoDRM::GetHWResourceInfo()+208` in `libsdmcore.so`
+  (`run40-live1-logcat.log:1127–1153,2026–2052`).
+  Run33 has the same PC and library BuildId (`run33-logcat.log:237,283`).
+  The missing/incompatible DRM resource contract remains **unverified**;
+  no driver patch follows from the stack alone.
+- Durable pull on the port failed (no `su`; scratch
+  `/tmp/ack-evidence-e77r1jkc`). After return to installed 4.19, the existing
+  pull tool saved 67,108,864 bytes, SHA256
+  `f58048b1c6125f9cb3660a4ebe7a64a58fd965320a9dfee8b2d91b3e66b71dc2`.
+  The 1,758,891-byte SD log matches the raw prefix; raw readable prefix is
+  1,759,037 bytes and reaches 456.249 s (`run40-logdump.log:15261`).
+  Both snapshot headers are valid but their DBGC rings are empty.
+  `run40-logdump.log:14344,14559–14566` shows explicit `reboot,shell` and
+  orderly shutdown, not evidence of a spontaneous QSEE reset.
+- All three live logcat/process/property snapshots were collected. `dmesg`
+  was denied in each; empty QSEE/readiness properties are not stopped-service
+  evidence. `sys.boot_completed` was empty in these snapshots; boot completion
+  is not established. The temporary host collector was stopped after the user
+  reported the run done and 4.19 fallback was observed (~670 s, before its
+  900 s maximum); no permanent collector was added.
+
+**Next after run40:** investigate the composer DRM resource contract using
+the captured tombstones and donor/AOSP display sources. The corrected real
+ramdisk package restores evidence beyond run39's 19.2 s cutoff and confirms
+6.12 adb; it does not establish why the guard-only run39 capture ended.
+Retain the separate KGSL audit findings; do not bundle secure-memory, bus-vote,
+or IOMMU-probe changes into this diagnostic result.
+
+## MDSS Phase 1: compile+link gate (2026-10-13, no boot)
+
+- Root cause (run40): stock `libsdmcore.so` selects its fbdev backend only if
+  `/sys/devices/virtual/graphics/fb0/mdp/caps` exists (verified
+  `GetDriverType` disassembly reads that path); on 6.12 the file is absent,
+  the DRM backend is taken, and `HWInfoDRM::GetHWResourceInfo()+208`
+  (`run40-live1-logcat.log:1147`) dereferences a null DRM-manager handle
+  (`_ZN3sdm9HWInfoDRMC2Ev` never fills it on mainline MDP5). Same PC/library
+  BuildId as run33 (`run33-logcat.log:237`). Fix direction per
+  `porting/PLAN-mdss-display-port.md`: restore the real MDSS fbdev interface.
+- Imported the tissot-needed donor subset into `drivers/video/fbdev/msm`
+  (47 `.c`, headers, 3 UAPI headers byte-identical) and wired
+  `drivers/video/fbdev/msm/{Kconfig,Makefile}` behind
+  `CONFIG_FB=y,CONFIG_FB_MSM=y,CONFIG_FB_MSM_MDSS=y`
+  (`scripts/tissot-ack.config`). `CONFIG_DRM_MSM` stays on and no DT nodes
+  exist yet, so nothing binds: this build behaves like run40 plus inert code.
+- Full `build-ack-tissot.sh` link passes (Image.gz 19,725,217 B);
+  `nm out/vmlinux` shows `mdss_fb_init`, `mdss_mdp_probe`, `mdss_dsi_probe`;
+  `CONFIG_QCOM_KGSL=y/CONFIG_QCOM_KGSL_IOMMU=y` retained. Not boot-tested:
+  no boot cycle spent on an image with no new bound driver.
+- Port decisions (all evidence-backed, no fake caps/stubs/bypasses):
+  secure display/camera enable returns `-EOPNOTSUPP` before side effects
+  (`mdss_mdp_secure_session_ctrl`); DMA lifetime owned by dma-buf attachment
+  with contiguous-span validation (`mdss_smmu_map_dma_buf_v2`); splash
+  early-map retired, splash disabled first cutover; 32-bit compat deferred
+  (no 32-bit client identified, plan Q5); PMI/PWM backlight paths fail loudly
+  (tissot uses WLED); `tracing_mark_write` renamed (collides with drm/msm
+  DPU event); `linear_map` made static (collides with dm-linear).
+- Genuine donor bug fixed on the way: `mdss_dsi_get_panel_cfg` copied
+  `sizeof(arg_cfg)` (257) into caller `char[256]` buffers; fortify proved it
+  after inlining. Bound is now `MDSS_MAX_PANEL_LEN`.
+- Shared headers promoted for MDSS+KGSL: `include/linux/msm-bus.h`
+  (+`update_context`), `include/linux/msm-bus-board.h`,
+  `include/dt-bindings/msm/msm-bus-ids.h`, `include/linux/clk/qcom.h`
+  (adreno.h now reuses it), `include/soc/qcom/event_timer.h` (feature off,
+  honest no-op stubs), `include/media/msm_media_info.h`,
+  `include/linux/display_state.h`, `include/video/{msm_dba.h,msm_hdmi_modes.h}`,
+  `include/linux/msm_ext_display.h`, `include/xiaomi-msm8953/mach.h`
+  (tissot-only). Optional core `fb_open_file/fb_release_file/fb_ioctl_file/
+  fb_compat_ioctl_file` callbacks added (`include/linux/fb.h`,
+  `drivers/video/fbdev/core/fb_chrdev.c`); legacy drivers unaffected.
+- Next: Phase 2 cutover (8953 PLL CCF conversion, DT ownership swap with
+  `power-domains = <&gcc MDSS_GDSC>`, PMI8950 LAB/IBB provider, splash
+  quiesce before DMA attach). Port tasks for DSI/PLL/bias were delegated
+  but the workers hit a usage limit and returned nothing; their research
+  handoffs (`agent://MdssMemoryMap`, `agent://MdssClockDt`) are retained and
+  already applied (DMA ownership, clock map, DT closure). No boot until the
+  cutover binds hardware.
 
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
