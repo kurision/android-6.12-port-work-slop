@@ -1,0 +1,15 @@
+{
+  "image": "porting/artifacts/snapshot60/boot-run43.img",
+  "size": 37969920,
+  "sha256": "3fa7e1788a96a5ac348ced29000209fcdc16872449bcd9bedd09e8d942506f5a",
+  "kernel_payload_sha256": "d5947c60221d6b7d4a0b37ad1fe7f6b53bfb652a4f872642b0f34a157c50bfd8",
+  "kernel_size": 19792626,
+  "ramdisk_size": 18173078,
+  "ramdisk_sha256": "95b070721ff8f4127f5e8e2cee5386d28d1e7ea2635de294567fbaa1ce0343c5",
+  "cpio_records": 665,
+  "init_sha256": "6a42d39501ce8674480030ba394f0a593fb95b92af94c4406178b3e9a80f964a",
+  "firmware": [],
+  "debuggable": false,
+  "base_image": "porting/artifacts/snapshot60/base-guard-debug-fw.img",
+  "cmdline": "androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 loop.max_part=7 androidboot.boot_devices=soc@0/7824900.mmc buildvariant=user ignore_loglevel printk.time=1 oops=panic panic=10 androidboot.force_normal_boot=1 rcupdate.rcu_cpu_stall_timeout=10 softlockup_panic=1 hung_task_panic=1 printk.devkmsg=on androidboot.bootdevice=../.. pstore_blk.blkdev=PARTLABEL=logdump pstore_blk.best_effort=1 pstore_blk.kmsg_size=32768 pstore_blk.pmsg_size=32768 console=ttynull firmware_class.path=/vendor/firmware"
+}

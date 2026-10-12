@@ -1,0 +1,16 @@
+{
+  "image": "base-guard-debug-fw.img",
+  "size": 35147479,
+  "sha256": "c08cf6b24ae5517b65ad0a6d50fb23b198bab90c706e4f5f983d7ac69cda49c7",
+  "source": "../snapshot59/base.img",
+  "cpio_records": 665,
+  "added": [
+    "ack-protected-fstab.qcom",
+    "ack-vendor-file-contexts",
+    "force_debuggable",
+    "userdebug_plat_sepolicy.cil"
+  ],
+  "replaced": [],
+  "ramdisk_size": 17348311,
+  "cmdline_unchanged": true
+}

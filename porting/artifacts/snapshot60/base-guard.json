@@ -1,0 +1,14 @@
+{
+  "image": "base-guard.img",
+  "size": 34895192,
+  "sha256": "022a9f66b179da1ca247db1f9edc50f193bced4f8b41cd3820e12586b5aeaca3",
+  "source": "../snapshot59/base.img",
+  "cpio_records": 663,
+  "added": [
+    "ack-protected-fstab.qcom",
+    "ack-vendor-file-contexts"
+  ],
+  "replaced": [],
+  "ramdisk_size": 17096024,
+  "cmdline_unchanged": true
+}
