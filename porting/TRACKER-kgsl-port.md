@@ -914,6 +914,14 @@ or IOMMU-probe changes into this diagnostic result.
   disconnected with no VSYNC, which gates composition and likely
   boot_completed. Also fixed: enable_seq lost its outer close brace
   during the diagnostic edit (caught before any build).
+- Cycle/binder/GPU-supply closure (2026-10-13, no boot needed):
+  cycle links go permissive both directions (core.c:1707-1753), so the
+  PLL's own power_get cannot move MDSS_GDSC; GDSC rides MDP/DSI
+  holders. Late attempts fail with GDSC held, so persistent 0xc is
+  config/sequencing, not domain power. Binder UAPI is the stable
+  v7/v8 ioctl set; dpmd stays a userspace double HIDL init. GPU node
+  carries donor clocks/IRQ/bus/pwrlevels and reads back live RBBM,
+  so coarse GPU power is on.
 
 ## Handoff to another machine
 
