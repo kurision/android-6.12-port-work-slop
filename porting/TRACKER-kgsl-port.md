@@ -6,7 +6,7 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, branch `kgsl-port` (from `driver-fix` a1e4992dc).
 The main tree stays untouched until this port has a boot verdict.
-Last update: 2026-10-10 — Stage 3 in progress; successful KGSL probe recorded, capture/IOMMU investigation remaining.
+Last update: 2026-10-13 — Stage 3 in progress; run82 repeat of run81 returned to stock before observed 6.12 ADB; raw/SD evidence preserved, reset cause and composer BW parsing remain open.
 
 ## Status key (same as FAILING-COMPONENTS.md)
 FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
@@ -451,7 +451,10 @@ or IOMMU-probe changes into this diagnostic result.
 ## Run41: cutover first light (2026-10-13, kernel #20 + DT overlay)
 
 - First image with MDSS+PLL+DT bound: `boot-run41.img` SHA256
-  `69b20f3d...` (package-run41.json; payload e6a1ca... rebuilt #20).
+  `e6d878b4bac6cef3056ce788d4e1c60684068eb33ba54af00e826c53d4abe4d3`
+  (package-run41.json:4-5; payload SHA256
+  `e8677d4498c3ee432f2e49b7a51d8fe9bb5b7bc595f377faa7cb801e177a7cd9`,
+  rebuilt #20).
   USB captured 469,822 bytes then adbd-handoff disconnect (expected).
 - PLL provider probes and registers both PLLs
   (`run41-usb.log:214,217` "Registered DSI PLL ndx=0/1 clocks").
@@ -684,7 +687,7 @@ or IOMMU-probe changes into this diagnostic result.
   reset. Saved exact 67108864-byte raw logdump; 2271820-byte SD/common
   prefix matches; two valid snapshot slots at 533.75 / 535.80 s.
 
-## Run81: bandwidth attribute mapping (offline verified; boot pending)
+## Run81: bandwidth attribute mapping (ADB reached; recovery return)
 
 - Add only the exact resolved `bw_mode_bitmap` path to the existing
   sysfs_graphics mappings. No new types/allow rules, no permissive mode.
@@ -695,33 +698,109 @@ or IOMMU-probe changes into this diagnostic result.
 - `boot-run81.img` sha256
   `853640cb9637f070374567cb252e9169c08360b45f6cfa9260ea6c1cffc0e17f`.
   Extracted-image comparison against run78: same kernel / cmdline / init
-  and all other records; only debug CIL differs. Device effect unverified.
+  and all other records; only debug CIL differs. BW parsing remains unverified.
+- Before boot, archived the stock device's raw 67108864-byte logdump and
+  logcat under `run81-preboot/`. `run81-preclear.status` proves zero
+  readback. RAM-boot command succeeded; no flashing or kernel change.
+- USB captured 345799 bytes, then disconnected
+  (`run81-usb-capture.status`). PLL0 lock failure and HS clock enable
+  `-22` occur at `run81-usb.log:2850-2858`; vsync poll timeout and
+  frame timeout follow at lines 2918-2919. No causal reset verdict.
+- ADB observed 6.12 / enforcing at uptime 207.08 through 239.38 s;
+  boot completion remained unset (`run81-adb-timeline.log:185-220`).
+  User observed return to stock recovery; no intentional reboot was
+  issued after RAM-boot. Later ADB was unauthorized.
+- Capture defect: collector deferred logcat until its nine-minute
+  deadline instead of capturing during the live ADB window. Stopped it
+  after the recovery report; no run81 Android logcat was saved.
+- After the user returned the device to stock, root retrieval saved
+  67108864 raw bytes; readable prefix 1176685 bytes. SD capture 1176627
+  bytes matches the common extent; two valid DBGC snapshot slots at
+  235.31 / 237.40 s. Final raw record is at 238.397 s
+  (`run81-logdump.log:10231`); no explicit panic/reboot record was found.
+- On-device audit proves caps and `bw_mode_bitmap` resolve to
+  `sysfs_graphics` (`run81-logdump.log:8774-8775,9008-9009`).
+  These are shell getattr denials, not composer read denials; label
+  application is verified, successful composer BW parsing is not.
+
+## Run82: unchanged run81 repeat (early return to stock; no port ADB)
+
+- RAM-booted the exact `boot-run81.img`, SHA256
+  `853640cb9637f070374567cb252e9169c08360b45f6cfa9260ea6c1cffc0e17f`.
+  Archived preboot stock evidence in `run82-preboot/`;
+  `run82-preclear.status` proves zero readback. No kernel/policy change.
+- Continuous logcat collector was ready to stream on first 6.12 ADB
+  response, but no port ADB window was observed. Stock 4.19 reappeared
+  at host elapsed 148.17 s (`run82-adb-timeline.log:38`); user also
+  reported the reset. No logcat segment was created.
+- USB captured 191063 bytes (`run82-usb-capture.status`). Root retrieval
+  saved 67108864 raw bytes and a matching 190821-byte raw/SD prefix.
+  Valid DBGC slots at 67.12 / 69.17 s contain no later text than the
+  raw prefix; last record at 66.726638 s is successful cleanup of
+  `apexd-bootstrap` (`run82-logdump.log:1398-1402`).
+- No explicit panic/reboot cause was found in the preserved port log.
+  Stock boot reasons report `bootloader` (`run82-stock-state.log:3-4`);
+  stock PMIC logs report PS_HOLD shutdown
+  (`run82-stock-dmesg.log:322-326`). These do not identify the initiating
+  port failure. Stock ramoops uses 0x91400000, not the port's region.
+- Collector stop defect: it detected stock return only after seeing
+  port ADB, so it kept waiting through this pre-ADB failure. Stopped
+  after the user's report. Next collector must detect return to stock
+  after transport loss even if port ADB never appeared.
+- Composer BW parsing remains unverified. Do not attribute this earlier
+  reset to the run81 PLL errors or infer a new policy failure.
+
+## Early-reset diagnostic preparation (source only; image pending)
+
+- User will build and supply the image. No run83 image is packaged or
+  boot-tested in this session; do not record a new boot verdict.
+- `fs/pstore/ram.c`: opt-in `ramoops.reset_capture=1` persists an orderly
+  reboot/power-off caller record and kernel-log tail at logdump offset
+  `0x3f30000`, before device shutdown. Separate buffer; normal reboot
+  behavior retained. Periodic snapshots gain a progress heartbeat.
+- `scripts/initramfs-diag/init.c`: `ANDROID_EARLY_LOGCAT` appends an
+  init-managed, existing-shell-domain logcat service before policy load.
+  Starts on post-fs-data, before ADB is needed, writing bounded rotating
+  `/data/local/tmp/ack-early-logcat.log*` files. No new policy rules.
+- `porting/logging/decode-reset.py` decodes the bounded reset record
+  from the raw partition. Missing evidence is not a reset-cause verdict.
+- Build/package/retrieval instructions and limits are in the new
+  `REFERENCE-boot-testing.md` early-reset section. Preserve run81 as
+  the packaging base, its policy/firmware/guard inputs and the DTB.
+  Full Linux build, Android init parsing and device behavior remain
+  unverified; host callback/RC smoke checks are not substitutes.
 
 ## Handoff to another machine
 
-- Stop point: run80 verifies caps access; bandwidth attribute is the
-  next reproduced composer blocker. Run81 is packaged and compile-
-  checked only; do not describe it as boot-tested or boot-complete.
-- Latest booted image is `snapshot60/boot-run78.img` (used for run80).
-  Next image is `snapshot60/boot-run81.img`; control is the original
-  `snapshot60/boot-run73.img`. Logs/evidence for runs78-80 are preserved.
+- Stop point: run82 repeat returned to stock without observed port ADB.
+  Run81 BW label is verified; composer parsing and reset cause remain open.
+  No boot completion, EGL success, or rendering verdict is established.
+- Latest RAM-booted image is `snapshot60/boot-run81.img`; control remains
+  the original `snapshot60/boot-run73.img`. Run81 and run82 tags are used.
 - Preserve / transfer the real `snapshot60/base-guard-debug-fw.img`,
   `init-run32`, and all four `kdir-run73/` files. Do not reconstruct
   the policy-bearing base from captures or stock images.
-- Next device step: read REFERENCE-boot-testing.md, archive any new
-  device evidence, preclear with unused tag run81, then RAM-boot
-  boot-run81.img and capture USB + ADB/logcat. Verify BW parsing, then
-  follow the next actual failure. Allow at least eight minutes for
-  initial collection: the run79 control exposed adb after 240 seconds.
-- Last controlled action returned the phone to normal ROM for a
-  successful run80 root-logdump pull. Final handoff ADB check found no
-  device (`snapshot60/handoff-device-state.log`); current kernel is
-  unverified. No further boot / clear / flash was attempted.
+- Treat HANDOFF-kgsl-port.md as a historical Stage 2 handoff.
+  REFERENCE-boot-testing.md's original timing/capture sections are
+  historical; this handoff and later run evidence take precedence.
+  Its new opt-in early-reset section describes the pending experiment.
+  Do not use its 150-second ADB window as a boot-failure verdict or run
+  direct make without the required arm64 environment.
+- Next step: user builds the diagnostic image using the early-reset
+  reference section; inspect its package and preserved inputs before
+  any boot. Any repeat needs an unused run tag and continuous logcat
+  capture alongside USB and a four-second ADB timeline.
+  Allow at least eight minutes unless the device demonstrably exits
+  the port kernel; do not treat a 150-second window as failure.
+- Current state: stock 4.19.325, boot completed, root available, enforcing;
+  verified after run82's return. Run81/run82 raw/SD evidence is preserved.
+  No further boot / clear / flash was attempted.
 - Deferred kernel work remains: raw display markers collide with
   ramoops; pstore retries cannot resolve PARTLABEL and synthetic panic
   is unsafe; arbitrary MDP delay and removed idle-PC restore are not
-  production fixes. Keep kernel unchanged until policy boot evidence
-  is collected; no cause is established for run78's early return.
+  production fixes. Keep KGSL/MDSS unchanged; only the approved
+  diagnostic pstore extension is in scope for the next kernel build.
+  No cause is established for run78/run81/run82 returns.
 
 
 ## Boot economy (AGENTS.md)

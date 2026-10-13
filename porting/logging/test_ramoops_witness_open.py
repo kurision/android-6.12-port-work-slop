@@ -29,8 +29,11 @@ static struct file backing_file, *ramoops_witness_file;
 static struct block_device backing_device, *ramoops_witness_bdev;
 static void *ramoops_witness_buf;
 static bool fail_alloc = true;
+static bool class_ready;
 static int opens, closes, allocations;
 static int ramoops_snap_find_logdump(void) { return 0; }
+static bool class_is_registered(void *c)
+{ (void)c; return class_ready; }
 static void class_for_each_device(void *c, void *s, dev_t *found, void *fn)
 { (void)c; (void)s; (void)fn; *found = 1; }
 static struct file *bdev_file_open_by_dev(dev_t d, int flags, void *h, void *o)
@@ -45,6 +48,9 @@ static void filp_close(struct file *f, void *owner)
     check = r'''
 int main(void)
 {
+    assert(ramoops_witness_open() == -ENODEV);
+    assert(opens == 0 && allocations == 0);
+    class_ready = true;
     assert(ramoops_witness_open() == -ENOMEM);
     assert(ramoops_witness_open() == -ENOMEM);
     assert(!ramoops_witness_file && !ramoops_witness_bdev && !ramoops_witness_buf);
