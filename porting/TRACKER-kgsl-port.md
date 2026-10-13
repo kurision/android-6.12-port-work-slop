@@ -583,6 +583,24 @@ or IOMMU-probe changes into this diagnostic result.
   `/dev/block/*` needs ueventd (late) — pstore retry must use PARTLABEL
   (sysfs) or `/dev/mmcblk0p48` (devtmpfs), never `/dev/block/*`.
 
+## Run77 plan: CIL policy delta for caps (packaged, untested 2026-10-13)
+
+- `package-diag-boot.py` gains `--policy-append FILE` (appends to the
+  ramdisk `userdebug_plat_sepolicy.cil`, records sha in the report;
+  verified offline: rules land at the record tail, image repacks clean).
+- `policy-mdss-caps.cil` (harness-only, NEVER ship): declares
+  `sysfs_mdss_mdp_caps`, genfscons the exact denial path, allows
+  `hal_graphics_composer_default` + `mm-pp-daemon` read (both scontexts
+  verified verbatim from run73 AVC lines). Matches Sony/vendor
+  convention (`sysfs_mdss_mdp_caps:file r_file_perms`).
+- Init loads the CIL text (variant-selected filename proves it); no
+  binary policy surgery, no `sepolicy-inject` needed.
+- If the composer proceeds past caps, the product still needs the
+  equivalent rule in its own policy — record it there, delete this delta.
+- `enforcing=0` / `androidboot.selinux=permissive` both ignored by this
+  init chain (our DIAG init does no SELinux setup before exec); `selinux=0`
+  (run76) never booted — phone stuck in fastbootd first.
+
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
 with file+line evidence before any claim. Reverts are one-line documented.
