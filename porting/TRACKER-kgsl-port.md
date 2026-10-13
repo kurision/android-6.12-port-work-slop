@@ -1003,3 +1003,45 @@ or IOMMU-probe changes into this diagnostic result.
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
 with file+line evidence before any claim. Reverts are one-line documented.
+
+## Run105 preparation: early SEA context; Linux build pending
+
+- User approved capturing PC/FAR/stack after run104 and selected
+  "I'll build on Linux". No run105 image or boot exists yet.
+- `arch/arm64/mm/fault.c:do_sea` now emits one kernel-mode-only
+  `SEA:` record with ESR, raw FAR, FnV, raw PC/LR, PID/PPID and comm,
+  then a fault-context backtrace before `arm64_notify_die`.
+  Recoverable fixups and user-mode handling remain unchanged; no
+  new Kconfig, exports, resets or driver changes.
+- Exported focused patch:
+  `porting/artifacts/snapshot60/run105-sea-context.patch`.
+  Apply only if the Linux tree does not already contain this edit.
+  Patch style passes strict checkpatch with signoff checking disabled;
+  no commit was made. Local clangd cannot compile the translation unit:
+  its configuration cannot find `linux/acpi.h`; no local kernel out/.
+  SSH host is reachable but authentication failed; user owns the build.
+- Incremental Linux build from the existing kernel worktree, preserving
+  the run101/run104 merged out/.config and existing DTB:
+
+  ```sh
+  patch --dry-run -p1 < /path/to/run105-sea-context.patch
+  patch -p1 < /path/to/run105-sea-context.patch
+  export PATH="/usr/bin:$PATH"
+  export ARCH=arm64 LLVM=1 LLVM_IAS=1 CC="ccache clang"
+  sha256sum out/.config
+  make O=out -j"$(nproc)" Image.gz
+  sha256sum out/.config
+  sha256sum out/arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dtb
+  tar -C out -czf /tmp/run105-sea-build.tgz \
+      .config vmlinux System.map arch/arm64/boot/Image.gz \
+      arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dtb
+  ```
+
+- Do not rerun gki_defconfig or merge fragments. The .config hashes
+  before/after must match; unchanged DTB expected SHA256
+  `71951fb1a5a989ca59a30762a33202229d86213c93f25d306a607f9bffb0c2c7`.
+  Retain the matching vmlinux/System.map, not symbols from another build.
+- [ ] Build/compile verification and on-device SEA emission pending.
+- [ ] After receiving artifacts, package with unchanged `init-run104`
+  and cmdline, RAM-boot once, record any early SEA line/backtrace and
+  attribute the read path. Do not claim the logging probe fixes the abort.
