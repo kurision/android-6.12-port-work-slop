@@ -6,7 +6,7 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, branch `kgsl-port` (from `driver-fix` a1e4992dc).
 The main tree stays untouched until this port has a boot verdict.
-Last update: 2026-10-13 — Stage 3 in progress; run82 repeat of run81 returned to stock before observed 6.12 ADB; raw/SD evidence preserved, reset cause and composer BW parsing remain open.
+Last update: 2026-10-13 — Stage 3 in progress; run83 diagnostic boot reached 153 s with composer active and no BW denial, then abrupt reset; /data file data does not survive resets, raw logdump does.
 
 ## Status key (same as FAILING-COMPONENTS.md)
 FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
@@ -750,33 +750,58 @@ or IOMMU-probe changes into this diagnostic result.
 - Composer BW parsing remains unverified. Do not attribute this earlier
   reset to the run81 PLL errors or infer a new policy failure.
 
-## Early-reset diagnostic preparation (source only; image pending)
+## Run83: diagnostic image (abrupt reset at 153 s; no orderly reboot)
 
-- User will build and supply the image. No run83 image is packaged or
-  boot-tested in this session; do not record a new boot verdict.
-- `fs/pstore/ram.c`: opt-in `ramoops.reset_capture=1` persists an orderly
-  reboot/power-off caller record and kernel-log tail at logdump offset
-  `0x3f30000`, before device shutdown. Separate buffer; normal reboot
-  behavior retained. Periodic snapshots gain a progress heartbeat.
-- `scripts/initramfs-diag/init.c`: `ANDROID_EARLY_LOGCAT` appends an
-  init-managed, existing-shell-domain logcat service before policy load.
-  Starts on post-fs-data, before ADB is needed, writing bounded rotating
-  `/data/local/tmp/ack-early-logcat.log*` files. No new policy rules.
-- `porting/logging/decode-reset.py` decodes the bounded reset record
-  from the raw partition. Missing evidence is not a reset-cause verdict.
-- Build/package/retrieval instructions and limits are in the new
-  `REFERENCE-boot-testing.md` early-reset section. Preserve run81 as
-  the packaging base, its policy/firmware/guard inputs and the DTB.
-  Full Linux build, Android init parsing and device behavior remain
-  unverified; host callback/RC smoke checks are not substitutes.
+- Build host supplied `run83-from-build-host/boot-run83.img`, SHA256
+  `3d7821e9e4fb0a2e6a8cf41391be89fb75eeff6a442dfe5c83b77bfce1e5b5c7`
+  (kernel 6.12.93-4k-g25f51ef04013, clang 22.1.8). Verified before boot:
+  header preserved except size/cmdline/id; cmdline is run81 plus
+  `ramoops.reset_capture=1`; 665 ramdisk records with all non-init
+  identical including sepolicy; DTB byte-identical to run81; kernel
+  contains reset-capture markers, init contains the early-logcat
+  service. Installed as `snapshot60/boot-run83.img` + `package-run83.json`.
+  No policy delta, no debuggable flag, no firmware staging.
+- Boot reached 153.46 s kernel time. surfaceflinger and zygote reached
+  `running` (`run83-logdump.log:4397-4410`); hwcomposer pid 984 opened
+  fb0 and retried interface starts. No composer `bw_mode_bitmap` or
+  caps denial exists anywhere in the log: the run81 BW policy blocker
+  did not recur as a denial. `max_brightness`/`gpu_model` generic-sysfs
+  denials remain (10 composer denials). PLL0 lock failure, DSI clock
+  `-22`, DSI cmd failures and frame timeouts persist.
+- Reset capture was armed: 7 heartbeats to snapshot seq 70, valid DBGC
+  slots at 151.19/153.24 s, raw+SD prefixes match (726366 bytes). No
+  `ACKRESET1` record and no `DIAG: reset` line: the return was abrupt,
+  not an orderly reboot or power-off. No panic, hung-task, RCU-stall
+  or watchdog-bark signature in the preserved log.
+- The log ends mid-warning-dump at 153.461 s, 3 ms after
+  `gfx3d_clk_src: rcg didn't update its configuration` during
+  `adreno_start` from `kgsl_worker_thr` (`run83-logdump.log:6336-6380`).
+  KGSL was alive and reconfiguring GPU clocks when the reset hit. This
+  timing is evidence of coincidence, not proof the GPU caused the reset.
+- Early-logcat service started (pid 575), received SIGABRT at ~147 s,
+  restarted (pid 1113). Its on-device file holds 299008 allocated zero
+  bytes; all 20 tombstones likewise read back allocated zeros while
+  sizes/mtimes persist. Stock-written files read back real content.
+  Working hypothesis: port-boot file DATA stays in page cache and is
+  lost on abrupt reset while journaled metadata persists; raw logdump
+  block writes with explicit flush survive. Unproven; treat all
+  port-boot /data file content as unreliable until a periodic-sync
+  experiment proves otherwise.
+- Next iteration is init-only (no kernel rebuild): the same kernel
+  payload with an added `ack-sync-loop` service (`sync` every 5 s plus
+  timestamp probe) so logcat/tombstone pages reach stable storage.
+  `kdir-run83` was not handed back; reconstruct it by splitting the
+  kernel payload at the DTB magic and re-hashing, or request it.
+
 
 ## Handoff to another machine
 
-- Stop point: run82 repeat returned to stock without observed port ADB.
-  Run81 BW label is verified; composer parsing and reset cause remain open.
+- Stop point: run83 proves composer passes BW sysfs and KGSL runs to
+  153 s, then abrupt reset with no orderly-reboot record. Display PLL
+  lock and /data write durability are the open blockers, not policy.
   No boot completion, EGL success, or rendering verdict is established.
-- Latest RAM-booted image is `snapshot60/boot-run81.img`; control remains
-  the original `snapshot60/boot-run73.img`. Run81 and run82 tags are used.
+- Latest RAM-booted image is `snapshot60/boot-run83.img`; control remains
+  the original `snapshot60/boot-run73.img`. Run81-83 tags are used.
 - Preserve / transfer the real `snapshot60/base-guard-debug-fw.img`,
   `init-run32`, and all four `kdir-run73/` files. Do not reconstruct
   the policy-bearing base from captures or stock images.
@@ -786,21 +811,23 @@ or IOMMU-probe changes into this diagnostic result.
   Its new opt-in early-reset section describes the pending experiment.
   Do not use its 150-second ADB window as a boot-failure verdict or run
   direct make without the required arm64 environment.
-- Next step: user builds the diagnostic image using the early-reset
-  reference section; inspect its package and preserved inputs before
-  any boot. Any repeat needs an unused run tag and continuous logcat
-  capture alongside USB and a four-second ADB timeline.
+- Next step: user rebuilds only init (same defines plus the committed
+  sync-loop service) and repackages run84 from the run83 kernel payload
+  per the early-reset reference section. Any repeat needs an unused run
+  tag and continuous host capture alongside USB and ADB timeline.
   Allow at least eight minutes unless the device demonstrably exits
   the port kernel; do not treat a 150-second window as failure.
 - Current state: stock 4.19.325, boot completed, root available, enforcing;
-  verified after run82's return. Run81/run82 raw/SD evidence is preserved.
-  No further boot / clear / flash was attempted.
+  verified after run83's return. Run81-83 raw/SD evidence is preserved.
+  The on-device `ack-early-logcat.log` (zeros) is archived as
+  `run83-early-logcat.log`. No further boot / clear / flash was attempted.
 - Deferred kernel work remains: raw display markers collide with
   ramoops; pstore retries cannot resolve PARTLABEL and synthetic panic
   is unsafe; arbitrary MDP delay and removed idle-PC restore are not
   production fixes. Keep KGSL/MDSS unchanged; only the approved
-  diagnostic pstore extension is in scope for the next kernel build.
-  No cause is established for run78/run81/run82 returns.
+  diagnostic pstore extension and init capture services are in scope.
+  No cause is established for run78/run81/run82 returns; run83's reset
+  is characterized as abrupt with GPU-clock activity at the cutoff.
 
 
 ## Boot economy (AGENTS.md)
