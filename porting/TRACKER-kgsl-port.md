@@ -832,6 +832,18 @@ or IOMMU-probe changes into this diagnostic result.
 - Host ADB saw 6.12 at elapsed 196-214 s but shell mostly timed out;
   4 streamed logcat segments captured 0 bytes. On-device service
   remains the primary Android-log channel.
+- Vold-death forensics (all channels complete, still traceless): T317
+  Looper spam is vndservicemanager shutdown noise, not the trigger.
+  vold's last kmsg line is at 114.5 s, last logcat lines at 00:27:52,
+  init confirms it alive at 144 s, yet it is absent from the shutdown
+  inventory with no exit, crash, tombstone, OOM, denial or restart
+  line anywhere. The ack shell services also go quiet ~165-175 s
+  (5-entry probe, logcat ends) with no death lines, consistent with
+  blocking rather than dying, unproven. A 42 ms primary-capture gap at
+  202.567-202.609 s exists but is not evidence of anything hiding in it.
+- Committed (needs init-only rebuild): sync-loop liveness marker
+  (`N <uptime>` per iteration) to separate blocked-in-sync (storage
+  stall) from service death on the next round.
 
 ## Handoff to another machine
 
