@@ -552,6 +552,37 @@ or IOMMU-probe changes into this diagnostic result.
   with PATH); preclear needs 4.19 (no su on diag); always pull the
   logdump even on success (run53's was wiped by the next preclear).
 
+## Run66-76: display probes, composer blocked on policy (2026-10-13)
+
+- 45 s defer + 60 s re-probe kick works: MDP reads `0x10100000` at 245 s
+  (run66), DSI+PHY revs read OK at 64 s (run70). Power comes up given
+  time; the early hang is power-not-ready, not structural.
+- DSI `pre_clkon_cb` OOPS (`NULL+0x59`, run66 @247 s): empty
+  `core-supply-entries` in DT leaves `vreg_config` NULL; guarded both
+  directions in `msm_mdss_io_8974.c` (verified: no OOPS in run67+).
+  DT completion (real `vdd` values) still needs donor numbers.
+- fbcon `soft_cursor` OOPS on garbage `screen_base` (run70 @64.9 s):
+  `CONFIG_FRAMEBUFFER_CONSOLE` off (Android never uses it).
+- fb0 exists with plausible mode (1080x3840 virtual, 32bpp); MDP+DSI
+  probe, panel parsed. `mm-pp-dpps` opens fb0 repeatedly (no failures).
+- Composer (`hwcomposer-2-1`) restart-loops, never touches fb0:
+  `SDM HWInfo::GetHWResourceInfo: .../fb0/mdp/caps not found` -> EINVAL.
+  The file EXISTS; SELinux denies `hal_graphics_composer_default` read
+  (`tcontext=sysfs`, generic label — DIAG base plat policy has no
+  graphics genfscon; stock product policy presumably does).
+- `enforcing=0` and `androidboot.selinux=permissive` both ignored (this
+  init chain forces enforcing; our DIAG init does no SELinux setup
+  before execing Android init). `selinux=0` untested (phone stuck in
+  fastbootd, host fastboot unusable + adb unauthorized — needs hands).
+- Permanent fix: product policy rule for the caps path (or equivalent);
+  harness-only alternative is `setenforce 0` in DIAG init source
+  (`snapshot26-init.c`, NDK available, rebuild flags unknown — risky).
+  NEVER ship permissive; record here when done.
+- Tooling: `su` is `/product/bin/su` (bare `su` flakes); DIAG `open_logdump`
+  scans `/sys/class/block/*/uevent` for PARTNAME (works) while
+  `/dev/block/*` needs ueventd (late) — pstore retry must use PARTLABEL
+  (sysfs) or `/dev/mmcblk0p48` (devtmpfs), never `/dev/block/*`.
+
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
 with file+line evidence before any claim. Reverts are one-line documented.
