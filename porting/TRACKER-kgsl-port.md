@@ -923,6 +923,42 @@ or IOMMU-probe changes into this diagnostic result.
   carries donor clocks/IRQ/bus/pwrlevels and reads back live RBBM,
   so coarse GPU power is on.
 
+## Run87: diagnostic boot, no recovered Android logcat
+
+- Delivered build-host run86 image was installed under unused run87 tag.
+  Kernel identifies as `6.12.93-4k-gd3ca5dd866f6-dirty`
+  (`run87-logdump.log:4`). Raw logdump and matching SD evidence were
+  retrieved; no ACKRESET1 record was found.
+- No port ADB window was observed; host timeline detected stock at
+  elapsed 176 s. Preserved kernel text ends at 107.377 s, not a proven
+  reset timestamp. Return cause remains unknown.
+- Early-logcat overlay append succeeded (`run87-logdump.log:877`).
+  Both `ack-early-logcat` and `ack-sync-loop` started at 101.6 s
+  (3547-3554). Sync service argument expansion reported deprecated
+  property syntax (3553), then SIGABRT at 102.122 s (3595).
+  Neither on-device diagnostic file was available after return.
+  `run87-early-logcat.log` contains only the missing-file error, not
+  Android log data. Service startup is proven; successful capture is not.
+- Four early PLL failure dumps report `vco=0`, `pm_active=1`,
+  `iface_rate=0`, and LDO/CLKCFG registers zero (315-318, 415-418,
+  663-666, 750-753). These establish the state at failed enable, not
+  why rate programming was absent or whether it propagated later.
+  No boot-completion, GPU-start, or composer verdict is established.
+- Sync-loop source correction: escape shell dollar signs as `$$` in
+  Android init service arguments. A host smoke compiled the real AOSP
+  `ExpandProps` function: old command rejected; fixed command survived
+  expansion and produced counter/uptime rows 1-3 when run by the shell.
+  Init rebuild and device verification remain required; this does not
+  explain the missing early-logcat file.
+- PLL zero-rate interpretation narrowed further: the first dumps precede
+  provider registration (`run87-logdump.log:513`); their warning stack
+  runs through `clk_core_reparent_orphans_nolock` (393-396).
+  GCC byte/pixel RCGs use `CLK_OPS_PARENT_ENABLE`, which prepares
+  parents during orphan reparenting before rate programming
+  (`drivers/clk/clk.c:2193-2196,3913-3918`). Thus these early zero-rate
+  enables cannot establish a missing DSI set-rate during panel startup.
+  Run87 contains no ME_INIT-submit datum; GPU start was not exercised.
+
 ## Handoff to another machine
 
 - Stop point: run85 reaches BootAnimation with SDM composer up, then GPU
