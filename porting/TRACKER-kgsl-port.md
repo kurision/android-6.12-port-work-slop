@@ -511,7 +511,7 @@ or IOMMU-probe changes into this diagnostic result.
   (the `platform_get_irq` -EPROBE_DEFER form, which unblocks the probe
   past the IRQ step into untested territory).
 
-## Run48-65: MDP silent-death bisection (2026-10-13, root cause found)
+## Run48-65: MDP silent-death bisection (2026-10-13, cause unverified)
 
 - Re-applying only the 4-hunk `mdss_mdp.c` change (modern
   `platform_get_irq` + defer-tolerant logging + splash-balance) on the
@@ -525,24 +525,19 @@ or IOMMU-probe changes into this diagnostic result.
   run59 (all enables skipped) dies; run60 (also skip `pm_get_sync`)
   dies; run61 (vote+spinlock only) dies; run62 (also skip
   `idle_pc_restore`) boots.
-- Root cause: `mdss_mdp_clk_ctrl(ON)` ends in
-  `mdss_mdp_idle_pc_restore()` whose `mdss_hw_init()` register access
-  hangs the bus — the MDP power/clock domain is not established by our
-  genpd/clk bring-up (`res_init` itself succeeds silently; GDSC
-  definition matches the 6.18 port at `0x4d078`; `pm_resume` reports no
-  error). Keeping LK clocks/domains (`clk_ignore_unused
-  pd_ignore_unused`, run63) does NOT save it; the hang fires even with
-  everything held on. DT is also missing `vbif_nrt_phys` (non-fatal).
-- Workaround (kept, documented in code): skip `idle_pc_restore`; the
-  probe stays degraded-but-bootable like the run47 baseline. The full
-  probe minus that skip (run64) still dies later — power/clock
-  establishment is the real fix, still open.
-- Infrastructure: `pstore_blk` bounded retry (fires 5x, but eMMC
-  `/dev/block/*` nodes appear only after ~24-30 s in our ramdisk, so
-  retries extended to 6 s x 8, ~50 s coverage); `kmsg_dump_desc`
-  exported + attach-triggered dmesg dump (marker proves attach; never
-  yet observed because deaths precede attach). `oops=panic` dropped
-  from diag cmdline (death persists regardless → hang, not OOPS).
+- Bisection implicates the clock-on / idle-restore path, but the silent
+  failures do not distinguish a bus hang, panic, or watchdog reset.
+  Power/clock readiness is an unverified hypothesis, not a proved cause.
+  `clk_ignore_unused pd_ignore_unused` did not make run63 succeed.
+- Skipping `idle_pc_restore` is diagnostic only: DT still enables idle
+  power collapse, and removing the restore also removes control-state
+  recovery and clearing of `idle_pc` / `mem_retain`. Runtime resume is
+  unverified. The full probe with the skip (run64) also failed later.
+- Infrastructure: retries run at 6 s x 8, but still pass literal
+  `PARTLABEL=logdump` to `filp_open`; run73 reports errno -2 throughout.
+  Attachment and panic persistence are not proved. The synthetic panic
+  marker would set the zone backend's `on_panic` without a `panic_write`.
+  Dropping `oops=panic` does not establish that the silent failure is a hang.
 - Run47-repeat and run51 notes: healthy boots die later from ORDERLY
   userspace reboots (`vold-failed` at 749 s, `apexd-failed` at 266 s)
   — a separate userspace-daemon class (vold/apexd never answer binder;
@@ -554,9 +549,9 @@ or IOMMU-probe changes into this diagnostic result.
 
 ## Run66-76: display probes, composer blocked on policy (2026-10-13)
 
-- 45 s defer + 60 s re-probe kick works: MDP reads `0x10100000` at 245 s
-  (run66), DSI+PHY revs read OK at 64 s (run70). Power comes up given
-  time; the early hang is power-not-ready, not structural.
+- Delayed probing reads MDP `0x10100000` at 245 s (run66); DSI+PHY revs
+  read at 64 s (run70). This demonstrates progress after delay, not a
+  supplier-readiness dependency or the cause of the earlier failures.
 - DSI `pre_clkon_cb` OOPS (`NULL+0x59`, run66 @247 s): empty
   `core-supply-entries` in DT leaves `vreg_config` NULL; guarded both
   directions in `msm_mdss_io_8974.c` (verified: no OOPS in run67+).
@@ -593,20 +588,141 @@ or IOMMU-probe changes into this diagnostic result.
   `hal_graphics_composer_default` + `mm-pp-daemon` read (both scontexts
   verified verbatim from run73 AVC lines). Matches Sony/vendor
   convention (`sysfs_mdss_mdp_caps:file r_file_perms`).
-- Init loads the CIL text (variant-selected filename proves it); no
-  binary policy surgery, no `sepolicy-inject` needed.
+- Source inspection identifies a possible debug-CIL load path; it does
+  not prove selection or successful loading on the device.
 - If the composer proceeds past caps, the product still needs the
   equivalent rule in its own policy — record it there, delete this delta.
 - `enforcing=0` / `androidboot.selinux=permissive` both ignored by this
   init chain (our DIAG init does no SELinux setup before exec); `selinux=0`
   (run76) never booted — phone stuck in fastbootd first.
-- CIL load path verified in Lineage init source (`selinux.cpp`:
-  `GetUserdebugPlatformPolicyFile` + `OpenSplitPolicy` compile the CIL
-  text in-process; works because this base sets `INIT_FORCE_DEBUGGABLE`
-  on an unlocked device). No binary surgery needed.
-- run77 packaged (same kernel as run73 + CIL delta, PARTLABEL cmdline):
-  awaiting phone recovery to boot. Expect composer past caps, then fb
-  open/ioctl/mmap trace to fire for the first time.
+- Lineage init's `GetUserdebugPlatformPolicyFile` / `OpenSplitPolicy`
+  select debug CIL conditionally; runtime selection remains unverified.
+- run77 packaged with the run73 kernel and unchanged cmdline, but not
+  boot-tested. Offline review subsequently proves its symlink-path
+  genfscon leaves the real platform caps inode labeled generic sysfs.
+
+## Run78: corrected caps mapping (offline verified; device boot failed)
+
+- Run73 preserved AVC: `run73-logdump.bin` byte 495793 denies composer
+  read of caps (`tcontext=sysfs`, enforcing); byte 616796 denies mm-pp.
+- Run77 merged policy compiles, but actual genfs lookup of
+  `/devices/platform/soc@0/1a00000.qcom,mdss_mdp/caps` returns sysfs.
+  `fb0/mdp` is a symlink, not the inode path used by genfs labeling.
+- Corrected delta reuses vendor `sysfs_graphics`, whose existing policy
+  permits composer and mm-pp reads; no new types or allow rules.
+  Merged with actual device vendor/system_ext/product/mapping inputs:
+  secilc succeeds with init's `-N`; without it both baseline and delta
+  report the same five pre-existing harness neverallow violations.
+  Compiled genfs lookup now returns `u:object_r:sysfs_graphics:s0`.
+  Evidence: `snapshot60/run78-policy-check.log`.
+- `boot-run78.img` sha256
+  `7df790910ba4f72584b88da32368a9ce48dcc653b0dfb83c9225510b1b175236`.
+  Compared extracted records with run73: identical kernel/cmdline and
+  all records except debug CIL. Package report cmdline field restored.
+- Current stock logdump archived as `run78-stock-before-preclear.bin`;
+  exact 67108864 bytes. `run78-preclear.status` proves readback all zero.
+- Raw display marker writes overlap the ramoops header at 60 MiB
+  (`fs/pstore/ram.c`); marker absence is not evidence of a splash failure.
+  They remain in the unchanged run73 kernel for this single-variable
+  policy boot and must be removed before another kernel cutover.
+- Run78 returned to stock before any 6.12 adb response. Four-second
+  collector: `run78-adb-timeline.log:12-117` has no device; line 120
+  first records fallback 4.19. Composer behavior remains unverified.
+- Debug policy selected / compiled (`run78-usb.log:859-861`), loaded
+  (line 877), enforcing enabled (line 893). Last USB records show late
+  MDP re-probe at 76.8 s (`:1356-1358`) and coldboot wait completing
+  at 78.8 s. Durable text prefix ends at 69.6 s
+  (`run78-logdump.log:1461`); SD matches the 198281-byte prefix.
+  Two valid snapshot headers at 74.35 / 76.41 s have empty DBGC rings.
+  No captured panic or reboot reason establishes why it returned stock.
+- Next: boot the preserved run73 image as a new run79 control; do not
+  reconstruct or change it. Only after the control can this failure be
+  attributed to the policy delta versus the existing delayed-probe path.
+
+## Run79: preserved run73 control (ADB reached; userspace still blocked)
+
+- Booted the original `boot-run73.img`, no reconstruction; sha256
+  `2d11fbc063a1c1515889c81039eabf189c8879824aa803373386f2c962bdce93`.
+  `run79-preclear.status` proves zero readback before boot.
+- MDP version read succeeds at 78.84 s (`run79-usb.log:1764`).
+  Initial 240-second ADB collector saw no 6.12 response, but the late
+  state capture at 247.93 s records 6.12 and enforcing
+  (`run79-adb-late-state.log:1-3`). Boot completion remains unset.
+  Do not treat a short no-ADB observation window as a failed boot.
+- Composer caps denial reproduced (`run79-logcat-late.log:203`);
+  caps open / display-core failure at lines 943-945. This control
+  does not contain run78's policy delta.
+- Crash triage in control logcat: composer PID 980 reports destroyed
+  mutex FORTIFY at line 263; its service identity is recorded in
+  `run79-logdump.log:5323`. Complete abort backtrace not captured.
+  LiveDisplay aborts "Failed to initialize SDM backend" at lines
+  322-344. dpmd aborts on different mmap size, stack through
+  `ProcessState::init` / `init_child` at lines 281-306; same signature
+  already exists in `run32-logcat.log:727`. These are userspace
+  failures; no causal link to run78's early reset is established.
+- Captured logcat before intentional reboot to stock for evidence
+  retrieval. Raw 67108864 bytes, readable prefix 1429949 bytes;
+  SD common extent matches 1429768 bytes, two valid snapshot slots.
+  Run78 reset cause and corrected-policy composer behavior remain open.
+
+## Run80: caps parsed; next blocker is bandwidth sysfs policy
+
+- RAM-booted the unchanged `boot-run78.img` after run79's control.
+  `run80-preclear.status` proves zero readback before boot. Extended
+  collector observes 6.12 / enforcing through 459.46 s
+  (`run80-adb-timeline.log:361-363`); boot completion remains unset.
+- Composer parses caps successfully (`run80-logcat.log:1317-1323`):
+  revision `0x10100000`, RGB=2 / VIG=1 / DMA=1 / Cursor=1,
+  clock 400 MHz, bandwidth 3400000 KBps. This exercises the mapping.
+- Next denial is `bw_mode_bitmap`, generic sysfs label, composer read
+  (`run80-usb.log:3599`; `run80-logcat.log:194,1273-1278`).
+  `GetDynamicBWLimits` then fails opening that file and propagates
+  display-core error 11 (`run80-logcat.log:1325-1328`).
+  [AOSP HWInfo reference](https://android.googlesource.com/platform/hardware/qcom/display/+/refs/heads/main/msm8996/sdm/libs/core/fb/hw_info.cpp)
+  likewise reads dynamic BW only after parsing caps.
+- Intentional reboot to stock for retrieval, not an observed spontaneous
+  reset. Saved exact 67108864-byte raw logdump; 2271820-byte SD/common
+  prefix matches; two valid snapshot slots at 533.75 / 535.80 s.
+
+## Run81: bandwidth attribute mapping (offline verified; boot pending)
+
+- Add only the exact resolved `bw_mode_bitmap` path to the existing
+  sysfs_graphics mappings. No new types/allow rules, no permissive mode.
+  Failing-before compiled lookup returns generic sysfs; corrected lookup
+  returns sysfs_graphics for both caps and bandwidth attribute.
+  Merged compilation passes with init's flags; same five pre-existing
+  neverallow violations without `-N`. Evidence: `run81-policy-check.log`.
+- `boot-run81.img` sha256
+  `853640cb9637f070374567cb252e9169c08360b45f6cfa9260ea6c1cffc0e17f`.
+  Extracted-image comparison against run78: same kernel / cmdline / init
+  and all other records; only debug CIL differs. Device effect unverified.
+
+## Handoff to another machine
+
+- Stop point: run80 verifies caps access; bandwidth attribute is the
+  next reproduced composer blocker. Run81 is packaged and compile-
+  checked only; do not describe it as boot-tested or boot-complete.
+- Latest booted image is `snapshot60/boot-run78.img` (used for run80).
+  Next image is `snapshot60/boot-run81.img`; control is the original
+  `snapshot60/boot-run73.img`. Logs/evidence for runs78-80 are preserved.
+- Preserve / transfer the real `snapshot60/base-guard-debug-fw.img`,
+  `init-run32`, and all four `kdir-run73/` files. Do not reconstruct
+  the policy-bearing base from captures or stock images.
+- Next device step: read REFERENCE-boot-testing.md, archive any new
+  device evidence, preclear with unused tag run81, then RAM-boot
+  boot-run81.img and capture USB + ADB/logcat. Verify BW parsing, then
+  follow the next actual failure. Allow at least eight minutes for
+  initial collection: the run79 control exposed adb after 240 seconds.
+- Last controlled action returned the phone to normal ROM for a
+  successful run80 root-logdump pull. Final handoff ADB check found no
+  device (`snapshot60/handoff-device-state.log`); current kernel is
+  unverified. No further boot / clear / flash was attempted.
+- Deferred kernel work remains: raw display markers collide with
+  ramoops; pstore retries cannot resolve PARTLABEL and synthetic panic
+  is unsafe; arbitrary MDP delay and removed idle-PC restore are not
+  production fixes. Keep kernel unchanged until policy boot evidence
+  is collected; no cause is established for run78's early return.
+
 
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
