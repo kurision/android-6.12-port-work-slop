@@ -901,7 +901,9 @@ or IOMMU-probe changes into this diagnostic result.
   cleanup, not per-access runtime-PM gating; power stays suspect).
   Strongest new PLL lead: commit() hardcodes RESETSM_CNTRL=0x38 AFTER
   commit_common programs the computed 48 (0x30); donor never writes
-  0x7f/VCO_TUNE dance either. One-line revert test queued.
+  0x7f/VCO_TUNE dance either. One-line revert implemented in this tree
+  (unbuilt, untested); the committed fail-state dump rides the same
+  image to confirm the latched value on the verdict boot.
   GPU correction: gfx3d RCG warnings fire on the slumber/teardown
   unwind, not power-up; best next datum is clock/power state sampled
   at ME_INIT submit entry. dpmd mmap abort is userspace double HIDL
