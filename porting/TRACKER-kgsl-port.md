@@ -600,6 +600,13 @@ or IOMMU-probe changes into this diagnostic result.
 - `enforcing=0` / `androidboot.selinux=permissive` both ignored by this
   init chain (our DIAG init does no SELinux setup before exec); `selinux=0`
   (run76) never booted — phone stuck in fastbootd first.
+- CIL load path verified in Lineage init source (`selinux.cpp`:
+  `GetUserdebugPlatformPolicyFile` + `OpenSplitPolicy` compile the CIL
+  text in-process; works because this base sets `INIT_FORCE_DEBUGGABLE`
+  on an unlocked device). No binary surgery needed.
+- run77 packaged (same kernel as run73 + CIL delta, PARTLABEL cmdline):
+  awaiting phone recovery to boot. Expect composer past caps, then fb
+  open/ioctl/mmap trace to fire for the first time.
 
 ## Boot economy (AGENTS.md)
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
