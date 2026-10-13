@@ -896,6 +896,22 @@ or IOMMU-probe changes into this diagnostic result.
   orderly reboot via reboot_on_failure. Needs KASAN or binder-UAPI
   audit; deferred until display/GPU move since it does not stop
   framework progress by itself.
+- Second-opinion integration (2026-10-13; reviewer challenged, verified):
+  GDSC falsification narrowed (pd_ignore_unused kills only boot-time
+  cleanup, not per-access runtime-PM gating; power stays suspect).
+  Strongest new PLL lead: commit() hardcodes RESETSM_CNTRL=0x38 AFTER
+  commit_common programs the computed 48 (0x30); donor never writes
+  0x7f/VCO_TUNE dance either. One-line revert test queued.
+  GPU correction: gfx3d RCG warnings fire on the slumber/teardown
+  unwind, not power-up; best next datum is clock/power state sampled
+  at ME_INIT submit entry. dpmd mmap abort is userspace double HIDL
+  init (single libbinder mapped), not kernel evidence. Stock crash
+  buffer is clean, so the crash cluster is port-induced but split:
+  binder-flavored subset vs memory-safety remainder (KASAN deferred,
+  no kernel-side primitive observed). PLL stays top-tier: HWC reports
+  disconnected with no VSYNC, which gates composition and likely
+  boot_completed. Also fixed: enable_seq lost its outer close brace
+  during the diagnostic edit (caught before any build).
 
 ## Handoff to another machine
 
