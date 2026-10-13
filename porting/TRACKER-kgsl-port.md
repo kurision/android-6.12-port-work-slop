@@ -1045,3 +1045,41 @@ with file+line evidence before any claim. Reverts are one-line documented.
 - [ ] After receiving artifacts, package with unchanged `init-run104`
   and cmdline, RAM-boot once, record any early SEA line/backtrace and
   attribute the read path. Do not claim the logging probe fixes the abort.
+
+## Reset logging repair after run106
+
+- Priority changed from MDSS messages to recoverable reset evidence.
+  Run106 raw recovery now exports console slots seq55 at 127.977 s and seq54
+  at 125.910 s. No valid dmesg panic/oops record exists in these samples.
+  Version0 has no CRC or commit guarantee; neither freshness nor same boot
+  is established by consecutive counters alone.
+- Built-in pstore-blk resolves late PARTLABEL devices without filesystem
+  nodes, retries only transient lookup failures and preserves ownership.
+  Removed the retry-attachment synthetic panic. Generic best-effort block
+  I/O remains unsuitable for panic context and cannot coexist over the
+  diagnostic ramoops layout.
+- Raw snapshots and new direct printk tails use version1 header/payload
+  CRC32 with invalidate/flush, payload/flush, publish/flush ordering.
+  Userspace logdump text is capped at 60 MiB; mirrors continue beyond the
+  cap. DT enables genuine emergency/shutdown RAM dumps.
+- Verification: 41 discovered host tests, collector integration, five
+  reset-decoder tests and witness-open harness pass. Actual run106 decoder
+  CLI recovered two console files. Production/static test init builds pass;
+  prefix-boundary/partial-write/mirror smoke passes on Android ARM64 emulator.
+  Tissot was disconnected; no new-kernel phone boot or kernel build claimed.
+- Build/packaging contract and non-overlapping disk ranges:
+  `porting/logging/README.md`, "Tissot reset persistence after run106".
+  Remove inherited pstore-blk cmdline tokens and retain ramoops ownership.
+
+### Reset logging acceptance todos
+
+- [x] Repair runtime PARTLABEL lookup and remove fake crash attachment.
+- [x] Recover existing raw console/dmesg with provenance and legacy limits.
+- [x] Verify C snapshot commit failure boundaries, CRC format, prefix cap
+  and decoder/collector behavior using reachable host/Android smoke paths.
+- [ ] Linux rebuild of kernel and DTB with the existing configuration.
+- [ ] New-image readiness: CRC32-committed snapshot and reset-capture armed.
+- [ ] Controlled orderly reboot: recover ACKRESET1 and valid version1 slots.
+- [ ] Capture genuine SEA/panic/watchdog evidence if the fault recurs;
+  absence still cannot prove no crash or identify the resetter.
+

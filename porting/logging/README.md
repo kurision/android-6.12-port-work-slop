@@ -105,8 +105,10 @@ From `porting/artifacts/snapshot<number>`, run
 `ADB_SERIAL=2819f2320604 ../../logging/pull-run-evidence.sh <run> boot.img`
 after the installed ROM returns. The collector refuses existing run outputs
 before touching the phone. It retains exact 64MiB `runN-logdump.bin`, decodes
-only the text prefix before NUL/60MiB, and reports binary slot validity in memory.
-Failed pulls and stderr remain in the printed unique host scratch directory.
+only the text prefix before NUL/60MiB, and exports validated ramoops snapshots,
+genuine dmesg records and periodic printk tails with a `runN-ramoops.json`
+provenance report. Failed pulls and stderr remain in the unique host scratch
+directory.
 Transport requires `shell_v2` and uses `adb shell -T`, preserving binary stdout,
 separate stderr and remote exit status. `exec-out` merges stderr and loses remote
 status ([ADB shell service](https://android.googlesource.com/platform/system/adb/+/master/shell_service.cpp?format=HTML));
@@ -140,3 +142,129 @@ Since snapshot45 qseecom writes one FUA record per SMC send/return and listener
 wake/response to a 128-slot ring at logdump offset 0x3f10000.
 `python3 porting/logging/decode-qsee-trace.py runN-logdump.bin` prints the
 records by boot and seq, then a `LAST=` line naming where the run died.
+
+## Tissot reset persistence after run106
+
+The port reserves 1 MiB at `0x86800000`; stock 4.19 uses 4 MiB at
+`0x91400000`. Stock's `/sys/fs/pstore` therefore does not expose the port's
+reservation. Do not relocate ramoops into the stock range: it overlaps this
+tree's Venus reservation. Recover committed samples from logdump instead:
+
+```sh
+python3 porting/logging/decode-pstore.py \
+  --logdump run106-logdump.bin --output-prefix /existing/scratch/run106
+```
+
+Outputs refuse overwrites, including dangling symlinks. Each console/dmesg
+filename identifies its slot, sequence and sample uptime; `-ramoops.json`
+records validation and provenance. Legacy version0 slots remain explicitly
+integrity/freshness-unverified. Run106 recovers console samples at 127.977 and
+125.910 s but no valid dmesg panic/oops record.
+
+### Ownership and next build
+
+`pstore_blk` previously passed a literal `PARTLABEL=logdump` to `filp_open()`
+when early resolution missed late MMC enumeration. Built-in pstore-blk now
+resolves GPT labels at every open attempt, retries only ENOENT/ENODEV, and
+preserves exclusive ownership. Retry attachment no longer emits a synthetic
+panic dump.
+
+This does **not** make the generic best-effort backend panic-safe: it has no
+`panic_write`, and pstore permits only one backend. Diagnostic ramoops already
+owns logdump; opening it for a second pstore layout must fail, not share bytes.
+For the next image retain ramoops, remove all four inherited pstore-blk tokens,
+and keep `ramoops.reset_capture=1`. With `package-diag-boot.py` and run105's
+base image, use:
+
+```sh
+--drop-cmdline pstore_blk.blkdev=PARTLABEL=logdump \
+--drop-cmdline pstore_blk.best_effort=1 \
+--drop-cmdline pstore_blk.kmsg_size=32768 \
+--drop-cmdline pstore_blk.pmsg_size=32768 \
+--append-cmdline pstore.backend=ramoops
+```
+
+Size parameters are KiB, not bytes. Do not enable a whole-partition pstore-blk
+layout over the diagnostic text/snapshot/witness/QSEE/reset ranges.
+
+Rebuild **both kernel and DTB on Linux**, using the existing `out/.config` and
+working toolchain. The usual LLVM invocation is:
+
+```sh
+make O=out ARCH=arm64 LLVM=1 olddefconfig
+make O=out ARCH=arm64 LLVM=1 Image.gz qcom/msm8953-xiaomi-tissot.dtb
+```
+
+`PSTORE_RAM` now selects CRC32 when BLOCK is enabled; run105 already has
+`CONFIG_CRC32=y`. The DT adds `max-reason = <4>` for genuine emergency and
+shutdown RAM dumps. Rebuild diagnostic init on the Mac:
+
+```sh
+zig cc -target aarch64-linux-musl -Os -static \
+  -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT -DANDROID_HALGATE \
+  scripts/initramfs-diag/init.c -o /tmp/ack-init-reset-logging
+```
+
+### Committed disk layout
+
+Ranges are half-open. The userspace text writer is capped at 60 MiB so it
+cannot overwrite reserved diagnostics; USB and optional SD mirrors are not
+capped.
+
+| Region | Start | End |
+|---|---:|---:|
+| Text prefix | `0` | `0x3c00000` |
+| Two raw RAM slots, each 4 KiB header + 1 MiB payload | `0x3c00000` | `0x3e02000` |
+| Two periodic printk slots, each 128 KiB | `0x3e02000` | `0x3e42000` |
+| Stall witness | `0x3f00000` | `0x3f00200` |
+| QSEE ring | `0x3f10000` | `0x3f20000` |
+| Orderly reset capture | `0x3f30000` | `0x3f40000` |
+
+Version1 preserves the 64-byte little-endian `<QQQQ8I>` header. Reserved words
+at 48/52/56/60 contain version1, payload CRC32, header CRC32, zero. Header CRC
+covers those 64 bytes with its own word zeroed; payload CRC covers actual
+payload bytes, not block padding. The writer invalidates and flushes the target
+header, writes and flushes payload, then publishes and flushes the CRC header.
+Every write/flush error stops sampling rather than claiming durability.
+
+Periodic tails capture the live printk buffer independently of the ramoops
+console and export as `-printk-tail-...-periodic-printk.log`. They are **not**
+panic dumps or ACKRESET1 records. CRCs verify stored bytes, not boot identity
+or coherent atomic sampling of a concurrently updated RAM ring.
+
+### Verification and limits
+
+Host regressions execute the real C header/commit functions against a
+volatile/durable storage model, inject all six write/flush failures, verify
+decoder compatibility and 4 KiB padding, and exercise corrupt/torn records.
+The ARM64 init prefix selftest checks exact boundary preservation, partial
+writes, unchanged budget on failed writes, and continued mirror capture:
+
+```sh
+python3 -m unittest discover -s porting/logging -p 'test_*.py'
+python3 porting/logging/test_pull_run_evidence.py
+python3 porting/logging/test_decode_reset.py
+python3 porting/logging/test_ramoops_witness_open.py
+zig cc -target aarch64-linux-musl -Os -static \
+  -DANDROID_CAPTURE -DANDROID_RAMOOPS_TEST \
+  scripts/initramfs-diag/init.c -o /tmp/ack-prefix-selftest
+# Push to an Android ARM64 target and execute: ack-prefix-selftest --prefix-only
+```
+
+Observed: 41 discovered tests pass; collector, five reset-decoder tests and
+witness-open harness pass; prefix selftest passes on the Android ARM64
+emulator. Tissot was disconnected during this verification. Full kernel
+compilation and new-kernel disk persistence have not been exercised.
+
+Next on-device acceptance: successful CRC32-committed snapshot readiness,
+`DIAG: orderly reset capture armed`, then one controlled orderly reboot of the
+new image and a recovered `ACKRESET1` plus validated version1 samples.
+Never use a fabricated panic to prove attachment. ACKRESET1 applies only to
+blocking orderly reboot/halt/poweroff, before MMC shutdown. Hardware watchdog,
+firmware reset, panic or power loss may omit it. Process-context periodic disk
+samples cannot guarantee the final unwritten panic/SEA lines; no sleeping
+block I/O is added to panic or IRQ-disabled paths.
+
+Relevant kernel contracts:
+[pstore-blk driver and panic_write](https://docs.kernel.org/admin-guide/pstore-blk.html),
+[ramoops persistence](https://docs.kernel.org/admin-guide/ramoops.html).
