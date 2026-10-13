@@ -6,7 +6,7 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, branch `kgsl-port` (from `driver-fix` a1e4992dc).
 The main tree stays untouched until this port has a boot verdict.
-Last update: 2026-10-13 — Stage 3 in progress; run84 returned via orderly init reboot (vold died, reason vold-failed) at 203 s; composer/BW path clean, PLL still failing; sync strategy validated.
+Last update: 2026-10-13 — Stage 3 in progress; run85 repeat shows BootAnimation playing but GPU CP-idle/start -110 failure then quiet hang and abrupt reset; vold death is flaky, PLL still failing.
 
 ## Status key (same as FAILING-COMPONENTS.md)
 FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
@@ -845,14 +845,45 @@ or IOMMU-probe changes into this diagnostic result.
   (`N <uptime>` per iteration) to separate blocked-in-sync (storage
   stall) from service death on the next round.
 
+## Run85: same-image repeat (BootAnimation plays; GPU start -110; abrupt reset)
+
+- Same `boot-run84.img`, new run85 tag, full capture. No `ACKRESET1`:
+  abrupt return again, unlike run84's orderly reboot. Failure modes
+  vary run to run with the identical image.
+- Furthest userspace yet: BootAnimation playing bootanimation.zip at
+  ~213 s (`run85-early-logcat.log:8073`), SurfaceFlinger pacesetter
+  with power modes set, SDM composer registered. Display stack is
+  functionally up at the framework level; panel visibility unconfirmed.
+- First hard KGSL functional failure: `kgsl kgsl-3d0: CP initialization
+  failed to idle` (`rb=0 pos=C/C rbbm_status=800001C1`), then
+  `gfx3d_clk_src: rcg didn't update its configuration` on the slumber
+  path, then `start failed -110` at 221.276 s
+  (`run85-logdump.log:8106-8193`). GPU never runs a command. No
+  firmware/zap/GMU lines in kmsg either way; silent success or silent
+  skip cannot be distinguished from this log.
+- After the -110, primary kmsg ends at 223.1 s (heartbeat seq 100)
+  while valid snapshots show the kernel alive at 235/237 s: ~12-14 s
+  of silence, then reset with no panic, hung-task, OOM or watchdog
+  trace. Shape matches a quiet hang followed by a silent reset, not
+  an orderly reboot. The hang's owner is unproven.
+- vold alive at 126 s with no death recorded; its run84 silent death
+  did not reproduce in the channels covered, so vold instability is
+  flaky, not deterministic. No boot completion in any run.
+- Capture wins: host logcat streamed 1238 lines (170 KB) while adbd
+  responded; on-device logcat kept 1,047,719 nearly-NUL-free bytes
+  through the abrupt reset thanks to the sync loop; 12-entry sync
+  probe survived. Periodic sync is now proven for abrupt resets too.
+
 ## Handoff to another machine
 
-- Stop point: run84 proves the return path is an orderly vold-failure
-  reboot at 203 s, not a kernel crash. Composer/BW sysfs is clean;
-  open blockers are vold's silent death and display PLL lock.
+- Stop point: run85 reaches BootAnimation with SDM composer up, then GPU
+  CP-idle/start -110 failure, ~14 s of silence and abrupt reset. Open
+  blockers are GPU start (CP idle), vold's flaky silent death, and
+  display PLL lock. Policy/BW sysfs is clean.
   No boot completion, EGL success, or rendering verdict is established.
-- Latest RAM-booted image is `snapshot60/boot-run84.img`; control remains
-  the original `snapshot60/boot-run73.img`. Run81-84 tags are used.
+- Latest RAM-booted image is `snapshot60/boot-run84.img` (run85 repeated
+  it); control remains the original `snapshot60/boot-run73.img`.
+  Run81-85 tags are used.
 - Preserve / transfer the real `snapshot60/base-guard-debug-fw.img`,
   `init-run32`, and all four `kdir-run73/` files. Do not reconstruct
   the policy-bearing base from captures or stock images.
@@ -862,14 +893,15 @@ or IOMMU-probe changes into this diagnostic result.
   Its new opt-in early-reset section describes the pending experiment.
   Do not use its 150-second ADB window as a boot-failure verdict or run
   direct make without the required arm64 environment.
-- Next step: diagnose vold's silent death (add sync-loop liveness
-  marker; consider host-side logcat persistence while adbd responds).
+- Next step: send the committed liveness-marker init to the build host
+  for an init-only rebuild, then boot with a new tag. Also targeted:
+  GPU CP-idle failure (firmware/zap/power sequencing) and PLL lock.
   Any repeat needs an unused run tag and continuous host capture
   alongside USB and ADB timeline.
   Allow at least eight minutes unless the device demonstrably exits
   the port kernel; do not treat a 150-second window as failure.
 - Current state: stock 4.19.325, boot completed, root available, enforcing;
-  verified after run84's return. Run81-84 raw/SD evidence is preserved.
+  verified after run85's return. Run81-85 raw/SD evidence is preserved.
   Run84's real logcat (`run84-early-logcat.log`), sync probe and dpmd
   tombstone (`run84-tombstone-20.txt`) are retained untracked per
   evidence precedent. No further boot / clear / flash was attempted.
@@ -878,9 +910,9 @@ or IOMMU-probe changes into this diagnostic result.
   is unsafe; arbitrary MDP delay and removed idle-PC restore are not
   production fixes. Keep KGSL/MDSS unchanged; only the approved
   diagnostic pstore extension and init capture services are in scope.
-  No cause is established for run78/run81/run82 returns; run83's reset
-  is abrupt with GPU-clock activity at the cutoff, while run84's is an
-  orderly vold-failure reboot.
+  run83's reset is abrupt with GPU-clock activity at the cutoff, run84's
+  is an orderly vold-failure reboot, run85's follows GPU start -110 and
+  a quiet hang. Same image, three faces: failure modes are flaky.
 
 
 ## Boot economy (AGENTS.md)
