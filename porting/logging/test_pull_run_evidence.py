@@ -1,15 +1,28 @@
 #!/usr/bin/env python3
 """Run the real collector against isolated adb transport fixtures; never a phone."""
+import json
 import os
 from pathlib import Path
 import subprocess
 import struct
 import tempfile
+import zlib
 
 COLLECTOR = Path(__file__).with_name('pull-run-evidence.sh').resolve()
 TEXT = (b'DIAG: Android capture ready; handing PID 1 to Android init\n'
         b'6,0,1000,-;Linux version fixture-kernel\n'
         b'6,1,2000,-;snapshot43 scm_raw_enter pid=7 fn=0x30000006\n')
+CONSOLE = b'[0.000000] Linux version snapshot-console-fixture\n'
+RECOVERED_CONSOLE = 'run1-ramoops-slot1-seq2-ns2000-snapshot-console.log'
+TAIL = b'6,42,3000,-;periodic printk fixture: Panic#1 Part1 ACKRESET1 text is not an event\n'
+RECOVERED_TAIL = 'run1-printk-tail-slot0-seq1-ns3000-periodic-printk.log'
+
+
+def tail_header(slot, seq, timestamp, payload):
+    fields = [0x314c4941544b4341, seq, seq, timestamp, 4096,
+              len(payload), 0, slot, 1, zlib.crc32(payload), 0, 0]
+    fields[10] = zlib.crc32(struct.pack('<QQQQ8I', *fields))
+    return struct.pack('<QQQQ8I', *fields)
 
 
 def main():
@@ -30,6 +43,21 @@ def main():
                                   4096, 1048576, 0x86800000, 1, 0, 0, 0, 0))
             out.seek(63967232 + 4096)
             out.write(b'DBGC')
+            for base in (62914560, 63967232):
+                for zone in range(119):
+                    out.seek(base + 4096 + zone * 4096)
+                    out.write(struct.pack('<III', 0x43474244, 0, 0))
+                out.seek(base + 4096 + 0x77000)
+                out.write(struct.pack('<III', 0x43474244, len(CONSOLE), len(CONSOLE)))
+                out.write(CONSOLE)
+            out.seek(0x3e02000)
+            out.write(tail_header(0, 1, 3000, TAIL))
+            out.seek(0x3e02000 + 4096)
+            out.write(TAIL)
+            out.seek(0x3e22000)
+            out.write(tail_header(1, 2, 4000, TAIL))
+            out.seek(0x3e22000 + 4096)
+            out.write(b'X' + TAIL[1:])  # Valid header CRC, invalid payload CRC.
         sd = root / 'sd'
         adb = root / 'adb'
         adb.write_text('''#!/usr/bin/env python3
@@ -71,9 +99,28 @@ sys.exit(status)
         assert (folder / 'run1-logdump.bin').stat().st_size == 67108864
         assert (folder / 'run1-logdump.log').read_bytes() == TEXT
         assert (folder / 'run1-sd.log').read_bytes() == TEXT
-        assert {p.name for p in folder.iterdir()} == {'boot.img', 'run1-logdump.bin', 'run1-logdump.log', 'run1-sd.log'}
-        assert b'valid=False' in next(line for line in result.stdout.splitlines() if line.startswith(b'slot0:'))
-        assert b'valid=True' in next(line for line in result.stdout.splitlines() if line.startswith(b'slot1:'))
+        assert (folder / RECOVERED_CONSOLE).read_bytes() == CONSOLE
+        assert (folder / RECOVERED_TAIL).read_bytes() == TAIL
+        recovery = json.loads((folder / 'run1-ramoops.json').read_bytes())
+        assert not recovery['slots'][0]['header_valid']
+        assert recovery['slots'][1]['header_valid']
+        assert recovery['slots'][1]['console']['file'] == RECOVERED_CONSOLE
+        assert recovery['slots'][1]['version'] == 0
+        assert recovery['slots'][1]['validation'] == 'legacy-structural-only'
+        assert 'unverified' in recovery['slots'][1]['console']['provenance']['integrity']
+        tails = recovery['periodic_tail_slots']
+        assert tails[0]['header_valid'] and tails[0]['header_crc_valid'] and tails[0]['payload_crc_valid']
+        assert tails[0]['tail']['file'] == RECOVERED_TAIL
+        assert tails[0]['tail']['kind'] == 'periodic-printk-tail'
+        assert not tails[1]['header_valid'] and tails[1]['header_crc_valid']
+        assert not tails[1]['payload_crc_valid']
+        assert 'payload CRC32 mismatch' in tails[1]['error']
+        assert 'tail' not in tails[1]
+        assert recovery['periodic_tail_sample_count'] == 1
+        assert recovery['dmesg_record_count'] == recovery['panic_or_oops_record_count'] == 0
+        assert {p.name for p in folder.iterdir()} == {
+            'boot.img', 'run1-logdump.bin', 'run1-logdump.log', 'run1-sd.log',
+            'run1-ramoops.json', RECOVERED_CONSOLE, RECOVERED_TAIL}
         actions = (root / 'actions').read_bytes()
         before = {p.name: p.read_bytes() for p in folder.iterdir()}
         again = subprocess.run(['bash', str(COLLECTOR), '1', 'boot.img'], cwd=folder,
@@ -81,15 +128,32 @@ sys.exit(status)
         assert again.returncode != 0
         assert (root / 'actions').read_bytes() == actions, 'overwrite refusal touched phone'
         assert before == {p.name: p.read_bytes() for p in folder.iterdir()}
-        linked = root / 'linked' / 'snapshot43'
-        linked.mkdir(parents=True)
-        (linked / 'boot.img').write_bytes(b'fixture image')
-        (linked / 'run1-sd.log').symlink_to('absent')
+        for linked_index, suffix in enumerate((
+                '-sd.log', '-ramoops.json',
+                '-ramoops-slot1-seq2-ns2000-snapshot-console.log',
+                '-printk-tail-slot0-seq1-ns3000-periodic-printk.log',
+                '-printk-tail-slot1-seq99-ns99-periodic-printk.log')):
+            linked = root / 'linked' / str(linked_index) / 'snapshot43'
+            linked.mkdir(parents=True)
+            (linked / 'boot.img').write_bytes(b'fixture image')
+            output = linked / ('run1' + suffix)
+            output.symlink_to('absent')
+            again = subprocess.run(['bash', str(COLLECTOR), '1', 'boot.img'],
+                                   cwd=linked, env=env, capture_output=True)
+            assert again.returncode != 0
+            assert (root / 'actions').read_bytes() == actions, 'dangling output touched phone'
+            assert output.is_symlink()
+        occupied = root / 'occupied' / 'snapshot43'
+        occupied.mkdir(parents=True)
+        (occupied / 'boot.img').write_bytes(b'fixture image')
+        prior_tail = occupied / 'run1-printk-tail-slot1-seq99-ns99-periodic-printk.log'
+        prior_tail.write_bytes(b'previous tail evidence\n')
         again = subprocess.run(['bash', str(COLLECTOR), '1', 'boot.img'],
-                               cwd=linked, env=env, capture_output=True)
+                               cwd=occupied, env=env, capture_output=True)
         assert again.returncode != 0
-        assert (root / 'actions').read_bytes() == actions, 'dangling output touched phone'
-        assert (linked / 'run1-sd.log').is_symlink()
+        assert (root / 'actions').read_bytes() == actions, 'existing periodic output touched phone'
+        assert prior_tail.read_bytes() == b'previous tail evidence\n'
+        assert {p.name for p in occupied.iterdir()} == {'boot.img', prior_tail.name}
         for status in ('0', '1'):
             folder, result = capture(b'cat: /sdlog/ack-kmsg.log: No such file or directory\n', SD_EXIT=status)
             assert result.returncode == 0, result.stderr.decode()
@@ -118,7 +182,7 @@ sys.exit(status)
         folder, result = capture(b'cat: missing\n', RAW_EXIT='1', SD_EXIT='1')
         assert result.returncode != 0
         assert {p.name for p in folder.iterdir()} == {'boot.img'}
-        print('collector trust-boundary checks passed: matching, invalid slots, cat errors, stale SD, short raw, both failed, overwrite refusal')
+        print('collector trust-boundary checks passed: legacy console, CRC-validated periodic tails, CRC rejection, absent crash, matching, invalid slots, cat errors, stale SD, short raw, both failed, overwrite refusal')
 
 
 if __name__ == '__main__':

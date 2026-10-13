@@ -1,31 +1,37 @@
 #!/usr/bin/env bash
 # From snapshot<number>: ../../logging/pull-run-evidence.sh <run> boot.img
-# Capture status and failed pulls stay in scratch, never in the snapshot folder.
+# Transport failures stay in scratch; recovered logs carry a provenance report.
 set -euo pipefail
-exec python3 - "$@" <<'PY'
+exec python3 - "${BASH_SOURCE[0]}" "$@" <<'PY'
 import hashlib
+import importlib.util
 import os
 from pathlib import Path
 import re
 import shlex
 import subprocess
-import struct
 import sys
 import tempfile
 
-if len(sys.argv) != 3 or not re.fullmatch(r'[1-9][0-9]*', sys.argv[1]):
+if len(sys.argv) != 4 or not re.fullmatch(r'[1-9][0-9]*', sys.argv[2]):
     sys.exit('usage: pull-run-evidence.sh <positive-run-number> <image-path>')
 folder = Path.cwd()
 if not re.fullmatch(r'snapshot[0-9]+', folder.name):
     sys.exit('working directory must be named snapshot<number>')
-tag = 'run' + sys.argv[1]
-image = Path(sys.argv[2])
+tag = 'run' + sys.argv[2]
+image = Path(sys.argv[3])
 if not image.is_file():
     sys.exit(f'image unavailable: {image}')
 owned = [folder / (tag + suffix) for suffix in
          ('-logdump.bin', '-logdump.log', '-sd.log', '-sd-unverified.log')]
+for namespace in ('-ramoops*', '-printk-tail*'):
+    owned.extend(folder.glob(tag + namespace))
 if any(p.exists() or p.is_symlink() for p in owned):
     sys.exit(f'refusing to overwrite existing {tag} evidence before touching phone')
+spec = importlib.util.spec_from_file_location(
+    'decode_pstore', Path(sys.argv[1]).resolve().with_name('decode-pstore.py'))
+decoder = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(decoder)
 scratch = Path(tempfile.mkdtemp(prefix='ack-evidence-', dir=os.environ.get('TMPDIR', '/tmp')))
 adb = ['adb', '-s', os.environ.get('ADB_SERIAL', '2819f2320604')]
 print(f'== {folder.name}/{tag} image={image} sha256={hashlib.sha256(image.read_bytes()).hexdigest()}')
@@ -82,21 +88,18 @@ prefix = b''
 if raw_ok:
     blob = raw_path.read_bytes()
     publish('-logdump.bin', blob)
-    candidate = blob[:62914560].split(b'\0', 1)[0]
+    candidate = blob[:decoder.SNAPSHOT_OFFSET].split(b'\0', 1)[0]
     if readable(candidate):
         prefix = candidate
         publish('-logdump.log', prefix)
         print(f'raw success: {size} bytes; readable prefix: {len(prefix)} bytes')
     else:
         print(f'raw success: {size} bytes; readable prefix unavailable (nontext)')
-    for idx, off in ((0, 62914560), (1, 63967232)):
-        magic, seq, index, timestamp, offset, length, phys, slot, *reserved = struct.unpack_from('<QQQQ8I', blob, off)
-        console = blob[off + 4096:off + 4100]
-        valid = (magic == 0x52414d4f and seq > 0 and index == seq
-                 and timestamp > 0 and offset == 4096 and length == 1048576
-                 and phys == 0x86800000 and slot == idx and not any(reserved)
-                 and console == b'DBGC')
-        print(f'slot{idx}: magic=0x{magic:08x} seq={seq} timestamp_ns={timestamp} console={console!r} valid={valid}')
+    report, recovered = decoder.recover_logdump(blob, str(folder / (tag + '-logdump.bin')), tag)
+    for suffix, data in recovered.items():
+        publish(suffix, data)
+    print('\n'.join(decoder.recovery_summary(report)))
+    print(f'recovery report: {folder / (tag + "-ramoops.json")}')
 else:
     print(f'raw error: retrieval or exact-size validation failed ({size} bytes); retained {raw_path}')
 
