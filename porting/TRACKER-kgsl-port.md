@@ -6,7 +6,7 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, branch `kgsl-port` (from `driver-fix` a1e4992dc).
 The main tree stays untouched until this port has a boot verdict.
-Last update: 2026-10-13 — Stage 3 in progress; run83 diagnostic boot reached 153 s with composer active and no BW denial, then abrupt reset; /data file data does not survive resets, raw logdump does.
+Last update: 2026-10-13 — Stage 3 in progress; run84 returned via orderly init reboot (vold died, reason vold-failed) at 203 s; composer/BW path clean, PLL still failing; sync strategy validated.
 
 ## Status key (same as FAILING-COMPONENTS.md)
 FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
@@ -794,14 +794,53 @@ or IOMMU-probe changes into this diagnostic result.
   kernel payload at the DTB magic and re-hashing, or request it.
 
 
+## Run84: sync-loop image (orderly reboot, reason vold-failed)
+
+- Build host supplied a fully packaged `run84-from-build-host/boot-run84.img`
+  plus matching `init-run84`. Verified before boot: report hashes match
+  image bytes; header preserved except size/cmdline/id; cmdline is run81
+  plus `ramoops.reset_capture=1`; 665 records, non-init identical
+  including sepolicy; DTB byte-identical to run81/83; loose init matches
+  packaged init and adds `ack-sync-loop`. Kernel rebuilt from the newer
+  commit (version `gc0655a13e557`, same source for kernel code, same
+  toolchain); payload differs from run83 only by build variation.
+  Installed as `snapshot60/boot-run84.img` + `package-run84.json`.
+- First `ACKRESET1` ever: `action=1 pid=1 comm=init command=vold-failed`
+  at 203.519 s with a 64942-byte tail. Init performed a complete orderly
+  shutdown (services SIGTERMed, /data cleanly unmounted, sync, `Reboot
+  ending, jumping to kernel`). The return to stock was a deliberate
+  init reboot, not a panic, hang or watchdog. Reset-capture mechanism
+  works end-to-end.
+- `vold.rc:10` sets `reboot_on_failure reboot,vold-failed`: vold (pid 326,
+  alive at 144 s) vanished without any exit, crash, tombstone, OOM or
+  denial trace in the complete primary kmsg. How vold died is still open;
+  dpmd's SIGABRT tombstone (binder mmap size) is a confirmed red herring
+  from an unrelated daemon.
+- Display/composer story unchanged: SDM composer up, display id 0 at
+  1080x1920, IComposer registered, SurfaceFlinger attached; no composer
+  `bw_mode_bitmap`/caps denial anywhere; PLL0 lock failure, DSI `-22`,
+  cmd failures and frame timeouts persist. No boot completion.
+- Sync strategy validated: 942080-byte real logcat, a real dpmd
+  tombstone and the sync-probe timestamps survived via orderly shutdown
+  plus periodic sync. Run83's zeros are therefore explained as
+  page-cache loss on abrupt reset (metadata journaled, data not),
+  with raw logdump as the always-durable channel.
+- New observation: both diagnostic shell services stopped producing
+  output mid-boot (probe has 5 entries, logcat ends ~175 s) with no
+  death/restart lines, suggesting they blocked (possibly in `sync`)
+  rather than crashed. Unproven; needs a liveness marker in the loop.
+- Host ADB saw 6.12 at elapsed 196-214 s but shell mostly timed out;
+  4 streamed logcat segments captured 0 bytes. On-device service
+  remains the primary Android-log channel.
+
 ## Handoff to another machine
 
-- Stop point: run83 proves composer passes BW sysfs and KGSL runs to
-  153 s, then abrupt reset with no orderly-reboot record. Display PLL
-  lock and /data write durability are the open blockers, not policy.
+- Stop point: run84 proves the return path is an orderly vold-failure
+  reboot at 203 s, not a kernel crash. Composer/BW sysfs is clean;
+  open blockers are vold's silent death and display PLL lock.
   No boot completion, EGL success, or rendering verdict is established.
-- Latest RAM-booted image is `snapshot60/boot-run83.img`; control remains
-  the original `snapshot60/boot-run73.img`. Run81-83 tags are used.
+- Latest RAM-booted image is `snapshot60/boot-run84.img`; control remains
+  the original `snapshot60/boot-run73.img`. Run81-84 tags are used.
 - Preserve / transfer the real `snapshot60/base-guard-debug-fw.img`,
   `init-run32`, and all four `kdir-run73/` files. Do not reconstruct
   the policy-bearing base from captures or stock images.
@@ -811,23 +850,25 @@ or IOMMU-probe changes into this diagnostic result.
   Its new opt-in early-reset section describes the pending experiment.
   Do not use its 150-second ADB window as a boot-failure verdict or run
   direct make without the required arm64 environment.
-- Next step: user rebuilds only init (same defines plus the committed
-  sync-loop service) and repackages run84 from the run83 kernel payload
-  per the early-reset reference section. Any repeat needs an unused run
-  tag and continuous host capture alongside USB and ADB timeline.
+- Next step: diagnose vold's silent death (add sync-loop liveness
+  marker; consider host-side logcat persistence while adbd responds).
+  Any repeat needs an unused run tag and continuous host capture
+  alongside USB and ADB timeline.
   Allow at least eight minutes unless the device demonstrably exits
   the port kernel; do not treat a 150-second window as failure.
 - Current state: stock 4.19.325, boot completed, root available, enforcing;
-  verified after run83's return. Run81-83 raw/SD evidence is preserved.
-  The on-device `ack-early-logcat.log` (zeros) is archived as
-  `run83-early-logcat.log`. No further boot / clear / flash was attempted.
+  verified after run84's return. Run81-84 raw/SD evidence is preserved.
+  Run84's real logcat (`run84-early-logcat.log`), sync probe and dpmd
+  tombstone (`run84-tombstone-20.txt`) are retained untracked per
+  evidence precedent. No further boot / clear / flash was attempted.
 - Deferred kernel work remains: raw display markers collide with
   ramoops; pstore retries cannot resolve PARTLABEL and synthetic panic
   is unsafe; arbitrary MDP delay and removed idle-PC restore are not
   production fixes. Keep KGSL/MDSS unchanged; only the approved
   diagnostic pstore extension and init capture services are in scope.
   No cause is established for run78/run81/run82 returns; run83's reset
-  is characterized as abrupt with GPU-clock activity at the cutoff.
+  is abrupt with GPU-clock activity at the cutoff, while run84's is an
+  orderly vold-failure reboot.
 
 
 ## Boot economy (AGENTS.md)
