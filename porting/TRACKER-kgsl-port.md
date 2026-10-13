@@ -874,6 +874,29 @@ or IOMMU-probe changes into this diagnostic result.
   through the abrupt reset thanks to the sync loop; 12-entry sync
   probe survived. Periodic sync is now proven for abrupt resets too.
 
+## Boot-blocker hypotheses (ranked, 2026-10-13; proofs pending)
+
+- PLL lock (status 0xc): GDSC-cleanup cause falsified by run86
+  (`pd_ignore_unused`, still 8 failures). Register programming mirrors
+  the donor except an added VCO_TUNE/KVCO_CODE dance of unknown effect;
+  DT carries a real fw_devlink cycle (folded gcc-mdss) with unknown
+  broken edge. Proof test: failure-path register dump (committed in
+  this tree, needs kernel rebuild) distinguishes unlatched config
+  (power) from stuck sequencer (config/refclk) from impossible target
+  (math).
+- GPU CP-idle/-110: firmware names verified correct for A506
+  (a530_pm4/pfp + a506_zap, all staged), no load errors, no IOMMU
+  faults; ME_INIT path is donor-identical vendored code. Ranked:
+  power/clock sequencing (gfx RCG warnings co-occur), then zap-auth
+  path, then command-stream compat. Proof: same dump round plus GPU
+  power/clock state at first open.
+- Userspace crash cluster (13 in run85): binder-EINVAL null-derefs,
+  stack_chk_fail x2, scudo heap abort x1, heap-garbage pointer x1.
+  System pushes through; servicemanager-class deaths cascade to
+  orderly reboot via reboot_on_failure. Needs KASAN or binder-UAPI
+  audit; deferred until display/GPU move since it does not stop
+  framework progress by itself.
+
 ## Handoff to another machine
 
 - Stop point: run85 reaches BootAnimation with SDM composer up, then GPU
