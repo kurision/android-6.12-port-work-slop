@@ -56,6 +56,23 @@ RAM_SIGNATURE = 0x43474244
 DMESG_ZONE_SIZE = 4096
 DMESG_ZONE_COUNT = 119
 CONSOLE_OFFSET = 0x77000
+# run117+: last dmesg zone holds MDSS diag marks; last 8 bytes = magic + boot id.
+MARK_OFFSET = 0x76000
+MARK_HDR = DMESG_ZONE_SIZE - 8
+MARK_MAGIC = 0x4B52414D
+
+
+def decode_marks(page: bytes):
+    """Return {boot_id, slots} for a mark page, or None if magic is absent."""
+    magic, boot_id = struct.unpack_from("<II", page, MARK_HDR)
+    if magic != MARK_MAGIC:
+        return None
+    slots = []
+    for slot in range(0, MARK_HDR, 8):
+        tag, val = struct.unpack_from("<II", page, slot)
+        if tag or val:
+            slots.append({"slot": f"0x{slot:02x}", "tag": f"0x{tag:08x}", "val": f"0x{val:08x}"})
+    return {"boot_id": f"0x{boot_id:08x}", "slots": slots}
 CONSOLE_SIZE = 512 * 1024
 # Current writer and the older uncompressed ramoops header understood by ram.c.
 KMSG_HEADER = re.compile(rb"\A====(-?[0-9]{1,19})\.([0-9]{1,6})(?:-([CD]))?\n")
@@ -275,8 +292,13 @@ def recover_logdump(blob: bytes, source: str, output_prefix: str) -> tuple[dict,
         result["dmesg"] = []
         result["dmesg_empty_zones"] = 0
         result["dmesg_rejected_zones"] = []
+        marks = decode_marks(payload[MARK_OFFSET:MARK_OFFSET + DMESG_ZONE_SIZE])
+        if marks is not None:
+            result["diag_marks"] = marks
         for zone_index in range(DMESG_ZONE_COUNT):
             zone_offset = zone_index * DMESG_ZONE_SIZE
+            if marks is not None and zone_offset == MARK_OFFSET:
+                continue
             try:
                 data, ring = recover_zone(payload[zone_offset:zone_offset + DMESG_ZONE_SIZE])
                 if not data:
@@ -331,6 +353,11 @@ def recovery_summary(report: dict) -> list[str]:
                      f"console={console.get('status', 'unavailable')} "
                      f"dmesg={len(slot.get('dmesg', []))}"
                      + (f" error={slot['error']}" if "error" in slot else ""))
+        marks = slot.get("diag_marks")
+        if marks:
+            lines.append(f"  diag marks boot_id={marks['boot_id']}: "
+                         + (" ".join(f"{m['slot']}={m['tag']}/{m['val']}" for m in marks["slots"])
+                            or "none"))
     lines.append(f"slot pair: {report['slot_pair']}; freshness remains unverified")
     for slot in report["periodic_tail_slots"]:
         lines.append(f"periodic-tail-slot{slot['slot']}: seq={slot['seq']} "
