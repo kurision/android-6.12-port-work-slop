@@ -2223,3 +2223,49 @@ Last services/display lines in the final 3 s of each late silent run:
   fb0. `vendor.livedisplay-sdm` aborts ×29 (`PictureAdjustment backend not
   ready`). Top SELinux denials: `watchdog` read ×54, `mm-qcamera-daem`
   write ×31, `mm-pp-dpps` read/write ×24.
+
+## Run126: MDSS SMMU fixed, composer on fbdev; GPU start precedes memory corruption and freeze
+
+- `boot-run126.img` (SHA256 `3a63abc3…3085`), kernel
+  `6.12.93-4k-g30087c43cf6e #45`, init `de669578…` (no display gate). Same
+  base, cmdline and policy append as run125. Logdump preclear matched
+  `run125-logdump.bin`. Phone diagnostics matched run125's retained files
+  and were removed (`run126-preboot/manifest.json`). RAM boot at 18:09:53;
+  the user forced a reboot after the freeze; stock was back at 18:18:06.
+  `L126` = `artifacts/snapshot60/run126-logdump.log`, `E126` =
+  `run126-early-logcat.log` (only file present; starts at the beginning of
+  main).
+- **MDSS SMMU: pass.** Zero `mdss_smmu_fault_handler` lines (run125:
+  ~146k). One MDSS iommu group (`L126:468`), no rotator client.
+  `IOMMU driver was not able to establish FW requested direct mapping`
+  (`L126:471`): qcom_iommu programs the context only at attach, so the core
+  installed the splash 1:1 map just after attach. No splash fault appeared.
+- **Composer: pass (fbdev backend).** `SDM HWInfo::GetHWResourceInfo: SDE
+  Version = 5, SDE Revision = 10100000` and `HWDevice::Init:
+  access(/dev/graphics/fb0) successful` (`E126:897-919`). No `HWInfoDRM`.
+  Composer opens fb0 at 40.56 s. SurfaceFlinger EGL is up: `renderer :
+  Adreno (TM) 506`, PFP/ME read back (`E126:1289,1309`).
+- **USB:** handoff marker `L126:3508`. The user saw port adb; host
+  `adb shell` then timed out (system already degraded).
+- **Memory corruption follows first GPU use within ~1 s.** KGSL `DIAG
+  ME_INIT submit` at 40.58 s (composer), 41.36 s and 41.61 s
+  (`L126:3450,3543,3605`). Within 0.4 s, unrelated daemons crash with garbage
+  pointers. Zygote faults at `0x1c70460000` (`E126:1392`). hwservicemanager
+  faults at `0x440e21385` in `Looper::pollAll` hash iteration
+  (`E126:1411,1468`; init `L126:3684`). tombstoned dies with SIGSEGV
+  (`L126:3658`). Then KGSL `CP initialization failed to idle`, `start
+  failed -110` and a GPU snapshot (43.61-43.66 s), with ME_INIT retries to
+  48.9 s. At 52.05-52.16 s a burst of SIGSEGV hits servicemanager, apexd,
+  mediametrics, mediaswcodec and binder threads. `L126` ends at 53.805 s;
+  ramoops tails end at 52.10 s; no panic/oops/SEA. Run125 (GPU never
+  opened, display gated) ran 194 s with no such crashes. [INFERENCE] The
+  GPU is writing outside its intended buffers into live process memory,
+  e.g. GPU SMMU context not translating, or wrong pagetable/IOVA handed to
+  the CP. This is the top suspect for both the run124 cascade and this
+  freeze.
+- **Next:** audit the KGSL IOMMU path on `gpu_iommu` (`iommu@1c48000`):
+  whether the GPU context bank has SCTLR.M set when ME_INIT runs; whether
+  any GPU global, ringbuffer or memstore IOVA would hit live RAM if
+  untranslated (DRAM spans 0x10000000-0xffffffff, `L126:36-40`, so any
+  32-bit IOVA is a valid physical address); and `CP initialization failed to
+  idle` with `rbbm_status=800001C1`.

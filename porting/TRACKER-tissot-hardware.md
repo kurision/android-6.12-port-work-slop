@@ -45,7 +45,7 @@ adaptation analysis.
 
 | Component | Status | Where the work is | Next proof / blocker |
 |---|---|---|---|
-| MDSS MDP5 / DSI (legacy fbdev) | Partial | `drivers/video/fbdev/msm/`; `D`; `porting/PLAN-mdss-display-port.md`; run125 MDP probes at 1.32 s inheriting LK splash (`L125:364`), `FrameBuffer[0] 1080x1920` at 1.42 s (`L125:512`) | Run125 SMMU faults on splash and on every fb buffer: `smmu_rot_unsec` shared stream 0x15 in a separate iommu group and clobbered the context TTBR0 (`L125:468,472`). Run126 removes it and 1:1-maps `cont_splash_mem` (`iommu-addresses`); prove no faults, composer commits, panel scanout/VSYNC |
+| MDSS MDP5 / DSI (legacy fbdev) | Partial | `drivers/video/fbdev/msm/`; `D`; `porting/PLAN-mdss-display-port.md`; run126: zero MDSS SMMU faults, single iommu group, vendor composer on fbdev backend (`SDE Version = 5`, `/dev/graphics/fb0` OK in `run126-early-logcat.log:897-919`) | Panel scanout/VSYNC not proven; run126 froze ~54 s after GPU start corrupted memory (see `TRACKER-kgsl-port.md` "Run126") |
 | Panel OTM1911 + WLED backlight | Partial | `D:367-430`; `drivers/video/backlight/qcom-wled.c`; LAB/IBB regulators | Re-prove panel init on the legacy path after PLL lock |
 | Adreno 506 + Zap | Partial | `drivers/gpu/msm/`; `TRACKER-kgsl-port.md` | Probes; CP init timeout (`-110`, run85); Zap auth unproven; no rendering |
 | HDMI / external display | N/A | No board endpoint; USB 2.0 Type-C per [Xiaomi FAQ](https://www.mi.com/global/support/faq/details/KA-07254/) | None |
