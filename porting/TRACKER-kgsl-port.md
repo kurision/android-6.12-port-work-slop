@@ -2015,3 +2015,63 @@ Last services/display lines in the final 3 s of each late silent run:
 - User took over building and pulling images. No run124 init binary,
   package or device boot was produced here; USB transport remains unverified.
 
+## Run124: combined USB + ashmem + PLL boot verdict
+
+- `boot-run124.img` (SHA256 `9708691b…b55e1`), kernel
+  `6.12.93-4k-g6bb466908fba-dirty #43`, RAM-booted ~17:04:24 host with
+  reset-test service gates removed. Phone returned to stock 4.19 at
+  17:08:32. Anchors: `L124` = `artifacts/snapshot60/run124-logdump.log`,
+  `E124` = `artifacts/snapshot60/run124-early-logcat.log*` (fresh: phone
+  copies were removed before boot; manifest
+  `run124-retained-diagnostics.json`, remote/local SHA matched before and
+  after transfer; no `.4` rotation existed), `T124` =
+  `artifacts/snapshot60/run124-adb-timeline.log`. Logcat covers kernel
+  ~32-75 s (offset from composer pid 1454: `E124.1:2236` = `L124:6453`).
+- One combined boot changed three things plus the service gates; every
+  verdict below has weak attribution.
+- **USB: fail.** Overlay applied (`L124:525` `7000000.dwc3 -> 7000000.usb
+  errno=0`), `vendor.usb.controller=*` action ran (`L124:3630`) and adbd
+  existed (pid 873, killed at shutdown `L124:9080`), but the host never saw
+  serial `2819f2320604` in 156 s of polling (`T124`). `L124` has no
+  `UDC core: g1` or dwc3 gadget line, so UDC binding is unproven.
+- **Ashmem: inconclusive, no regression seen.** `ashmem: Using Rust
+  implementation.` (`L124:280`); `Unable to stat ashmem device` and
+  `Failed to create ashmem` have zero matches in `E124`; HIDL allocator
+  registered `IAllocator/ashmem` (`E124.3:761`). Zygote never forked
+  SystemServer (no `SystemServer` lines in `E124`): every zygote was
+  killed as a dependent of the composer/surfaceflinger restart loop, so
+  the run123 `/dev/ashmem` failure path was not reached.
+- **PLL/display: PLL repair pass, display partial.** Both PLLs register
+  (`L124:337,340`) and `L124` has zero `already disabled`, `already
+  unprepared`, `fail state`, `failed to lock` or `lock failed` lines
+  (previously ~30 lock failures per boot). MDP deferred until the late
+  kick (`MDP not probed yet` `L124:439-510,4079`; re-probe `L124:6340`),
+  then DSI ctrl0 (`L124:6402`) and `FrameBuffer[0] 1080x1920`
+  (`L124:6445`). New defects in that path: `init_timer_key` WARN from
+  `mdss_fb_register+0x318` (`L124:6405-6443`), `unable to add event timer`
+  (`L124:6446`), 12 `mdss_smmu` faults at iova `0xfffff000` descending to
+  `0xffffc000` after composer commits (`L124:6753-7820`, DIAG123
+  post-commit `lm0=01000000` `L124:6762`). No SEA this run. Panel light-up
+  was not observed. No `mdss_8953_pll_locked` line exists to confirm lock
+  positively.
+- **hwcomposer:** before MDP probed, every composer start SIGSEGVs at NULL
+  in `sdm::HWInfoDRM::GetHWResourceInfo+208` (libsdmcore.so) from
+  `CoreImpl::Init` (`E124.3:947,1050-1057`; same stack `E124.3:3349-3356`);
+  init restarts take surfaceflinger and zygote with them (`L124:3458-3602`,
+  repeats every ~5 s). After `L124:6445` composer pid 1560 opens fb0
+  (`L124:6734`), commits, and bootanim starts (`L124:7518`).
+- **Overall: no kernel panic, oops or SEA; clean userspace reboot.**
+  `ACKRESET1` absent; no `Kernel panic`, `Internal error`, `Unable to
+  handle` or `SEA:` lines. From ~73.4 s long-lived daemons SIGSEGV:
+  bootanim in `glTexParameteri` (`L124:7800`, `E124:4050-4058`),
+  hwservicemanager and logd (`L124:7882,7886`), servicemanager
+  (`L124:8626`). servicemanager restart kills apexd, whose
+  `reboot_on_failure` gives `reboot,apexd-failed` (`L124:8657,8719`).
+  Last kernel timestamp 184.153425 s during shutdown unmounts. The
+  `ack-sync-loop` shell also SIGSEGVs from 54.2 s (`fault addr 0x40` in
+  mksh `ktenter`, `E124.1:202,287-305`). Run123 had zero SIGSEGV services
+  in `L`. That ordering argues against MDSS scanout as the only source.
+  [INFERENCE] Kernel-side memory corruption is the likely cause; Rust
+  ashmem and the newly ungated display/KGSL path are both suspects.
+  `sys.boot_completed` never reached (`L124:6466` `exited 4 times before
+  boot completed`).
