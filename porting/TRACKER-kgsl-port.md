@@ -1844,6 +1844,46 @@ Last services/display lines in the final 3 s of each late silent run:
   (`0x80=0x504B534D`) plus skip `pr_err` in kmsg; the re-probe path
   must still complete with `mdp_rev=0x10100000`.
 
+### Run118 revision: observe the late path, don't guess it
+
+- Review of f834a9b1e: the `mdss_mdp_overlay_start` guard tests
+  `&mfd->pdev->dev` right after `pm_runtime_get_sync()` on that same
+  device succeeded (failure jumps to `end`); fb0 is a DT child of
+  mdss_mdp, so the parent resumed too. It can never fire — removed.
+  The `idle_pc_restore` guard (MDP device) is kept.
+- The premise is half-supported: run116/117 `-logdump.log` (the
+  userspace kmsg logger, ahead of the 2 s snapshots) end with
+  `mdss_fb_open by mm-pp-dpps` -> `hw_init begin` -> `hw_settings table
+  begin`, then 45 ms of unrelated lines in run117. `hw_init` had no end
+  print, so death inside hw_init vs later (ctl_start / panel on with
+  DSI PLL0 unlocked) is undecided. `Footswitch failed to enable`
+  appears in no run110-117 log, so "domain down" is unproven. Run115
+  (136.5 s) had no fb_open; runs 110/114 died before any MDP probe.
+- RAM marks cannot see a ~45 ms death (snapshot period 2 s); the
+  kmsg logger lands lines in logdump within ms. So breadcrumbs are
+  `pr_info`, prefix `DIAG118`:
+  - `mdss_mdp_diag_pwr()` reads GCC (always clocked): MDSS GDSCR
+    PWR_ON (0x184d078 bit31), CBCR CLK_OFF of mdss ahb/axi/mdp
+    (0x184d07c/080/088 bit31), plus MDP runtime-PM status. Logged at
+    hw_init entry and before ctl_start.
+  - `hw_init begin ... from %pS` names the caller (overlay_start vs
+    idle_pc_restore); each `hw_settings[i] addr <- val` before the
+    write; `hw_init end writes=N`.
+  - overlay_start: EARLY_MAP clear, ctl_start rc, pp_resume rc,
+    splash_cleanup rc; idle_pc_restore: ctl_restore pre/done.
+- Package with `--append-cmdline ' panic=0'`: a Linux panic (e.g.
+  SError from an unclocked access) then hangs instead of resetting
+  (physical 10 s power-hold recovery; POFF should read KPDPWR_N 0x80).
+  A reset at ~137 s anyway rules out Linux's panic path. Rationale:
+  run116 A/B shows silent = PS_HOLD with WARM_RESET_REASON1=0x00
+  (orderly stock reboot: 0x02); the port's mainline msm-poweroff drops
+  PS_HOLD without setting the PMIC type (stock rest value 0x85A=0x08,
+  DVDD_HARD_RESET), and panic->emergency_restart skips ACKRESET1 while
+  smp_send_stop halts the snapshotter — a port panic has never been
+  capturable in this pipeline.
+- Readout: last `DIAG118` line = failing step; `gdsc_on`/`*_off` at
+  that point = power truth; hang vs reset = panic vs firmware.
+
 ## Open defect (display, not reset): DSI PLL clock imbalance
 
 - Every boot warns at ~2.5 s in `mdss_8953_pll_probe`:
