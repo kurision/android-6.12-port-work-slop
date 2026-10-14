@@ -188,12 +188,33 @@ Size parameters are KiB, not bytes. Do not enable a whole-partition pstore-blk
 layout over the diagnostic text/snapshot/witness/QSEE/reset ranges.
 
 Rebuild **both kernel and DTB on Linux**, using the existing `out/.config` and
-working toolchain. The usual LLVM invocation is:
+working toolchain. Run123 omitted Rust/ashmem; enable the existing driver
+without replacing the rest of that run's config, and refuse an image if
+Kconfig drops it again (commands below use Bash):
 
 ```sh
-make O=out ARCH=arm64 LLVM=1 olddefconfig
-make O=out ARCH=arm64 LLVM=1 Image.gz qcom/msm8953-xiaomi-tissot.dtb
+rust_make=(make O=out ARCH=arm64 LLVM=1
+  RUSTC="${RUSTC:-rustc}" HOSTRUSTC="${HOSTRUSTC:-${RUSTC:-rustc}}"
+  BINDGEN="${BINDGEN:-bindgen}")
+"${rust_make[@]}" rustavailable || exit 1
+scripts/config --file out/.config -e STAGING -e SHMEM -e RUST -e ASHMEM -e COMPAT
+"${rust_make[@]}" olddefconfig || exit 1
+for sym in RUST_IS_AVAILABLE RUST ASHMEM; do
+  grep -qx "CONFIG_${sym}=y" out/.config || {
+    echo "Missing built-in CONFIG_${sym}; do not package this image" >&2
+    exit 1
+  }
+done
+"${rust_make[@]}" Image.gz qcom/msm8953-xiaomi-tissot.dtb
 ```
+
+On Fedora, install missing prerequisites with
+`sudo dnf install rust rust-src bindgen-cli clang-libs`; for rustup, add
+`rust-src` to the selected compiler's toolchain. `RUST_LIB_SRC` must point
+to matching Rust library sources, and bindgen may require `LIBCLANG_PATH`.
+See the [upstream Rust quick start](https://docs.kernel.org/6.16/rust/quick-start.html).
+The normal `scripts/build-ack-tissot.sh` entrypoint now checks the same
+availability and required built-ins before compiling.
 
 `PSTORE_RAM` now selects CRC32 when BLOCK is enabled; run105 already has
 `CONFIG_CRC32=y`. The DT adds `max-reason = <4>` for genuine emergency and
@@ -201,9 +222,15 @@ shutdown RAM dumps. Rebuild diagnostic init on the Mac:
 
 ```sh
 zig cc -target aarch64-linux-musl -Os -static \
-  -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT -DANDROID_HALGATE \
+  -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT -DBOOT_DEADLINE_SECONDS=0 \
   scripts/initramfs-diag/init.c -o /tmp/ack-init-reset-logging
 ```
+
+The headless, HAL and display reset-test service gates have been removed.
+Rebuild diagnostic init; do not reuse `init-run110` or another gated binary.
+Gatekeeper, composer, display-color, SurfaceFlinger and LiveDisplay must use
+their original service definitions. Diagnostic capture, storage protections
+and the read-only USB controller property correction remain enabled.
 
 ### Committed disk layout
 
