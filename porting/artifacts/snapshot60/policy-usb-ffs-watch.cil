@@ -1,0 +1,10 @@
+
+;; Harness-only: let the QTI USB gadget HAL inotify-watch adbd's FunctionFS
+;; dir so it binds the UDC once /dev/usb-ffs/adb is ready (run120/121:
+;; "avc: denied { watch watch_reads } ... path=/dev/usb-ffs/adb
+;; scontext=u:r:hal_usb_qti:s0 tcontext=u:object_r:functionfs:s0
+;; tclass=dir permissive=0", adbd wrote its descriptors, UDC never bound).
+;; SELinux only checks fsnotify watches via security_path_notify (2019,
+;; post-4.19); stock 4.19 never asked, so the stock vendor policy lacks it.
+;; Move into the device's vendor hal_usb_qti.te before shipping.
+(allow hal_usb_qti functionfs (dir (watch watch_reads)))
