@@ -1077,9 +1077,58 @@ with file+line evidence before any claim. Reverts are one-line documented.
 - [x] Recover existing raw console/dmesg with provenance and legacy limits.
 - [x] Verify C snapshot commit failure boundaries, CRC format, prefix cap
   and decoder/collector behavior using reachable host/Android smoke paths.
-- [ ] Linux rebuild of kernel and DTB with the existing configuration.
-- [ ] New-image readiness: CRC32-committed snapshot and reset-capture armed.
-- [ ] Controlled orderly reboot: recover ACKRESET1 and valid version1 slots.
+- [x] Linux rebuild of kernel and DTB with the existing configuration (run107).
+- [x] New-image readiness: CRC32-committed snapshot and reset-capture armed.
+- [x] Controlled orderly reboot: recover ACKRESET1 and valid version1 slots.
 - [ ] Capture genuine SEA/panic/watchdog evidence if the fault recurs;
   absence still cannot prove no crash or identify the resetter.
+
+## Run107: orderly-reset persistence acceptance passed
+
+- User supplied `run107/` kernel/DTB/config; all four SHA256SUMS pass.
+  Banner is `6.12.93-4k-gbe63c5ea5a0e`, with the CRC32 commit,
+  reset-capture armed and SEA markers present. DTB has `max-reason=4`;
+  config has built-in PSTORE_RAM/BLOCK/CRC32 and 4 KiB pages.
+- Rebuilt init with capture, early-logcat, gatekeeper-only HAL gate and
+  `BOOT_DEADLINE_SECONDS=45`. Packaged from run105, preserving its existing
+  console via `--keep-stock-console`; no firmware/policy/other ramdisk
+  change. Removed all four pstore-blk cmdline tokens and selected
+  `pstore.backend=ramoops`; reset capture remains enabled.
+  Boot SHA256 `54abe74e42a76b07b72ae904bfa7588613ae082d480a1b0ae3460bd31f314b63`.
+- Archived current partition and diagnostic files in `run107-preboot/`.
+  Preclear hash matches the archive; all-zero readback verified.
+  `fastboot boot` accepted the image; nothing flashed.
+- Kernel registered ramoops at 0.427 s, armed reset capture at 0.431 s,
+  and reported CRC32-committed snapshots/tails ready at 4.531 s
+  (`run107-logdump.log:160-164,468-469`). No pstore-blk open error seen;
+  its generic PARTLABEL opener is not exercised by this ramoops-only boot.
+- Deadline marker at 45.381 s, orderly notifier at 47.382 s, successful
+  reset-capture flush at 47.394 s (`run107-usb.log:963-965`).
+  This return was deliberately requested by the diagnostic deadline,
+  not another spontaneous cutoff. No host reboot after image entry.
+- Raw logdump is 67108864 bytes, readable prefix 139949 bytes; USB
+  captured 140035 bytes. Decoder recovered both console slots and both
+  periodic printk slots with valid version1 header **and** payload CRCs:
+
+| Record | Slot | Sequence | Header uptime (s) |
+|---|---:|---:|---:|
+| Raw ramoops snapshot | 0 | 21 | 46.401171231 |
+| Raw ramoops snapshot | 1 | 20 | 44.348233003 |
+| Periodic printk tail | 0 | 21 | 46.416637481 |
+| Periodic printk tail | 1 | 20 | 44.362904357 |
+
+- `decode-reset.py run107-logdump.bin` recovered
+  `ACKRESET1 timestamp_ns=47378926023 action=1 pid=178 comm=init command= tail_bytes=64926`.
+  Its saved tail includes the deadline and orderly-reset messages;
+  USB separately proves `reset capture persisted tail_bytes=64926`.
+  Preclear plus current build/banner/deadline establishes this test's
+  provenance; CRCs or consecutive counters alone would not.
+- No genuine dmesg panic/oops record recovered, as expected for this
+  controlled non-panic boot. SD pull unavailable; USB/raw/ACK evidence
+  suffices for the persistence result. Stock 4.19 returned and then
+  reached boot-completed=1, root available, SELinux Enforcing.
+- [x] Orderly reboot persistence and post-stock console/tail recovery proven.
+- [ ] Remove only the 45 s test deadline for a later fault-reproduction boot.
+- [ ] Final unwritten SEA/panic lines and hardware-watchdog persistence remain
+  unproven; run107 does not diagnose the earlier spontaneous reset cause.
 
