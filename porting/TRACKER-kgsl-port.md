@@ -2075,3 +2075,43 @@ Last services/display lines in the final 3 s of each late silent run:
   ashmem and the newly ungated display/KGSL path are both suspects.
   `sys.boot_completed` never reached (`L124:6466` `exited 4 times before
   boot completed`).
+
+## Run125 preparation: fixes from run124 + display gate (not boot-tested)
+
+- **MDP early probe** (`drivers/video/fbdev/msm/mdss_mdp.c`): removed the
+  `< 45 s` boottime defer and the 60 s `driver_deferred_probe_trigger()`
+  kick. The gate began in `c510185d0` as a pstore-capture aid (run63-65) and
+  was never shown to be a supplier dependency (`:531-533`, `:555-557`).
+  Ordering now comes from the `power-domains` device link and clock
+  `-EPROBE_DEFER`. New guard: if runtime resume did not activate the MDSS
+  domain before the first register read, log `mdss_mdp: MDSS power domain
+  not active, deferring probe` and defer. Reference: stock 4.19 probes MDP at
+  1.196 s after linking to the MDSS GDSC regulator (live `dmesg`).
+  Expect fb0 within ~1-3 s; a return of the old hang shows as `probe marker
+  before HW_VERSION read` followed by a silent reset.
+- **fb timer** (`mdss_fb.c`): `timer_setup()` was passed `mfd` as flags,
+  causing the `init_timer_key` WARN (`L124:6405`) and random
+  DEFERRABLE/PINNED/IRQSAFE bits; flags are now 0.
+- **KGSL pm-qos** (`drivers/gpu/msm/kgsl.c`): the port dropped the donor's
+  add/remove of `pm_qos_req_dma`, so every `adreno_start` warned
+  `cpu_latency_qos_update_request called for unknown object` (18 WARNs in
+  L124) and cast no vote. Now added at probe, removed at remove.
+- **USB handoff** (`scripts/initramfs-diag/init.c`): the appended handoff
+  only triggered on `sys.usb.configfs=1`; this vendor stack sets `=2`
+  (`L124:3638,4021`; zero `configfs=1` lines), so the diag ACM config
+  `c.2` stayed in gadget `g1` next to adb's `b.1`. Same action now also on
+  `=2`, with kmsg marker `ACK diag: USB handoff configfs=N`. [INFERENCE]
+  The host chose the ACM configuration, hiding adb.
+- **Segfault cascade**: no Rust ashmem bug found (audit of mmap, pin/unpin,
+  purge and compat paths). The run123/run124 delta is GPU/display activity
+  (`kgsl_open` 0 vs 14; MDSS SMMU faults 0 vs 13; KGSL `CP initialization
+  failed to idle` at 73.16 s, `L124:7579`). Run125 reinstates only the
+  display gate (`-DANDROID_DISPLAY_GATE`: composer, display-color,
+  SurfaceFlinger stubbed). Display/GPU is implicated if run125 has zero
+  `kgsl_open`, zero SMMU faults and no `sh`/servicemanager/logd SIGSEGV;
+  if `sh` still crashes at ~54 s, look at ashmem/PLL/USB instead.
+- With the display gate, the MDP fix is checked only by kernel probe timing
+  and `fb0/mdp/caps` existing, not by composer behaviour.
+- Checkpatch `--strict` clean on all kernel hunks. Diag init compiles with
+  `zig cc -target aarch64-linux-musl` with the documented flags plus
+  `-DANDROID_DISPLAY_GATE`.

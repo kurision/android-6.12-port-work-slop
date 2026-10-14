@@ -228,14 +228,19 @@ shutdown RAM dumps. Rebuild diagnostic init on the Mac:
 ```sh
 zig cc -target aarch64-linux-musl -Os -static \
   -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT -DBOOT_DEADLINE_SECONDS=0 \
+  -DANDROID_DISPLAY_GATE \
   scripts/initramfs-diag/init.c -o /tmp/ack-init-reset-logging
 ```
 
-The headless, HAL and display reset-test service gates have been removed.
-Rebuild diagnostic init; do not reuse `init-run110` or another gated binary.
-Gatekeeper, composer, display-color, SurfaceFlinger and LiveDisplay must use
-their original service definitions. Diagnostic capture, storage protections
-and the read-only USB controller property correction remain enabled.
+The headless and HAL reset-test gates have been removed. Run125 reinstates
+only the display gate (`-DANDROID_DISPLAY_GATE`): composer, display-color and
+SurfaceFlinger rc files are bound to comment stubs, so the run tests whether
+run124's SIGSEGV cascade needs the GPU/display path. The log must show three
+`DIAG: display gate rc override ... errno=0` lines. Gatekeeper and LiveDisplay
+keep their original service definitions. Diagnostic capture, storage
+protections, the read-only USB controller property correction and the USB
+handoff (now also on `sys.usb.configfs=2`, logging `ACK diag: USB handoff
+configfs=N` to kmsg) remain enabled. Omit the define to run the display stack.
 
 ### Committed disk layout
 
