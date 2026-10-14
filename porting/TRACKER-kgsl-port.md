@@ -6,7 +6,7 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, branch `kgsl-port` (from `driver-fix` a1e4992dc).
 The main tree stays untouched until this port has a boot verdict.
-Last update: 2026-10-13 — Stage 3 in progress; run85 repeat shows BootAnimation playing but GPU CP-idle/start -110 failure then quiet hang and abrupt reset; vold death is flaky, PLL still failing.
+Last update: 2026-10-13 — Stage 3 in progress; run89 returned before observed port ADB but preserved real early Android logcat; reset cause, panel PLL and GPU start remain unresolved.
 
 ## Status key (same as FAILING-COMPONENTS.md)
 FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
@@ -959,16 +959,152 @@ or IOMMU-probe changes into this diagnostic result.
   enables cannot establish a missing DSI set-rate during panel startup.
   Run87 contains no ME_INIT-submit datum; GPU start was not exercised.
 
+## Run88: repaired sync loop, early return before observed ADB
+
+- Verified build-host SHA256SUMS and kernel-directory payload against
+  packaged image. Image SHA256
+  `e0f5518856fde6701a5b06ff89b272e23652e995b6568c8a34f71bbb348b0a9c`.
+  Kernel is rebuilt at `b37ecaa78917`, not identical to run87; DTB,
+  cmdline and every non-init ramdisk record are unchanged. Static arm64
+  init contains the corrected dollar escapes.
+- Archived preboot raw/logcat in `run88-preboot/`; verified zero readback
+  (`run88-preclear.stdout`). RAM boot succeeded; no flash performed.
+  USB retained 451197 bytes (`run88-usb-capture.status`). Continuous
+  collector ended at host elapsed 192.33 s with no observed port ADB
+  and no logcat segments; user reported reset, stock kernel confirmed.
+- Retrieved 67108864-byte raw dump and matching 452310-byte SD/common
+  extent. Valid snapshot slots timestamped 107.127 / 109.177 s.
+  Kernel text ends at 110.674 s (`run88-logdump.log:3707`), not a
+  proven reset timestamp. No ACKRESET1 record was found.
+- Both capture services started around 105.4 s
+  (`run88-logdump.log:3528-3533`). Sync probe survived with
+  `1 106.04 622.73` (`run88-sync-probe.log:1`): corrected command executed
+  and its output persisted. Only one iteration is proven.
+  Early-logcat pull failed with missing file; failure stderr retained.
+  Service startup does not prove successful Android log capture.
+- PLL dumps remain early zero-rate enables (315, 415, 658, 749).
+  No ME_INIT-submit datum; GPU start was not exercised. No boot
+  completion, composer, EGL, rendering or reset-cause verdict.
+- Follow-up: logcat PID 572 connected to logd at 107.201 s
+  (`run88-logdump.log:3610`). Capability denials for dac_override and
+  sys_nice appear at 3608-3611; neither proves file-write denial.
+  A stock-kernel smoke using the actual `u:r:shell:s0`, uid 0,
+  gid log and supplemental shell/readproc groups successfully dumped
+  and rotated logcat files (`run88-shell-logcat-smoke.log`).
+  Probe files were removed; boot evidence was not altered.
+- Surviving sync row precedes the logd connection. With five-second
+  sleep after sync, a subsequent flush is not demonstrated before the
+  110.674 s log cutoff. Lost unflushed file output is a hypothesis,
+  not a proven startup failure or reset cause.
+- Both reserved snapshot tails were decoded independently
+  (`run88-slot0-strings.log`, `run88-slot1-strings.log`); neither
+  establishes the reset cause. Stock dmesg reports Hard Reset/cold boot
+  and PS_HOLD shutdown (322-326 in `run88-stock-dmesg.log`), which does
+  not identify the requesting actor. No new tombstone timestamp from
+  this boot was present in the preserved directory listing
+  (`run88-stock-postreset.log`). Stock boot completed later.
+- Approved run89 diagnostic source change: initial finite `logcat -d`
+  dump, then `sync`, then `exec` continuous logcat, using `&&` so a
+  failed initial dump/flush does not masquerade as successful setup.
+  Same output path, rotation, service credentials and policy retained;
+  continuous capture can repeat backlog records.
+  Stock smoke executed the generated command in the actual shell
+  domain/groups, reached streaming after the dump/flush, and captured
+  an injected marker. Probe process/files removed.
+- Run89 built locally with Homebrew Zig 0.17.0 targeting
+  `aarch64-linux-musl`, static, `-Os`, ANDROID_CAPTURE and
+  ANDROID_EARLY_LOGCAT, deadline zero. Static arm64 ELF verified;
+  separate same-toolchain executable ran on stock 4.19.
+  Packaged `snapshot60/boot-run89.img` SHA256
+  `8bf159a2a7f7b8a28c0601d0d0a8e28f1262a4b22d38e07b89dcc4f17ea65e17`.
+  Kernel/DTB/cmdline byte-identical to run88; 665 CPIO records with
+  only init changed, including unchanged policy/firmware records.
+  Init SHA256
+  `639ae66c5f8c4aa9e728a4e9a54f319e5998cf87f29de974b4369c5e7d87d9c6`.
+  No kernel rebuild; subsequently RAM-booted under run89 below.
+
+
+## Run89: local init boot, early Android logcat survives return
+
+- Archived preboot evidence and verified zero readback under unused
+  run89 tag. RAM boot succeeded; USB retained 460268 bytes.
+  Continuous host collector observed stock after transport loss at
+  elapsed 200.30 s, with no observed port ADB or host logcat segments.
+- Retrieved full 67108864-byte raw dump; readable prefix 459581 bytes.
+  SD/common extent matches 459408 bytes. Valid snapshot timestamps
+  119.872 / 121.954 s. Kernel text ends at 122.853 s
+  (`run89-logdump.log:3748`), not a proven reset time.
+  No ACKRESET1 record found; reset cause remains unknown.
+- Recovered real `/data` early-logcat: 101136 bytes, 776 lines
+  (`run89-early-logcat.log`). Logcat's nonblocking initial reader
+  connected at 120.181 s (kernel log:3666). No later streaming-reader
+  connection is recorded; full dump/sync/stream completion is unproven.
+  Sync probe retained `1 122.07 715.28` (`run89-sync-probe.log:1`).
+- Logcat shows vold/fscrypt user-0 setup and successful keystore work,
+  with initial HAL registration near its tail (764-776). It contains
+  no recovered fatal-signal or reboot-request record establishing the
+  return cause. No ME_INIT entry recorded in kernel evidence; GPU start
+  was not exercised. No framework boot-completion or rendering verdict.
+- Stock 4.19.325, boot completed, root available, enforcing confirmed
+  after retrieval (`run89-postreset-state.log:1-4`). No further boot,
+  clear or flash performed. Local Zig-built init executed successfully
+  far enough to install and launch the diagnostic services; full PID 1
+  and capture-lifetime correctness are not established.
+
+## Run90: kernel process/signal diag, collector lifecycle fully proven, same silent death
+
+- Change: kernel commit a58d7a094 (opt-in process/signal reset-attribution
+  evidence); init byte-identical to run89
+  (`package-run90.json:init_sha256`). Packaged
+  `snapshot60/boot-run90.img` SHA256 `efaa1c91838c9bb5...90121727`,
+  kernel payload `322b1149...` (+2054 B vs run89), same run81 base,
+  same cmdline. RAM boot succeeded; preclear verified zero
+  (`run90-preclear.status`).
+- New instrumentation works: 84 `process_exit`/`signal_generate` records
+  in kernel evidence, all routine userspace churn (odrefresh exit 0,
+  odsign SIGKILL by init, apexd/netbpfload/netd/sync exits). No fatal
+  or reset-attributing signature.
+- Collector lifecycle closed the run88/89 flush question: initial
+  nonblocking dump connected (`run90-logdump.log:3747`, PID 592,
+  t=106.006 s), first sync-loop sync completed exit 0
+  (`run90-logdump.log:3726`, t=105.447 s), blocking streaming reader
+  connected (`run90-logdump.log:3762`, PID 578, t=106.467 s) and
+  streamed until ~1 s before kernel end. /data early-logcat gained
+  720 lines / 93839 bytes this boot (lines 777-1496 of
+  `run90-early-logcat.log`; run89's 776-line prefix was archived in
+  `run90-preboot/early-logcat-rotation.log` — pre-boot delete step was
+  skipped, file appends, boundary at line 776/777).
+- Death: abrupt and silent. Kernel text ends t=112.028 s starting
+  `vendor.wifi_hal_legacy` (`run90-logdump.log:3849`, record 3748,
+  file end); logcat streams normally through 03:37:18.118 (~111.6 s).
+  No panic text, no ACKRESET1 (decode-reset.py on `run90-logdump.bin`),
+  no KGSL/GPU lines, ME_INIT never reached (4th consecutive run).
+- Refutes run89's "dies during first sync" correlation: run90's first
+  sync completed 6.6 s before death; sync probe line 2 = `1 104.79
+  622.64` (`run90-sync-probe.log:2`); loop iteration 2 `cat` exit seen
+  at 110.99 s, its echo lost with the reset (no fsync, expected).
+- Timeline: stock visible 0-12 s, transport loss from 16 s, stock
+  stable by continuation cont_elapsed=9, `continuation exit segs=0`
+  (`run90-adb-timeline.log`) — port ADB never observed, 4th
+  consecutive run. USB ACM reader died at host 143.5 s / 476311 bytes
+  (`run90-usb-capture.status`).
+- Evidence gap: no `run90-postreset-files.log`/`-state.log` pulled, so
+  post-run tombstone delta is unverified (preboot archive holds
+  run89's tombstones as `run90-preboot/tombstones.tgz`).
+- Verdict: same image family now has runs 87/88/89/90 all dying
+  abruptly with no kernel-log panic at 104-123 s uptime, mid
+  vendor-HAL startup, no GPU start, no orderly record. Reset cause
+  remains unknown; next diagnostic lever per handoff below.
+
 ## Handoff to another machine
 
-- Stop point: run85 reaches BootAnimation with SDM composer up, then GPU
-  CP-idle/start -110 failure, ~14 s of silence and abrupt reset. Open
-  blockers are GPU start (CP idle), vold's flaky silent death, and
-  display PLL lock. Policy/BW sysfs is clean.
-  No boot completion, EGL success, or rendering verdict is established.
-- Latest RAM-booted image is `snapshot60/boot-run84.img` (run85 repeated
-  it); control remains the original `snapshot60/boot-run73.img`.
-  Run81-85 tags are used.
+- Stop point: run89 returned before observed port ADB but preserved real
+  Android logcat. Reset cause remains unknown. Run85 remains GPU-start
+  failure evidence; run89 did not exercise ME_INIT. Panel PLL lock, GPU
+  CP idle and flaky userspace death remain open. No boot completion,
+  EGL success or rendering verdict.
+- Latest RAM-booted image is `snapshot60/boot-run89.img`; control remains
+  the original `snapshot60/boot-run73.img`. Run81-89 tags are used.
 - Preserve / transfer the real `snapshot60/base-guard-debug-fw.img`,
   `init-run32`, and all four `kdir-run73/` files. Do not reconstruct
   the policy-bearing base from captures or stock images.
@@ -978,18 +1114,17 @@ or IOMMU-probe changes into this diagnostic result.
   Its new opt-in early-reset section describes the pending experiment.
   Do not use its 150-second ADB window as a boot-failure verdict or run
   direct make without the required arm64 environment.
-- Next step: send the committed liveness-marker init to the build host
-  for an init-only rebuild, then boot with a new tag. Also targeted:
-  GPU CP-idle failure (firmware/zap/power sequencing) and PLL lock.
+- Next step: diagnose early return using preserved run89 Android/kernel
+  evidence before another boot or kernel change.
+  GPU CP-idle and actual panel-start PLL state still need runtime data.
   Any repeat needs an unused run tag and continuous host capture
   alongside USB and ADB timeline.
   Allow at least eight minutes unless the device demonstrably exits
   the port kernel; do not treat a 150-second window as failure.
-- Current state: stock 4.19.325, boot completed, root available, enforcing;
-  verified after run85's return. Run81-85 raw/SD evidence is preserved.
-  Run84's real logcat (`run84-early-logcat.log`), sync probe and dpmd
-  tombstone (`run84-tombstone-20.txt`) are retained untracked per
-  evidence precedent. No further boot / clear / flash was attempted.
+- Current state: stock 4.19.325, boot completed, root available, enforcing,
+  confirmed after run89 return. Raw/SD, USB, timeline, early-logcat and
+  sync probe are preserved. Earlier run84 logcat and tombstone retained.
+  No further boot / clear / flash after run89 retrieval.
 - Deferred kernel work remains: raw display markers collide with
   ramoops; pstore retries cannot resolve PARTLABEL and synthetic panic
   is unsafe; arbitrary MDP delay and removed idle-PC restore are not
@@ -1004,10 +1139,172 @@ or IOMMU-probe changes into this diagnostic result.
 One change per boot. `package-diag-boot.py` capture, verdict recorded here
 with file+line evidence before any claim. Reverts are one-line documented.
 
-## Run105 preparation: early SEA context; Linux build pending
+## Run102: SD mirror disabled; early silent return persists
+
+- Init-only change: SD mirroring is opt-in (`ANDROID_SD_MIRROR`), not
+  enabled in run102. This does not disable the kernel's SD/MMC probe.
+  Kernel payload `5a8a3ac2…` and cmdline match run101; no kernel rebuild.
+- USB retained 203612 bytes (`run102-usb-capture.status`); full 64 MiB
+  logdump retained. Tail at 64.504747 s, during deferred MDP re-probe,
+  `xlog_status` (`run102-logdump.log:1498-1513`). This is the last
+  recorded activity, not a measured reset time.
+- `mmc1: Card stuck being busy!` remains at 5.901993 s
+  (`run102-logdump.log:498`). Disabling the userspace mirror does not
+  prevent the early card failure; its causal role remains unproven.
+- Neither keymaster nor gatekeeper started before the cutoff. No
+  `ACKRESET1` record (decode-reset.py); stock 4.19 returned without an
+  observed 6.12 ADB window (`run102-adb-timeline.log:6-17`).
+  Early-logcat contains only an error, not recovered Android output.
+
+### HAL timing comparison through run102
+
+Times are kernel uptime seconds. Gatekeeper's first QSEE ioctl is
+attributed using the PID in init's service-start record; the filename
+in the last column is `run<N>-logdump.log`. A dash means not observed,
+not proof that an unlogged operation could not occur.
+
+| Run | Gatekeeper first QSEE ioctl | Last kernel record | Gap | Evidence lines (first ioctl / tail) |
+|---|---:|---:|---:|---|
+| 87 | 106.439 | 107.377 | 0.938 | 3728 / 3746 |
+| 88 | 109.115 | 110.674 | 1.559 | 3682 / 3707 |
+| 89 | 121.301 | 122.853 | 1.552 | 3701 / 3748 |
+| 90 | — | 112.029 | — | Service starts 3808; tail 3849 |
+| 91 | 119.005 | 122.303 | 3.298 | 3731 / 3835 |
+| 92 | — | 57.380 | — | 2027 |
+| 93 | 133.094 | 135.961 | 2.867 | 3767 / 3813 |
+| 94 | 109.108 | 122.565 | 13.456 | 3638 / 4590; clock WARN/unwind |
+| 95 | 155.013 | 156.757 | 1.744 | 3787 / 3824 |
+| 96 | — | 76.553 | — | 1451 |
+| 97 | — | 74.340 | — | Keymaster send at 2372; tail 2381 |
+| 98 | 124.865 | 126.102 | 1.237 | 3840 / 3859 |
+| 99 | — | 64.448 | — | 1488; headless |
+| 100 | — | 990.490 | — | 2955; SD failure/qseecomd exit storm |
+| 101 | — | 549.681 | — | 2216; SD failure/qseecomd exit storm |
+| 102 | — | 64.505 | — | 1513; early-init/MDP |
+
+- Correlation, not confirmed causation: most late cutoffs follow
+  gatekeeper's first QSEE ioctl by 0.9–3.3 s. Run90 has only a service
+  start, run94 is a distinct clock-warning case, and early cutoffs
+  show that neither HAL is necessary for every silent return.
+- Run97 ends during keymaster activity before gatekeeper starts. It
+  supports gating both, but does not by itself prove keymaster caused
+  the return. A single shifted cutoff cannot establish causation in
+  this flaky population.
+- Completed experiment: run103 RAM-booted with keymaster+gatekeeper
+  stubbed by `ANDROID_HALGATE`; unchanged run102 kernel/DTB/cmdline.
+  Both binds succeeded and neither service started. Verdict below.
+
+## Run103: paired HAL gate holds; fscrypt wait, user-forced reboot
+
+- Locally rebuilt only init with Zig, static `aarch64-linux-musl`,
+  `-Os -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT -DANDROID_HALGATE`.
+  Ungated rebuild reproduces run102 init SHA256 exactly (`0aba507b…`).
+  Gate list now contains only keymaster+gatekeeper, not run91's five HALs.
+- `boot-run103.img` SHA256
+  `540ec28d6e1f1df08aaf1a9e5425b49ee43f67cd64d800c42e525fd9a49296b7`.
+  Packager verified 665 CPIO records with only init replaced.
+  Kernel payload `5a8a3ac2…`, DTB and cmdline unchanged from run102.
+  RAM-only fastboot boot succeeded; no kernel build or flash.
+- Preboot run102 logdump matched its archived SHA256; preclear proved
+  zero readback. Both HAL bind overlays returned errno=0 at 19.509 /
+  19.512 s (`run103-logdump.log:879-880`). No service-start record for
+  either HAL, no `qsee_send_desc` record.
+- SD stuck-busy/-110 recurred, but early mount_all completed in 505 ms
+  at 59.360 s (1964). QSEE daemon started at 61.439 s; eight listeners
+  registered (2027-2104). SD failure alone does not invariably produce
+  run100/101's mount delay and qseecomd exit storm.
+- Init reaches `post-fs-data`, then waits for
+  `vdc --wait cryptfs enablefilecrypto` at 62.937 s (2266-2269).
+  Missing keymaster causes repeated interface-start failures; vold
+  repeatedly waits for keystore2 (2272-2279 onward). No zygote start,
+  later HAL startup or recovered early-logcat; sync file unchanged.
+- USB retained 489898 bytes; raw logdump 67108864 bytes with a
+  492108-byte readable prefix. Valid snapshots at 224.529 / 226.576 s.
+  Last kernel record at 226.511309 s (3107), still waiting on keystore2.
+  No ACKRESET1 record. No observed port ADB; stock first observed at
+  host elapsed 284.32 s (`run103-adb-timeline.log:72-73`).
+  Stock root/enforcing verified (`run103-postreset-state.log`).
+- User reports forcing the reboot because the same messages repeated.
+  This run is manually terminated, not a spontaneous-death sample.
+  The log cutoff is not a reset timestamp; no exact manual-reboot
+  uptime was captured. Absence of ACKRESET1 does not contradict the
+  reported forced reboot.
+- Verdict: survived beyond the 107-157 s window, but the intervention
+  blocks an earlier dependency and never exercises the former late-HAL
+  path. Confounded, not proof of either HAL as trigger. No spontaneous
+  reset observed before manual termination; no boot-completion verdict.
+
+### Diagnostic todos after run103
+
+- [x] Record run102, preserve its evidence and add the HAL timing table.
+- [x] Build init only; verify unchanged kernel/DTB/cmdline and baseline init.
+- [x] Perform one paired-gate RAM boot; verify overlays and preserve
+  USB/raw/timeline/post-return files and tombstones.
+- [x] Run104: gatekeeper-only RAM boot completed; keymaster retained,
+  fscrypt progressed, gatekeeper absent. Crash evidence recorded below.
+- [ ] Reset attribution remains open; run104 captures an external abort.
+
+## Run104: gatekeeper absent; synchronous external abort in cat
+
+- User approved the follow-on boot. Only gatekeeper's vendor rc is
+  stubbed by the existing `ANDROID_HALGATE`; keymaster is retained.
+  Init rebuilt locally with the same Zig target and flags as run103.
+- `boot-run104.img` SHA256
+  `3e9db5a05494231ffe9ce169a44873dd6210240f72baff4324c2db7078f4241b`.
+  Init SHA256 `d749d6fb…`; kernel payload `5a8a3ac2…`.
+  Packager verified 665 CPIO records with only init replaced relative
+  to run103; kernel/DTB/cmdline unchanged.
+- Archived run103 preboot evidence and verified its logdump matches
+  the existing archive. Run104 logdump preclear proved zero readback.
+  RAM-only boot succeeded with continuous host USB/ADB capture.
+  No kernel build, flash or host-initiated reboot after image entry.
+- Gatekeeper override errno=0 at 33.862 s
+  (`run104-logdump.log:880`); no gatekeeper service start. Keymaster
+  starts at 129.341 s (2227), emits 35 send descriptors from 129.765
+  to 151.765 s (2254-3516). Eight QSEE listeners register.
+- `enablefilecrypto` exits status 0 at 132.501 s (2555); zygote starts
+  at 156.342 s (3679). This run passes the paired gate's fscrypt
+  confounder and reaches later HAL startup. SD stuck-busy remains,
+  but mount_all --early takes 805 ms at 120.612 s (2060).
+- USB captures `Internal error: synchronous external abort:
+  0000000096000010 [#1] PREEMPT SMP` at 161.390266 s
+  (`run104-usb.log:3835-3839`). CPU 0, PID 640, comm `cat`;
+  kernel `6.12.93-4k-g58bcef21591f`, taints MACHINE_CHECK and WARN.
+  ESR EC=0x25, DFSC=0x10: current-EL data abort, synchronous external
+  abort. No faulting PC, LR, FAR or abort stack trace survives.
+- Crash header is USB-only. Raw logdump's readable prefix stops at
+  161.238 s (`run104-logdump.log:3841`), before the abort; byte search
+  finds no abort header in raw or snapshot regions. Valid snapshots
+  at 157.299 / 159.371 s. No ACKRESET1 record.
+- USB retained 474046 bytes; raw logdump 67108864 bytes, readable
+  prefix 473685 bytes. Early-logcat recovered 88592 bytes / 685 lines.
+  Sync probe adds `1 155.41 993.73`; tombstone contents unchanged.
+  No observed 6.12 ADB; stock returns at host elapsed 228.23 s
+  (`run104-adb-timeline.log:58-59`). Stock boot-completed, root and
+  enforcing verified (`run104-postreset-state.log:1-4`).
+- Verdict: gatekeeper is not necessary for this post-zygote failure.
+  A 161 s abort with gatekeeper absent does not confirm the earlier
+  gatekeeper timing correlation, nor prove all prior silent returns
+  share this cause. Keymaster remains a possible indirect contributor,
+  not established by the crash context.
+- [INFERENCE] `cat` may be ack-sync-loop's second `/proc/uptime` read:
+  first iteration is retained at 155.41 s, with sync plus five-second
+  sleep between iterations. PID 640's parent/argv were not captured;
+  process name and timing are insufficient to assign the fault.
+
+### Diagnostic todos after run104
+
+- [x] Gatekeeper-only boot with keymaster retained; verify gate and
+  progression, preserve raw/USB/Android logs and post-return state.
+- [ ] Capture faulting PC/FAR/stack and identify PID 640's read path
+  before changing a driver or attributing the abort to a subsystem.
+- [ ] Distinguish external-abort failures from earlier silent returns;
+  no extra boot performed in this request.
+
+## Run105 preparation: early SEA context; Linux build received
 
 - User approved capturing PC/FAR/stack after run104 and selected
-  "I'll build on Linux". No run105 image or boot exists yet.
+  "I'll build on Linux". Built artifacts received; run105 verdict below.
 - `arch/arm64/mm/fault.c:do_sea` now emits one kernel-mode-only
   `SEA:` record with ESR, raw FAR, FnV, raw PC/LR, PID/PPID and comm,
   then a fault-context backtrace before `arm64_notify_die`.
@@ -1016,10 +1313,9 @@ with file+line evidence before any claim. Reverts are one-line documented.
 - Exported focused patch:
   `porting/artifacts/snapshot60/run105-sea-context.patch`.
   Apply only if the Linux tree does not already contain this edit.
-  Patch style passes strict checkpatch with signoff checking disabled;
-  no commit was made. Local clangd cannot compile the translation unit:
-  its configuration cannot find `linux/acpi.h`; no local kernel out/.
-  SSH host is reachable but authentication failed; user owns the build.
+- Probe and build notes committed/pushed as `6b11c2e1c`. After pulling,
+  no separate patch application is needed. Local clangd lacked kernel
+  include configuration; user completed the Linux build and artifact pull.
 - Incremental Linux build from the existing kernel worktree, preserving
   the run101/run104 merged out/.config and existing DTB:
 
@@ -1041,10 +1337,112 @@ with file+line evidence before any claim. Reverts are one-line documented.
   before/after must match; unchanged DTB expected SHA256
   `71951fb1a5a989ca59a30762a33202229d86213c93f25d306a607f9bffb0c2c7`.
   Retain the matching vmlinux/System.map, not symbols from another build.
-- [ ] Build/compile verification and on-device SEA emission pending.
-- [ ] After receiving artifacts, package with unchanged `init-run104`
-  and cmdline, RAM-boot once, record any early SEA line/backtrace and
-  attribute the read path. Do not claim the logging probe fixes the abort.
+- [x] Build received: banner `6.12.93-4k-g6b11c2e1c578`, clang/LLD
+  22.1.8. Early SEA diagnostic format present in decompressed Image.gz.
+  All four pulled hashes verified; Image.gz-dtb concatenation checked.
+- [x] Embedded config options identical to run104 and pulled kernel.config;
+  DTB byte-identical. Required TRACEPOINTS/BLOCK/PSTORE_RAM retained.
+- [x] Packaged `boot-run105.img`, SHA256
+  `ea5095b6fae6e9f9ed10dd90cfce3529448d9470fa6771e2dfada3596942f5e3`.
+  Kernel payload `cd415ff3…`, Image.gz `4403ae99…`, config `b7e1abe8…`.
+  Init `d749d6fb…`, entire ramdisk and cmdline byte-identical to run104.
+- [x] Archived run104 preboot evidence; current logdump hash matches it.
+  Run105 preclear verified zero. Early-logcat's 88592-byte run104 prefix
+  preserved, so any appended output must be separated from old records.
+- [x] One RAM-only boot with USB/continuous ADB capture completed.
+  Early return did not reproduce run104's SEA; no fault-context capture.
+- Matching vmlinux/System.map were not included in the pulled directory;
+  raw-address offline symbolization requires those exact build artifacts.
+
+## Run105 result: early silent return; SEA path not reproduced
+
+- Fastboot RAM boot succeeded; USB retained 200704 bytes before
+  disconnect at host elapsed 108.94 s (`run105-usb-capture.status`).
+  No host-initiated reboot after image entry. No observed 6.12 ADB;
+  stock first seen at host elapsed 144.17 s
+  (`run105-adb-timeline.log:37-38`). Stock boot-completed, root and
+  enforcing verified (`run105-postreset-state.log:1-4`).
+- Full 67108864-byte raw logdump retained, readable prefix 203629 bytes.
+  Valid snapshots at 73.589 / 75.637 s. USB ends during SMMU rotator
+  probe at 76.983 s; raw continues to 76.997781 s during DSI panel
+  parsing (`run105-logdump.log:1489-1506`, `dyn_fps: min = 60, max = 60`).
+  These are last captured activity, not measured reset timestamps.
+- Gatekeeper bind errno=0 at 34.441 s (539). No keymaster or gatekeeper
+  service start, QSEE send descriptors, zygote start or mount_all record.
+  SD stuck-busy/-110 remains at 18.732 s (497-498). None of these tail
+  correlations identifies the reset actor or proves an MDP/SMMU defect.
+- Neither USB nor the complete raw dump (including snapshot regions)
+  contains `SEA:` or `Internal error:`. No ACKRESET1 record. The new
+  probe is compiled into the booted kernel, but its reporting path was
+  not observed; run104's 161 s abort and faulting read path remain open.
+- Retrieved early-logcat (88592 bytes) and sync-probe (174 bytes) are
+  byte-identical to the preboot archives: both are run104 evidence,
+  not new run105 output. Tombstone contents also unchanged.
+
+### Diagnostic todos after run105
+
+- [x] Verify rebuilt kernel/embedded config and one-variable packaging.
+- [x] Run one probe boot and preserve raw/USB/timeline/post-return evidence.
+- [ ] Reproduce the target SEA with the same diagnostic image under a
+  fresh run tag before claiming PC/FAR/stack capture works on-device.
+- [ ] Obtain matching vmlinux/System.map for any raw-address decoding.
+- [ ] Keep early silent-return and post-zygote external-abort hypotheses
+  distinct; no driver fix or extra boot performed in this request.
+
+## Run106: unchanged run105 image; post-zygote silent return
+
+- User approved one repeat. RAM-booted the existing `boot-run105.img`
+  SHA256 `ea5095b6…` under unused run106 tag; no rebuild, repack, init,
+  DTB or cmdline change. Archived run105 evidence and verified current
+  logdump matches it; run106 preclear verified zero readback.
+- USB retained 474023 bytes; raw logdump 67108864 bytes with a
+  474116-byte readable prefix. Valid snapshots at 125.910 / 127.977 s.
+  Last kernel record at 130.025225 s
+  (`run106-logdump.log:3837`, qrtr service cgroup creation).
+  No host-initiated reboot after image entry. No observed port ADB;
+  stock first observed at host elapsed 196.23 s
+  (`run106-adb-timeline.log:50-51`). Stock boot-completed/root/enforcing.
+- Gatekeeper override errno=0 at 32.929 s (878), no gatekeeper start.
+  Keymaster starts at 93.223 s (2238), 35 send descriptors from 93.685
+  to 119.326 s (2275-3536). Fscrypt advances; zygote starts at
+  125.077 s (3712), followed by vendor HALs.
+- MDSS reports bootloader display off at 74.751 s (1806), then
+  registers the 1080x1920 framebuffer at 74.781 s (1875), despite the
+  same missing optional-resource/property messages. SD stuck-busy
+  persists at 16.972 s (837); mount_all --early succeeds in 1491 ms
+  at 85.571 s (2071).
+- No SEA/abort header in USB or the entire raw dump; no ACKRESET1.
+  This repeats the late silent profile with gatekeeper absent. It does
+  not reproduce run104's external abort or identify the faulting read.
+- Early-logcat retains the unchanged 88592-byte prefix and adds
+  88127 bytes / 683 lines. Sync probe adds `1 123.64 768.21`.
+  Tombstone contents unchanged. These new records are distinct from
+  the run104 carry-over retained in run105.
+
+### MDSS message assessment requested during run106
+
+- `lut_clk`, `bimc_clk`, `mnoc_clk`, `throttle_bus_clk` are treated as
+  optional (`mdss_mdp.c:1939-1958`); bus/iface/core acquisition failures
+  do fail probe. Failed optional acquisition does not store an ERR_PTR
+  in the zero-initialized clock array (1822-1839,2998).
+- Missing `vbif_nrt_phys` does not fail probe (3049-3054); normal NRT
+  client selection requires a non-NULL NRT base (`mdss_mdp.h:1398-1402`).
+  This is not an exhaustive proof of every later VBIF access path.
+- Missing pipe-reset offset retains zero and skips setup
+  (`mdss_mdp.c:3638,3713-3728`). Missing bandwidth factors retain
+  preinitialized defaults (4229-4241,4575-4592). Missing min/max FPS
+  defaults to panel frame rate (`mdss_dsi_panel.c:2380-2418`).
+- Therefore these messages do not justify invented DT register/clock
+  entries or warning suppression as a reset fix. Actual required-resource
+  failures, power/clock sequencing and splash handoff still warrant
+  targeted correctness review; no MDSS code was changed.
+- Splash state differs across samples: run104 off with late SEA,
+  run105 on with early cutoff, run106 off with late silent cutoff.
+  `mdss_mdp.c:3189-3215` selects different handoff/power paths based
+  on that state. Correlation only; not a demonstrated causal defect.
+- [ ] SEA PC/FAR/stack capture and raw-address symbolization still pending.
+- [ ] Review actual MDSS power/handoff accesses separately from optional
+  property logs; do not equate run104 SEA with every silent return.
 
 ## Reset logging repair after run106
 
@@ -1128,7 +1526,118 @@ with file+line evidence before any claim. Reverts are one-line documented.
   suffices for the persistence result. Stock 4.19 returned and then
   reached boot-completed=1, root available, SELinux Enforcing.
 - [x] Orderly reboot persistence and post-stock console/tail recovery proven.
-- [ ] Remove only the 45 s test deadline for a later fault-reproduction boot.
+- [x] Remove only the 45 s test deadline for a later fault-reproduction boot (run108).
 - [ ] Final unwritten SEA/panic lines and hardware-watchdog persistence remain
   unproven; run107 does not diagnose the earlier spontaneous reset cause.
+
+## Run108: deadline removed; early silent reset during MDP re-probe
+
+- Same run107 kernel payload and cmdline; init rebuilt with
+  `BOOT_DEADLINE_SECONDS=0` as the only change. Boot SHA256
+  `3566dd337c06d951eefd3a1adf88ba5f28635774bcfcd5c3ba6fa993353ef89b`.
+  Preboot raw partition matched archived run107 evidence; archived
+  early-logcat rotation removed; preclear zero readback verified.
+  RAM boot only; no host reboot after image entry. Stock first observed
+  at host elapsed 123.21 s (`run108-adb-timeline.log`).
+- Raw logdump 67108864 bytes, readable prefix 215072 bytes; USB 214106
+  bytes. Last raw record at 66.542461 s (`run108-logdump.log:1606`),
+  8 records after `mdss_mdp: kicking late deferred re-probe` at
+  66.536843 s (1598), inside `mdss_mdp_parse_dt` pipe setup. USB stops
+  earlier at 66.394908 s.
+- Four version1 slots pass header/payload CRCs: snapshots/tails seq27
+  at 63.969/63.987 s and seq28 at 66.044/66.067 s. Reset region all
+  zero: no ACKRESET1, so no orderly reboot path. No dmesg panic/oops,
+  SEA, internal error or watchdog text.
+
+### Cutoff versus late MDP re-probe, run90-run108
+
+| Run | Last record (s) | Last re-probe kick (s) | Records after kick |
+|---|---:|---:|---:|
+| run102 | 64.505 | 64.494 | 15 |
+| run105 | 76.998 | 76.783 | 37 |
+| run108 | 66.542 | 66.537 | 8 |
+
+Every other run that logged the kick continued 957-2737 records past it
+(cutoffs 112-990 s). Runs 92/96/97/99 died before any kick (57-76 s).
+
+- Classification: early cluster is a silent reset within milliseconds
+  of the deferred MDP probe's hardware path (splash footswitch,
+  `mdss_hw_rev_init`, then `mdss_hw_init`, `mdss_mdp.c:3114-3164`).
+  Consistent with an unclocked/unpowered MDSS access hanging the bus and
+  a firmware watchdog reset, matching the existing run62-64 workaround
+  note (`mdss_mdp.c:1813`) and run104's external abort. `[INFERENCE]`:
+  asynchronous text capture means the faulting access may follow the
+  last stored line; the exact access is not identified.
+- Late cluster (107-160 s) remains separate and unexplained.
+- [ ] Add direct-eMMC markers around each MDP re-probe hardware access
+  plus GDSC/clock state; reproduce the early reset to name the access.
+- [ ] Fix power/clock ordering for the identified access, not skip it.
+
+## Run109: SD card removed; late silent reset at display HAL start
+
+- User removed the SD card; stock showed only `mmcblk0` (type MMC).
+  RAM-booted the unchanged `boot-run108.img` (SHA256 `3566dd33…`) under
+  run109 after archiving run108's partition (hash-equal) and preclear.
+- Zero `Card stuck` / `error -110` lines: the SD wedge is gone. MDP
+  re-probe at 66.537 s now completed (display off, framebuffer 66.579 s),
+  zygote at 110.1 s. Silent cutoff at 125.297 s; no ACKRESET1, SEA,
+  panic or oops; four version1 slots CRC-valid (seq54/55, 122.9-125.1 s).
+  Stock first observed at host elapsed 187 s; no port ADB.
+- DSI PLL still logs 30 `failed to lock` lines (status 0/0xc) from 4.68 s.
+
+### Late cutoffs follow display-stack startup
+
+Last services/display lines in the final 3 s of each late silent run:
+
+| Run | Cutoff (s) | Display event before cutoff |
+|---|---:|---|
+| run87 | 107.38 | `display-color-hal-1-0` started 107.28 |
+| run88 | 110.67 | `display-color-hal-1-0` starting 110.41 |
+| run89 | 122.85 | `display-color-hal-1-0` started 122.46 |
+| run91 | 122.30 | `surfaceflinger` started 120.15 |
+| run93 | 135.96 | `display-color-hal-1-0` started 134.77 |
+| run94 | 122.56 | `mdss_fb_open` by `mm-pp-dpps` 119.77 |
+| run95 | 156.76 | `display-color-hal-1-0` started 156.49 |
+| run98 | 126.10 | `mdss_fb_open` by HAL at 126.10 |
+| run104 | 161.24 | `display-color-hal-1-0` started 158.92 |
+| run106 | 130.03 | `display-color-hal-1-0` started 128.54 |
+| run109 | 125.30 | `display-color-hal-1-0` started 124.90 |
+
+- Run85 ended 1.6 s after `mdss_dsi_cmds_tx: failed to call cmd_dma_tx`.
+  Early cluster (102/105/108) ends inside the MDP re-probe.
+- `[INFERENCE]` Both clusters coincide with first MDSS hardware use:
+  kernel re-probe early, userspace framebuffer open/power-on late.
+  Correlation only; the faulting access is not identified. The MDSS
+  port predates run84, so this is the existing driver, not a post-run85
+  regression; the only MDSS-area change since is the DSI PLL RESETSM value.
+- [x] Gate display HALs (hwcomposer, display-color, surfaceflinger) on an
+  unused tag, init-only, to test whether late resets disappear — done as
+  run110 below.
+
+## Run110: display stack gated; reset recurs in kernel MDP re-probe
+
+- Init-only change on the run108 kernel payload (`580ea3c7…`, cmdline
+  identical, 665 CPIO records): new `ANDROID_DISPLAY_GATE` stubs
+  `android.hardware.graphics.composer@2.1-service.rc`,
+  `vendor.display.color@1.0-service.rc` and `/system/etc/init/
+  surfaceflinger.rc`. Init SHA256 `78423028…`, boot `8731c440…`.
+- Gate provably held: three `DIAG: display gate rc override … errno=0`
+  lines; zero starts of `vendor.hwcomposer-2-1`, `display-color-hal-1-0`
+  or `surfaceflinger` in the whole log. HAL-gate (gatekeeper) retained;
+  no deadline; SD card still removed.
+- Silent reset at 62.668 s, 0.22 s after the deferred MDP re-probe kick
+  at 62.448 s (`mdss_mdp_defer_kick_fn`), inside DSI panel parse
+  (`mdss_dsi_parse_dcs_cmds` lp-mode on/off, refresh-rate-range reads).
+  No ACKRESET1, panic, oops or SEA; four version1 slots CRC-valid
+  (seq26/27, 60.1-62.2 s). USB 198,798 bytes; readable prefix 201,869.
+  Stock first observed at host elapsed 56.88 s; no port ADB.
+- Verdict: the reset needs no userspace display stack at all — this boot
+  never started hwcomposer, display-color or surfaceflinger, yet died in
+  the same deferred re-probe window as runs 102/105/108. The resetter is
+  below the HAL layer, in the kernel MDSS re-probe path. The late-cluster
+  correlation (display HAL start → death) is not exonerated — this boot
+  never reached that window — but a userspace-display trigger is no longer
+  required to explain the resets.
+- [ ] Add direct-eMMC markers around each MDP re-probe hardware access
+  plus GDSC/clock state; reproduce the early reset to name the access.
 
