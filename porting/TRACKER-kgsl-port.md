@@ -1771,3 +1771,43 @@ Last services/display lines in the final 3 s of each late silent run:
   can be the resetter unless re-armed mid-boot by TZ/RPM (no evidence).
   Watchdog theory closed for the fastboot-boot path.
 
+## Run116: borrowed root fails too; PON A/B identical; KPSS confirmed
+
+- Root-fix kernel (`2fc6e428…`, banner `gd49bf21590bd`) packaged as
+  `boot-run116.img` (`903ec706…`) with unchanged `init-run110`
+  (display gate held: zero display starts) and identical cmdline.
+  Preclear zero-verified on a partition hash-equal to run115 evidence.
+- Silent reset at ~134.3 s, last line `mdss_fb_open` by `mm-pp-dpps`
+  (same adjacency as run94; run110 died with no fb activity at all, so
+  this stays coincidence-grade). No ACKRESET1/panic/oops. Snapshots
+  CRC-valid (seq59/60, 130.3-132.5 s). USB 550,463 bytes. No port ADB.
+- Re-probe kicked at 64.5 s and markers ran, but `file_open_root` on
+  init's borrowed root failed ENOENT on all three paths — no "no init
+  root" message, so the borrow itself worked and absolute resolution
+  under it still failed (mechanism unexplained). VFS path abandoned.
+- `apps_wdt2`: en2/sts2 zero, bark2/bite2 `0x7FFFF`/`0xFFFFF`. Stock
+  pets via the KPSS offsets (downstream `msm_watchdog` writes
+  `0x38`), which would be ineffective on an APCS block while stock
+  never resets — so KPSS is the real layout, the WDT is truly off,
+  and the APCS-offset values are GPTIMER-channel noise. Watchdog
+  theory closed with both layouts covered.
+- PON A/B experiment: post-silent-reset stock dump
+  (`run116-post-silent-regmap.log`) vs post-orderly-reboot stock dump
+  (`run116-post-orderly-regmap.log`) are byte-identical at every
+  interesting offset (`0808=21 080c=02 080d=00 0854=0f 0855=03
+  0856=08 0857=00`). PON/POFF cannot distinguish the silent reset
+  from an orderly reboot — exhausted as an attribution path.
+- Next: markers rewritten onto reserved RAM via `ramoops_diag_mark()`
+  (no VFS, no task, works from any context; same 0x3F80000 slots, so
+  decodes unchanged). Queued as run117.
+
+## Open defect (display, not reset): DSI PLL clock imbalance
+
+- Every boot warns at ~2.5 s in `mdss_8953_pll_probe`:
+  `mdss_dsi_pll0_pixel already disabled` + `clk_core_disable` WARN
+  (reparent-orphans path), and the DSI PLL then fails to lock ~30x
+  per boot. Non-fatal (boots run 130+s past it), present in all runs
+  while deaths vary freely — not the resetter, but the likely root
+  of the display misbehavior. Fix: balance enable/disable around
+  provider registration. Tracked separately from the reset hunt.
+
