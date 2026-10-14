@@ -1717,3 +1717,28 @@ Last services/display lines in the final 3 s of each late silent run:
   (DT + config + driver), since a traceless random-time reset fits a
   watchdog better than any driver access now.
 
+## Watchdog audit: stock pets one, the port builds none
+
+- Stock 4.19 (live, read-only): no `/dev/watchdog*`, no
+  `/sys/class/watchdog`; `msm_watchdog b017000.qcom,wdt: MSM Watchdog
+  Initialized` with in-kernel `[msm_watchdog]` pet thread and
+  `[irq/200-wdog-ti]` bark handler. All petting is in-kernel.
+- This tree: `CONFIG_QCOM_WDT`/`CONFIG_PM8916_WATCHDOG` not set, no
+  `msm_watchdog` driver exists in 6.12, no WDT node in `msm8953.dtsi`
+  / `pm8953.dtsi` / tissot DTS, no petter anywhere (RPM/remoteproc
+  kicks are IPC doorbells, not pets). `WATCHDOG_HANDLE_BOOT_ENABLED`
+  idles with zero registered devices. Gap is in the fragment, not a
+  merge accident.
+- Hypothesis: firmware arms a WDT (normal Qualcomm boot state); stock
+  pets it, the port never does → bark unheard, bite = traceless reset
+  at firmware-programmed intervals. Variance (57-990 s) vs fixed
+  timeout is unexplained — possibly bootloader dwell (countdown starts
+  in XBL, our clock starts at kernel entry) and/or RPM-side petting of
+  the PMIC WDT varying with system activity.
+- Decisive test, no kernel rebuild for step one: dump the HW state at
+  every boot — APPS WDT EN/STS/BARK/BITE via `ramoops_probe` (~0.4 s),
+  PMIC POFF1/POFF2 + WDT S1/S2/S2CTL/S2CTL2 in the PON DIAG line.
+  Queued as run115 (`fs/pstore/ram.c`, `drivers/power/reset/qcom-pon.c`,
+  reads only). If EN=1/S2-enabled: enable driver + DT + pet loop and
+  see deaths stop. No Kconfig/DT change in the dump commit.
+
