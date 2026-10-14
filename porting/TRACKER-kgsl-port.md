@@ -1638,6 +1638,29 @@ Last services/display lines in the final 3 s of each late silent run:
   correlation (display HAL start → death) is not exonerated — this boot
   never reached that window — but a userspace-display trigger is no longer
   required to explain the resets.
-- [ ] Add direct-eMMC markers around each MDP re-probe hardware access
-  plus GDSC/clock state; reproduce the early reset to name the access.
+- [x] Add direct-eMMC markers around each MDP re-probe hardware access
+  plus GDSC/clock state — built and booted as run112 below.
+
+## Run112: marker kernel boots; re-probe passes, late reset, tags empty
+
+- Host built `e5322d6a7` (marker patch): payload `0f72ccf3…` (+158 B),
+  banner `6.12.93-4k-ge5322d6a786c`, DTB/config untouched. Packaged as
+  `boot-run112.img` (`24dd2809…`) with unchanged `init-run110`
+  (display gate held: zero hwcomposer/display-color/surfaceflinger
+  starts) and identical cmdline. Preclear zero-verified on a partition
+  hash-equal to run110 evidence.
+- Re-probe kicked at 68.587 s and PASSED (framebuffer 68.649 s); boot
+  ran to a silent reset at 132.415 s amid routine service starts
+  (gatekeeperd, update_engine) plus ART-internal SIGSEGV deliveries and
+  routine exits. No ACKRESET1, panic, oops or SEA; four version1 slots
+  CRC-valid (seq57/58, 129.7-132.0 s). USB 561,718 bytes. No port ADB.
+- Marker pr_infos ran (probe-entry, rev_init, hw_init begin rev=269484032,
+  hw_settings begin, intf_sel reads) but all 16 eMMC slots at `0x3F80000`
+  read zero: the `filp_open` path failed silently under both tried
+  names. The probe ran; the writer did not land. Fix queued: try
+  by-name plus both mmc enumerations with `pr_err` on open/write
+  failure and a readback verify (O_RDWR), so the next boot says why.
+- [x] Markers-around-re-probe item from run110 — built and booted, but
+  verdict deferred: this boot never took the early-cluster path, and
+  the tags were empty. A late-cluster data point (132 s, gate held).
 
