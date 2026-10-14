@@ -1664,3 +1664,26 @@ Last services/display lines in the final 3 s of each late silent run:
   verdict deferred: this boot never took the early-cluster path, and
   the tags were empty. A late-cluster data point (132 s, gate held).
 
+## Run113: writer fix names it — kworkers have no fs, all opens ENOENT
+
+- Host built `2c3c39b67` (writer fix): payload `d644bb5a…`, banner
+  `6.12.93-4k-g2c3c39b6786d`, DTB/config untouched. Packaged as
+  `boot-run113.img` (`34f35ec8…`) with unchanged `init-run110`
+  (display gate held: zero display starts) and identical cmdline.
+  Preclear zero-verified on a partition hash-equal to run112 evidence.
+- Silent reset at 153.953 s amid routine service starts (gatekeeperd,
+  traced), same profile: no ACKRESET1, panic, oops or SEA; four
+  version1 slots CRC-valid (seq61/62, 149.9-152.0 s). USB 551,649
+  bytes. No port ADB. Another late-cluster point (154 s, gate held).
+- Writer fix worked as a diagnostic: `mdss_mdp: marker open failed
+  err=-2` (ENOENT) on every path, repeatedly from 78.87 s. Init's own
+  opens of the same nodes succeed and no "no logdump" line appears,
+  while ueventd is up — so `/dev` is populated; the opener's context
+  is the problem. Deferred probe runs in a kworker, which has no
+  fs_struct, so absolute-path resolution has no root: ENOENT for
+  every name. Fix queued: borrow init's root under task_lock and open
+  with `file_open_root` (both exported, declared in tree headers).
+- [x] Writer-fix item from run112 — built, booted, root-caused the
+  silent writer. Marker attribution still needs a boot with the
+  root-borrowing opener, preferably one that takes the early path.
+
