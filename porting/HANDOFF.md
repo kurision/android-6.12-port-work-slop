@@ -1,4 +1,95 @@
-# Handoff: tissot 6.12 port boot bringup (snapshots 28-32)
+# Handoff: tissot 6.12 port boot bringup
+
+## Current state (2026-10-14, after run126) — read this first
+
+Older sections below are historical (snapshots 28-60, runs up to 123).
+Detailed per-run evidence: `porting/TRACKER-kgsl-port.md`, sections "Run124"
+through "Run126". Per-component status: `porting/TRACKER-tissot-hardware.md`.
+
+**Git.** Branch `mdss-bisect`, pushed. Run126 kernel source is
+`30087c43c`; the run126 verdict is committed after it. Unrelated dirty files
+(netfilter headers, `AGENTS.md`, `porting/REFERENCE-boot-testing.md`,
+`.pyc`, untracked `scripts/logdigest*`) are the user's; leave them alone.
+
+**Working on 6.12 now (proven on device):**
+- USB adb on the port kernel (run125). The fix was the diag USB handoff
+  trigger on `sys.usb.configfs=2` (`scripts/initramfs-diag/init.c`). The
+  port has no `su`.
+- Rust ashmem (`CONFIG_ASHMEM=y`): system_server stayed up 143 s in run125.
+- DSI PLL lifecycle: no lock failures since run124.
+- MDP probes at ~1.3 s; the 45 s debug gate is removed (`5a970d696`).
+- MDSS IOMMU: zero faults in run126. `d4dde4350` dropped the
+  `smmu_rot_unsec` client that clobbered the shared context bank, and maps
+  the LK splash 1:1 via `iommu-addresses` plus `qcom_iommu`
+  `.get_resv_regions`.
+- Vendor composer runs its fbdev backend (`SDE Version = 5`, fb0 OK), and
+  SurfaceFlinger EGL reports Adreno 506 (run126).
+
+**Main blocker: the GPU corrupts memory.** In run126, unrelated daemons
+crash on garbage pointers within ~0.4 s of the first KGSL `DIAG ME_INIT
+submit` (40.58 s). KGSL then reports `CP initialization failed to idle`
+(43.6 s), and a crash burst at 52 s ends in a hard freeze (~54 s; the user
+forces a reboot). Run125, with the display gated and no GPU open, ran 194 s
+without this. The same cascade appeared in run124.
+
+**Next step:** audit the KGSL IOMMU path on `gpu_iommu` (`iommu@1c48000`,
+`drivers/gpu/msm/kgsl_iommu.c`, `drivers/iommu/arm/arm-smmu/qcom_iommu.c`):
+- Is the GPU context bank translating (SCTLR.M) before the first CP
+  submission?
+- Which IOVAs do the globals, ringbuffer and memstore use? DRAM spans
+  0x10000000-0xffffffff, so any 32-bit IOVA executed untranslated hits live
+  RAM.
+- Why does the CP not go idle (`rbbm_status=800001C1`)?
+
+If you need a stable userspace while working on it, re-gate the display
+stack with `-DANDROID_DISPLAY_GATE` (as in run125).
+
+**Other failing components (not started):** `remoteproc` cannot find
+`adsp.mdt` / `wcnss.mdt` (`-2`), which drives restart loops of
+`vendor.qrtr-ns`, `per_mgr`, `per_proxy`, `dataqti` and `ppd`.
+`vendor.livedisplay-sdm` aborts (PP backend). There are top SELinux
+denials for `watchdog`, `mm-qcamera-daem` and `mm-pp-dpps`.
+
+**Run procedure (Mac side; the user builds kernels on Linux into
+`porting/artifacts/snapshot60/runNNN/`).** Run everything from
+`porting/artifacts/snapshot60/`.
+1. Diag init:
+   `zig cc -target aarch64-linux-musl -Os -static -DANDROID_CAPTURE
+   -DANDROID_EARLY_LOGCAT -DBOOT_DEADLINE_SECONDS=0
+   ../../../scripts/initramfs-diag/init.c -o init-runNNN`
+   (add `-DANDROID_DISPLAY_GATE` only to gate the display stack).
+2. Package:
+   `python3 ../../logging/package-diag-boot.py --base-image boot-run110.img
+   --kernel-dir runNNN --init init-runNNN --keep-stock-console
+   --drop-cmdline panic=10 --append-cmdline panic=0
+   --policy-append policy-usb-ffs-watch.cil --out boot-runNNN.img
+   --report package-runNNN.json`.
+3. On stock, check that the phone's `/data/local/tmp/ack-early-logcat.log*`
+   and `ack-sync-probe.log` match the previous run's
+   `runNNN-retained-diagnostics.json`. Write
+   `runNNN-preboot/manifest.json`, then `rm` them (`su`).
+4. Clear the logdump: `bash ../../logging/clear-logdump.sh runNNN`. Its
+   pre-clear SHA must equal the previous `runNNN-logdump.bin`.
+5. Boot (RAM only, never flash):
+   `python3 ../../logging/usb-boot-capture.py --image boot-runNNN.img
+   --log runNNN-usb.log`. The USB log ends with Errno 6 at the adb handoff;
+   that is expected. Poll `adb devices` separately and wrap every
+   `adb shell` in a timeout (`perl -e 'alarm 15; exec @ARGV' adb ...`):
+   in run126 shell hung on the degraded port.
+6. After stock returns (often by forced reboot):
+   `ADB_SERIAL=2819f2320604 bash ../../logging/pull-run-evidence.sh NNN
+   boot-runNNN.img`. Then pull the logcat and sync-probe files with
+   `adb shell -T 'su -c "cat ..."'`, checking the remote SHA before and
+   after, and write `runNNN-retained-diagnostics.json`.
+7. Append the verdict to `TRACKER-kgsl-port.md` with file:line anchors.
+   Run artifacts stay untracked.
+
+Cmdline uses `panic=0`, so a panic hangs instead of resetting. A "silent
+reset" that needs a forced reboot is a hang.
+
+---
+
+# Historical: snapshots 28-32
 
 ## State (2026-10-07, phone on installed ROM, snapshot28 backups recovered, nothing flashed)
 - Commits in: `7bea83f` policy fix, `c3179f5` evidence, `c0c2406` findings doc.
