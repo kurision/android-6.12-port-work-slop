@@ -2,12 +2,12 @@
 
 Last update: 2026-10-14. Baseline evidence is run123
 (`6.12.93-4k-ge1f984e30348`); run124 (`6.12.93-4k-g6bb466908fba-dirty`)
-booted the USB controller overlay, Rust ashmem and DSI PLL repair together,
-so its verdicts have weak attribution. `L124` =
-`porting/artifacts/snapshot60/run124-logdump.log`, `E124` =
-`porting/artifacts/snapshot60/run124-early-logcat.log*`; details in
-`porting/TRACKER-kgsl-port.md` "Run124". Kernel builds and boots are done
-on the user's build host.
+booted the USB controller overlay, Rust ashmem and DSI PLL repair together.
+Run125 (`6.12.93-4k-g578942c8b94e`) added early MDP probe and the USB
+handoff fix, with the display services gated. `L124`/`L125` =
+`porting/artifacts/snapshot60/run12N-logdump.log`, `E124`/`E125` =
+`run12N-early-logcat.log*`; details in `porting/TRACKER-kgsl-port.md`
+"Run124" and "Run125". Kernel builds are done on the user's build host.
 
 Status words: **Working** = function proven on ACK; **Probes** = driver binds,
 function unproven; **Partial** = some runtime evidence, known blocker;
@@ -45,7 +45,7 @@ adaptation analysis.
 
 | Component | Status | Where the work is | Next proof / blocker |
 |---|---|---|---|
-| MDSS MDP5 / DSI (legacy fbdev) | Partial | `drivers/video/fbdev/msm/`; `D`; `porting/PLAN-mdss-display-port.md`; run124 MDP late re-probe (`L124:6340`), DSI ctrl0 (`L124:6402`), `FrameBuffer[0] 1080x1920` (`L124:6445`), composer opens fb0 (`L124:6734`) | Run124: zero PLL lock/unbalanced-clock errors after `L124:337,340`. Open: `init_timer_key` WARN in `mdss_fb_register` (`L124:6405`), `unable to add event timer` (`L124:6446`), SMMU faults at iova `0xfffff000` (`L124:6753-7820`); scanout/VSYNC and panel light-up not proven |
+| MDSS MDP5 / DSI (legacy fbdev) | Partial | `drivers/video/fbdev/msm/`; `D`; `porting/PLAN-mdss-display-port.md`; run125 MDP probes at 1.32 s inheriting LK splash (`L125:364`), `FrameBuffer[0] 1080x1920` at 1.42 s (`L125:512`) | Run125 SMMU faults on splash and on every fb buffer: `smmu_rot_unsec` shared stream 0x15 in a separate iommu group and clobbered the context TTBR0 (`L125:468,472`). Run126 removes it and 1:1-maps `cont_splash_mem` (`iommu-addresses`); prove no faults, composer commits, panel scanout/VSYNC |
 | Panel OTM1911 + WLED backlight | Partial | `D:367-430`; `drivers/video/backlight/qcom-wled.c`; LAB/IBB regulators | Re-prove panel init on the legacy path after PLL lock |
 | Adreno 506 + Zap | Partial | `drivers/gpu/msm/`; `TRACKER-kgsl-port.md` | Probes; CP init timeout (`-110`, run85); Zap auth unproven; no rendering |
 | HDMI / external display | N/A | No board endpoint; USB 2.0 Type-C per [Xiaomi FAQ](https://www.mi.com/global/support/faq/details/KA-07254/) | None |
@@ -95,7 +95,7 @@ adaptation analysis.
 |---|---|---|---|
 | Fuel gauge (PMI8950 FG) | Unported | Donor `qpnp-fg.c`; health HAL: `No battery devices found` (`L:4667-4673`) | Port gauge + battery profile |
 | Charger (PMI8950 SMBCHG) | Unported | Donor `qpnp-smbcharger.c` | Port charger, extcon, OTG VBUS |
-| USB Type-C / OTG / roles | Partial | `B:391-398` forces peripheral; overlay in `scripts/initramfs-diag/init.c` applied in run124 (`L124:525`) | Run124 fail: host never saw adb in 156 s (`porting/artifacts/snapshot60/run124-adb-timeline.log`); no UDC bind line in `L124`. PD capability unproven |
+| USB Type-C / OTG / roles | Partial | `B:391-398` forces peripheral; overlay plus handoff on `sys.usb.configfs=2` in `scripts/initramfs-diag/init.c` (`L125:3599`) | Run125: adb on 6.12 with `sys.usb.controller=7000000.usb`, adbd running (`porting/artifacts/snapshot60/run125-adb-timeline.log`). Host/OTG roles and PD unproven |
 | Battery health / thermal throttling | Blocked | Depends on gauge, charger, TSENS, cpufreq | After those land |
 
 ## Storage, security, misc
@@ -105,7 +105,7 @@ adaptation analysis.
 | eMMC (HS400, RPMB) | Working | `L:765-770` | Keep |
 | microSD | Unstable | runs100/101 stuck-busy `-110` (`porting/FAILING-COMPONENTS.md`) | Debug SD init separately |
 | QSEE / keymaster / TrustZone | Partial (transactions succeed) | `drivers/misc/qseecom.c`; `L:494-510,1938-2136` | Prove keystore keys, gatekeeper, FBE unlock |
-| Ashmem | Built | Rust ashmem in `scripts/tissot-ack.config`; `ashmem: Using Rust implementation.` (`L124:280`) | Run124 inconclusive: zero `Unable to stat ashmem device`/`Failed to create ashmem` in `E124`, but SystemServer never started (composer restart loop), so the run123 failure path was not exercised |
+| Ashmem | Working | Rust ashmem in `scripts/tissot-ack.config`; `ashmem: Using Rust implementation.` (`L125:280`) | Run125: system_server pid 1032 alive 51-194 s, zygote started once (run123: 16 restarts); zero ashmem errors in `E125` |
 | Notification LED (AW2013, white) | Built | `B:171-193`; `drivers/leds/leds-aw2013.c` | Prove LED and Lights HAL |
 | IR blaster (Peel SPI) | Unported | Donor `techpack/xiaomi-msm8953/ir/peelir.c`; Xiaomi FAQ confirms IR | Pick driver matching Consumer IR HAL |
 

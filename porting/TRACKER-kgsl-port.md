@@ -2115,3 +2115,111 @@ Last services/display lines in the final 3 s of each late silent run:
 - Checkpatch `--strict` clean on all kernel hunks. Diag init compiles with
   `zig cc -target aarch64-linux-musl` with the documented flags plus
   `-DANDROID_DISPLAY_GATE`.
+
+## Run125: early MDP, USB adb, display gate verdict
+
+- `boot-run125.img` (SHA256 `6d1fc3c2…84b5`), kernel
+  `6.12.93-4k-g578942c8b94e` (clean tree at `578942c8b`; DTB and config
+  identical to run124). Init `b69d85cc…` adds `-DANDROID_DISPLAY_GATE`.
+  Packaged from `boot-run110.img` with the same cmdline as run124. Logdump
+  preclear matched `run124-logdump.bin`. Phone copies of the diagnostics
+  were identical to run124's retained files, so they were removed before
+  boot (`run125-preboot/manifest.json`). RAM boot at 17:31:28; stock was
+  back at 17:35:41. Anchors: `L125` = `artifacts/snapshot60/run125-logdump.log`,
+  `T125` = `run125-adb-timeline.log`, `E125` = `run125-early-logcat.log*`.
+- **USB: pass.** `ACK diag: USB handoff configfs=2` (`L125:3599`, 42.06 s).
+  Port adb appeared at 17:32:33 with `uname 6.12.93-4k-g578942c8b94e`,
+  `sys.usb.controller=7000000.usb`, `sys.usb.config=adb` and
+  `init.svc.adbd=running` (`T125`). Run124 had no adb. The port has no `su`,
+  so UDC/configfs nodes could not be read.
+- **MDP early probe: pass, new splash defect.** `mdss version = 0x10100000,
+  bootloader display is on, num 1, intf_sel=0x00000100` at 1.32 s
+  (`L125:364`; run124 was 62.4 s). `FrameBuffer[0]` at 1.42 s
+  (`L125:512`). No kick line, no `power domain not active`, no
+  `init_timer_key` or pm-qos WARN. The only WARN is the existing
+  `adreno_ringbuffer_probe` one (`L125:431`). Probing early means MDP
+  inherits LK's running splash (`Continuous splash enabled` `L125:498`),
+  but `splash mem child node is not present` / `splash memory reserve
+  failed` (`L125:514-516`). Pipe RGB0 keeps fetching `src0=90001000`
+  (`L125:4299`), and that address is not mapped in the MDSS SMMU, so faults
+  run at iova `0x90001000-0x90001900` from 1.41 s (`L125:501`). Total is
+  198 printed plus 146,353 rate-limit-suppressed SMMU faults. After
+  `mm-pp-dpps` starts opening fb0 (first `L125:4294`, 54.3 s) the faults
+  move to descending `0xfffff000…0xffff9000` (66-192 s). The DT comment ("No
+  cont-splash-memory: splash is disabled") assumed LK's display would be
+  off; that held only while probe was 62 s late. Next fix: the donor's
+  `qcom,cont-splash-memory { linux,contiguous-region = <&cont_splash_mem>; }`
+  child under `mdss_mdp` (reserved region already present, `L125:26`).
+- **Ashmem: pass.** `zygote` started once (`starting service 'zygote'` ×1)
+  and `system_server` pid 1032 stayed alive from ~51 s (`L125:4192`) to the
+  end of the log at 193.8 s (`L125:9478`). Run123 had 16 zygote restarts.
+  Zero `Unable to stat ashmem device` / `Failed to create ashmem` in `E125`.
+  `/dev/ashmem` is `crw-rw-rw- 10,260` (`T125`). `E125` covers only the last
+  ~43 s (06:43:11-06:43:54; rotation dropped earlier output), so
+  `ApplicationSharedMemory` itself is outside the window.
+- **SIGSEGV cascade: gone with display gated.** Zero `kgsl_open`. The diag
+  sync loop ran 30 iterations to 189.4 s (`run125-sync-probe.log`; run124
+  died at iteration 4). No `sh`, servicemanager, hwservicemanager or logd
+  SIGSEGV. The only service deaths are `vendor.livedisplay-sdm` SIGABRT ×28
+  (expected: PictureAdjustment backend) and `odsign` ×1. MDP stayed active,
+  with SMMU faults, so MDP alone does not trigger the cascade. Remaining
+  suspects are KGSL/GPU or composer/SurfaceFlinger use.
+- **Overall: hard hang at ~194 s; the user forced the reboot.** The phone
+  froze and did not reset itself. `L125` ends at 194.128 s mid-activity
+  (`getprop` exits from the adb poll). There is no shutdown command,
+  `ACKRESET1`, panic, oops or SEA in any channel. Both ramoops slots and
+  printk tails end at 193.45 s. Adb dropped at 17:35:00. With `panic=0` a
+  panic also hangs (run118), and the USB console was already handed to adb,
+  so an unflushed panic/SEA cannot be excluded. `sys.boot_completed` was not
+  reached, as expected with SurfaceFlinger stubbed (system_server waits for
+  `SurfaceFlingerAIDL`, `L125:9477`). [INFERENCE] Lead: the MDSS IOMMU fault
+  path, since run118/119 caught a SEA in it. The splash fault storm itself
+  ended at ~54 s; only sporadic `0xffffX000` faults (last 192.42 s) remained
+  near the hang.
+
+## Run126 preparation: MDSS SMMU context clobber, splash 1:1 map (not boot-tested)
+
+- **Root cause of every MDSS SMMU fault since run124:** two DT clients share
+  MDSS stream 0x15 (`smmu_mdp_unsec`, `smmu_rot_unsec`). `qcom_iommu` uses
+  `generic_device_group`, so they landed in iommu groups 1 and 2
+  (`L125:468,472`), each with its own default domain.
+  `qcom_iommu_init_domain()` rewrites the shared context bank's TTBR0 for
+  whichever domain attaches last, which here is the rotator's (1.4059 s).
+  Every MDP mapping (splash, then fb/composer buffers at descending
+  `0xfffff000…`) was therefore invisible to the hardware. That fits both
+  run124's composer-era faults and run125's, and the solid blue panel
+  (MDP underflow/border colour). The donor has no rotator context bank
+  (`msm8953-mdss.dtsi` has only `smmu_mdp_unsec` 0xC00 and `smmu_mdp_sec`).
+  Fix: delete `smmu_rot_unsec` from `msm8953-xiaomi-tissot-mdss.dtsi`. With
+  no ROT device, `mdss_smmu_get_domain_type()` falls back to the MDP
+  unsecure domain (`mdss_smmu.h:128-140`), as on stock.
+- **Splash:** add `iommu-addresses = <&smmu_mdp_unsec 0x90001000 0x13ff000>`
+  to `cont_splash_mem` and `memory-region = <&cont_splash_mem>` on
+  `smmu_mdp_unsec`. Add `.get_resv_regions = iommu_dma_get_resv_regions` to
+  `qcom_iommu` (upstream arm-smmu pattern) so the core creates the
+  IOMMU_RESV_DIRECT 1:1 mapping before the default domain attaches. The
+  no-map region stays reserved: the driver still finds no
+  `qcom,cont-splash-memory` child, so `mdss_free_bootmem()` never runs. The
+  first kernel commit replaces LK's solid blue splash with border fill, as
+  in run125 (`L125:4306-4307`).
+- DTB compiled on the host (clang cpp + dtc 1.7) without errors: the
+  `iommu-addresses` phandle resolves to `smmu_mdp_unsec`,
+  `memory-region` resolves to `cont_splash_mem`, and no `smmu_rot` node
+  remains. checkpatch `--strict` is clean.
+- **Display gate removed for run126:** build diag init without
+  `-DANDROID_DISPLAY_GATE` (README updated).
+- **Run126 signatures:** no `iova:0x9000xxxx` and no `0xffffX000` faults;
+  one iommu group for MDSS; composer opens fb0 and commits; the panel
+  changes from blue. If the SIGSEGV cascade returns with GPU use, the KGSL
+  path stays the suspect (run125 had none without display services).
+- **Run125 hang (~194 s, forced reboot) not fixed directly.** The
+  last-printed faults came from the clobbered context; whether the fault
+  stream caused the freeze is unproven. Observe run126 for a recurrence.
+- **Other failing components seen in run125, not addressed here:**
+  `remoteproc` cannot find `adsp.mdt` / `wcnss.mdt` (`-2`), so ADSP and
+  WCNSS never boot. That drives the restart loops of `vendor.qrtr-ns`
+  (exit 1, ×31), `vendor.per_proxy` (×31), `vendor.per_mgr` (exit 255,
+  ×31), `vendor.dataqti` (×14), `ppd` (×12) and `mm-pp-dpps` reopening
+  fb0. `vendor.livedisplay-sdm` aborts ×29 (`PictureAdjustment backend not
+  ready`). Top SELinux denials: `watchdog` read ×54, `mm-qcamera-daem`
+  write ×31, `mm-pp-dpps` read/write ×24.
