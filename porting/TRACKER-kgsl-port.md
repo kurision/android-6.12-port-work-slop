@@ -1946,6 +1946,39 @@ Last services/display lines in the final 3 s of each late silent run:
   (find_vm_area, takes the vmap lock, so last). Package again with
   ` panic=0`.
 
+## Run119: SEA is the MDSS IOMMU fault handler reading an unclocked CB_FSR
+
+- Kernel `gf7d99b6067a0 #39` (13:38:11), panic=0. Same late path as
+  run118: `mdss_fb_open by mm-pp-dpps` -> hw_init (gdsc/clocks on, 5/5
+  writes) -> ctl_start/pp_resume/splash_cleanup rc=0, then
+  (`run119-usb.log` tail, 159.68 s):
+  `SEA: ESR=96000010 FAR=ffffffc0840f7058 PC=ffffffc080b42e88`
+  `SEA2: pc=readl_relaxed+0x38 sp=ffffffc080003ea0 (IRQ stack) far_in=vmalloc far_pa=0x01e35058`
+  `SEA3: area=+0x2000 phys=0x01e35000 flags=0x1 (VM_IOREMAP) caller=ioremap_prot`
+- 0x01e35000 = apps_iommu `iommu@1e20000` + `iommu-ctx@15000` (SPI 112),
+  the context bank both MDSS SMMU children use (`iommus = <&apps_iommu
+  0x15>`, tissot-mdss.dtsi:190/198). Offset 0x58 = ARM_SMMU_CB_FSR.
+  So: MDP fetch faults in its SMMU context -> context-fault IRQ ->
+  `qcom_iommu_fault()` reads CB_FSR -> external abort -> oops -> panic.
+- Same PC value as run118: run118's `drm_dp_pcon_frl_configure_2` came
+  from an out/ System.map of a later build; the in-kernel %pS is
+  authoritative. Runs 89/93 (IRQ stack, `readl_relaxed+0x38`) fit the
+  same mechanism.
+- Mechanism (code, unverified on device): qcom_iommu holds runtime PM
+  (iface/bus/tbu clk_bulk) only around attach/map/unmap
+  (`qcom_iommu.c` get_sync/put_sync pairs); the fault handler reads
+  registers with no reference. Upstream fixed the same class in arm-smmu
+  by guarding fault handlers with `pm_runtime_get_if_active()`.
+- Run120 changes: (1) that guard in `qcom_iommu_fault` - a fault while
+  suspended now logs `context fault IRQ while IOMMU suspended, cb=N`
+  and returns IRQ_NONE instead of aborting (proves or kills the
+  hypothesis; a level IRQ may storm until the core disables it);
+  (2) `DIAG cpuclk` at ramoops probe: APCS PLL L/lock and c0/c1/cci
+  mux src/div from stock clock-cpu-8953.c offsets (the port has no CPU
+  clock/cpufreq/CPR driver; boot-time investigation). Reads only.
+- Still open: why the MDP faults at all (expect `Unhandled context
+  fault: fsr= iova=` once the handler can read, if the IOMMU is active).
+
 ## Open defect (display, not reset): DSI PLL clock imbalance
 
 - Every boot warns at ~2.5 s in `mdss_8953_pll_probe`:
