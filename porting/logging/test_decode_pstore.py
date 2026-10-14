@@ -145,6 +145,19 @@ class SnapshotDecodeTests(unittest.TestCase):
         self.assertEqual(report["slots"][0]["dmesg_empty_zones"], 119)
         self.assertEqual(report["slots"][0]["dmesg_rejected_zones"], [])
 
+    def test_mark_page_decodes_and_is_not_a_dmesg_zone(self):
+        page = self.payload + decoder.MARK_OFFSET
+        self.blob[page:page + decoder.DMESG_ZONE_SIZE] = b"\0" * decoder.DMESG_ZONE_SIZE
+        struct.pack_into("<II", self.blob, page + 0x18, 0x48575652, 0x10100000)
+        struct.pack_into("<II", self.blob, page + decoder.MARK_HDR,
+                         decoder.MARK_MAGIC, 0x1234abcd)
+        report, _ = self.recover()
+        slot = report["slots"][0]
+        self.assertEqual(slot["diag_marks"], {"boot_id": "0x1234abcd", "slots": [
+            {"slot": "0x18", "tag": "0x48575652", "val": "0x10100000"}]})
+        self.assertEqual(slot["dmesg_empty_zones"], 118)
+        self.assertEqual(slot["dmesg_rejected_zones"], [])
+
     def test_plain_dump_has_independent_dump_and_snapshot_provenance(self):
         body = b"Panic#7 Part1\n[3.000000] actual fixture dump\n"
         put_dmesg(self.blob, self.payload, b"====1700000000.123456-D\n" + body)

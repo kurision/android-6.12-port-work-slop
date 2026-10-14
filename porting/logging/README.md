@@ -220,10 +220,13 @@ capped.
 | QSEE ring | `0x3f10000` | `0x3f20000` |
 | Orderly reset capture | `0x3f30000` | `0x3f40000` |
 
-MDSS re-probe markers (run117+) live outside this partition, in 4K
-carved from the ramoops dmesg area (one fewer dmesg record); the
-previous boot's slots print as `DIAG mark prev` lines at ~0.4 s of
-the next boot.
+MDSS re-probe markers (run117+) live in 4K carved from the ramoops
+dmesg area (payload offset `0x76000`, 118 dmesg zones remain; last 8
+bytes = `MARK` magic + boot id). Each 2 s snapshot copies the page, and
+`decode-pstore.py` prints it as `diag marks boot_id=...`. Match the
+boot id against that boot's `DIAG mark boot_id` line. `DIAG mark prev`
+at the next port boot is best-effort only: after a silent reset the
+phone boots stock, which does not reserve `0x86800000`.
 
 Version1 preserves the 64-byte little-endian `<QQQQ8I>` header. Reserved words
 at 48/52/56/60 contain version1, payload CRC32, header CRC32, zero. Header CRC
