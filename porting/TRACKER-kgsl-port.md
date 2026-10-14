@@ -1801,7 +1801,7 @@ Last services/display lines in the final 3 s of each late silent run:
   (no VFS, no task, works from any context; same 0x3F80000 slots, so
   decodes unchanged). Queued as run117.
 
-## Run118 (queued): gate late mdss_hw_init on runtime-PM suspend
+## Run118: breadcrumbs-only boot falsifies the domain-down theory
 
 - Runs 116/117 died within ~30 ms of `mdss_fb_open` by `mm-pp-dpps`
   followed by `mdss_hw_init` register writes, after the re-probe had
@@ -1836,13 +1836,30 @@ Last services/display lines in the final 3 s of each late silent run:
   `ctl_restore`/`ctl_start`/smmu-attribute. If run118 hangs *with*
   the SKIP mark set, the gate is insufficient and the follow-up is
   power-up sequencing, not more gating.
-- Not yet built (macOS host cannot build): needs the Linux-host
-  `make O=out ARCH=arm64 LLVM=1 Image.gz
-  qcom/msm8953-xiaomi-tissot.dtb`, packaging as `boot-run118.img`
-  via `package-diag-boot.py`, then preclear/capture/pull-evidence.
-  Pass criteria: survival past the 134-137 s window, or SKIP mark
-  (`0x80=0x504B534D`) plus skip `pr_err` in kmsg; the re-probe path
-  must still complete with `mdp_rev=0x10100000`.
+- Booted `boot-run118.img` (`3b81b389…`, cmdline `panic=0`, ramdisk
+  identical to run117). NOTE: string-probing the decompressed
+  `Image.gz` shows `DIAG118` present but `hw_init skipped` absent —
+  the kdir predates both guards, so this run tests diagnosis, not
+  the gate. No SKIP mark in the logdump marks (consistent).
+- Death at 136.47 s, 54 ms after `mdss_fb_open` by `mm-pp-dpps`:
+  `hw_init` ran to completion (5/5 writes, end marker) with
+  `gdsc_on=1`, all MDSS clocks on, `rpm=active` at both hw_init
+  entry and `ctl_start` pre; `ctl_start rc=0`, pp_resume and
+  splash_cleanup clean. Then `SEA ESR=0x96000010
+  FAR=0x840fb058 PC=…b42e88` in `kworker/u36:0` — a bus fault
+  *after* successful overlay_start, not a power-down hang.
+- `panic=0` behaved as designed: no reset, USB froze at 545,736
+  bytes, device hung until manual reboot. This death is a Linux
+  fault, not a firmware reset. Logdump slots (seq60/61,
+  CRC-verified, to 136.09 s) carry the full probe mark chain and
+  no panic/oops record; snapshots predate the SEA by ~400 ms, so
+  the USB log is the sole record of the final window.
+- Consequence: the suspend-gate guards a non-cause on this path —
+  runtime PM truthfully reports active with the GDSC on. Hunt
+  moves to the post-overlay_start bus fault. Follow-ups (Linux
+  host): symbolize `PC=ffffffc080b42e88` / `FAR=ffffffc0840fb058`
+  against `System.map`; explain why `panic=10` runs left no pstore
+  panic record for the same fault class.
 
 ### Run118 revision: observe the late path, don't guess it
 
@@ -1883,6 +1900,51 @@ Last services/display lines in the final 3 s of each late silent run:
   capturable in this pipeline.
 - Readout: last `DIAG118` line = failing step; `gdsc_on`/`*_off` at
   that point = power truth; hang vs reset = panic vs firmware.
+
+## Run118: SEA caught; silent reset = Linux panic path (panic=0 hung)
+
+- Kernel `g99553226bb68-dirty #38` (13:09:38), cmdline + ` panic=0`.
+  `run118-usb.log:4360-4375` (logdump copy ends earlier, 136.277 s).
+- hw_init/overlay_start exonerated: `hw_init ... from
+  mdss_mdp_overlay_start+0x148`, `gdsc_on=1 ahb_off=0 axi_off=0
+  mdp_off=0 rpm=active`, 5/5 writes, `hw_init end`, ctl_start /
+  pp_resume / splash_cleanup all rc=0 (136.4176 s). f834a9b1e's
+  "domain down" premise is false.
+- 136.4713 s, CPU0: `SEA: ESR=96000010 FAR=ffffffc0840fb058
+  PC=LR=ffffffc080b42e88 PID=107 kworker/u36:0` (DFSC 0x10 external
+  abort, WnR=0). Nothing printed after it.
+- Phone HUNG with panic=0 (user force-rebooted). With panic=10 the same
+  oops -> panic_on_oops -> emergency_restart -> msm-poweroff PS_HOLD
+  drop under PMIC default 0x85A=0x08 (DVDD_HARD_RESET) gives exactly the
+  run116 silent signature (POFF PS_HOLD, WARM_RESET_REASON1=0x00 vs
+  orderly 0x02). Single run; the panic path is now the leading
+  explanation for the "silent" resets, not a proven universal one.
+- PC symbol (Fedora System.map, matches booted Image: `paciasp` at
+  image offset 0xb42e4c, `movz w1,#0x305b` = DP_PCON_HDMI_LINK_CONFIG_2):
+  `drm_dp_pcon_frl_configure_2+0x3c`, the `str x9,[sp,#8]`/`strb`
+  stack stores; FAR = sp+8. No caller exists on this hardware and
+  PC == LR mid-function: consistent with a corrupted return address
+  (A53 has no PAuth, paciasp/autiasp are NOPs). Whether FAR is a real
+  stack page (DDR access aborting) or garbage sp into a device mapping
+  is undecided.
+- Same ESR in older runs, all truncated right after the header:
+  run82 (loop2 workqueue, CPU4, `readl+0x38`), run89 and run93 (IRQ
+  stack, CPU0, `readl_relaxed+0x38`), run104 (`cat`, CPU0). Different
+  contexts, same bus-rejected access class.
+- No SCM/QSEECOM/zap activity near 136 s (last at ~97 s), so a
+  runtime TZ lock of the page is unsupported. Modem never boots on the
+  port (only adsp/wcnss remoteprocs, both fw -2), so the stock
+  memshare `gps@93000000` region is not the trigger either.
+- Lead (unverified): `# CONFIG_INTERCONNECT_QCOM_MSM8953 is not set`.
+  clk-smd-rpm only kickstarts bimc/pcnoc/snoc/sysmmnoc (active set,
+  `clk-smd-rpm.c:1293`) for an icc driver that never comes; downstream
+  keeps buses alive (upstream `keep_alive`, which msm8953.c lacks while
+  8937/8976 set it). Test only after SEA2/SEA3 say where aborts land.
+- Run119 prep: `arch/arm64/mm/fault.c` adds, right after the SEA line,
+  `SEA2: pc=%pS lr=%pS sp= far_in=task_stack|irq_stack|linear|vmalloc
+  far_pa=` (lock-free) and `SEA3: area=+size phys= flags= caller=%pS`
+  (find_vm_area, takes the vmap lock, so last). Package again with
+  ` panic=0`.
 
 ## Open defect (display, not reset): DSI PLL clock imbalance
 
