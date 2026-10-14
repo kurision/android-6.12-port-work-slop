@@ -1687,3 +1687,33 @@ Last services/display lines in the final 3 s of each late silent run:
   silent writer. Marker attribution still needs a boot with the
   root-borrowing opener, preferably one that takes the early path.
 
+## Run114: pre-kick death — re-probe is not necessary either
+
+- Root-fix kernel (`2fc6e428…`, banner `gd49bf21590bd`) packaged as
+  `boot-run114.img` (`7d2b4655…`) with unchanged `init-run110` and
+  cmdline; preclear zero-verified on a partition hash-equal to run113.
+- Silent reset at 62.3 s in second-stage early-init (SetupCgroups).
+  A slow secilc policy compile (~44.5-58.2 s, no kernel silence anomaly
+  — heartbeats print every 10th sample, none missing) put this boot
+  ~20 s behind schedule: first probe deferred at 12.78 s, kick due
+  ~72.8 s, death well before it. No kick, no re-probe, no display
+  userspace, no ACKRESET1/panic/oops. Snapshots CRC-valid (seq27/28,
+  59.6-61.7 s); USB 175,560 bytes. No port ADB.
+- Markers untested again: no tags AND no `marker open failed` pr_errs,
+  consistent with the probe never running. The `file_open_root` fix
+  still awaits a boot that reaches the re-probe.
+- Falsification: run110 killed display-userspace necessity; run114
+  kills re-probe necessity. The reset fires in at least three contexts
+  (pre-kick like 92/96/97/99, inside re-probe like 102/105/108/110,
+  post-display-HAL like 87-89/91/93-95/98/104/106/109/112/113) with
+  healthy progression to the cutoff every time.
+- PON reason1 reads `0x21` in every run including this one, but it is
+  sampled at 1-15 s of each port boot, always after `adb reboot
+  bootloader` + `fastboot boot` — constant by construction, so it
+  cannot attribute the silent reset as currently sampled. Parked.
+- Next: (a) re-boot the root-fix image until an early-path run
+  validates the markers; (b) widen below drivers — audit what pets
+  the PMIC/RPM/APPSS watchdogs on stock 4.19 vs this 6.12 tree
+  (DT + config + driver), since a traceless random-time reset fits a
+  watchdog better than any driver access now.
+
