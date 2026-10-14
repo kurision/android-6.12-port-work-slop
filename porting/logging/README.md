@@ -252,13 +252,17 @@ zig cc -target aarch64-linux-musl -Os -static \
 ```
 
 Observed: 41 discovered tests pass; collector, five reset-decoder tests and
-witness-open harness pass; prefix selftest passes on the Android ARM64
-emulator. Tissot was disconnected during this verification. Full kernel
-compilation and new-kernel disk persistence have not been exercised.
+witness-open harness pass. Prefix selftest passes on both the Android ARM64
+emulator and physical Tissot under stock 4.19.
 
-Next on-device acceptance: successful CRC32-committed snapshot readiness,
-`DIAG: orderly reset capture armed`, then one controlled orderly reboot of the
-new image and a recovered `ACKRESET1` plus validated version1 samples.
+Run107 exercised the Linux-built `be63c5ea5` kernel/DTB on Tissot with a
+45-second diagnostic reboot deadline. Snapshot readiness and reset-capture
+arming were observed. After stock returned, both raw console snapshots and
+both periodic tails passed header/payload CRC32 validation; ACKRESET1 retained
+64926 bytes, and USB recorded the successful reset-capture flush.
+See `../TRACKER-kgsl-port.md`, "Run107", for exact image and record provenance.
+This validates the orderly path, not spontaneous-reset or panic durability.
+
 Never use a fabricated panic to prove attachment. ACKRESET1 applies only to
 blocking orderly reboot/halt/poweroff, before MMC shutdown. Hardware watchdog,
 firmware reset, panic or power loss may omit it. Process-context periodic disk
