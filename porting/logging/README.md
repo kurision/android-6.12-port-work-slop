@@ -208,13 +208,18 @@ done
 "${rust_make[@]}" Image.gz qcom/msm8953-xiaomi-tissot.dtb
 ```
 
-On Fedora, install missing prerequisites with
-`sudo dnf install rust rust-src bindgen-cli clang-libs`; for rustup, add
-`rust-src` to the selected compiler's toolchain. `RUST_LIB_SRC` must point
-to matching Rust library sources, and bindgen may require `LIBCLANG_PATH`.
-See the [upstream Rust quick start](https://docs.kernel.org/6.16/rust/quick-start.html).
-The normal `scripts/build-ack-tissot.sh` entrypoint now checks the same
-availability and required built-ins before compiling.
+Run124 was built on Fedora with clang/LLD 22.1.8, rustc 1.99,
+`BINDGEN=~/.cargo/bin/bindgen` (0.73.2),
+`RUST_LIB_SRC=<toolchain>/lib/rustlib/src/rust/library` and
+`LIBCLANG_PATH=/usr/lib64`. Current rustc renamed the AutoFDO flag that
+`scripts/Makefile.autofdo` passes (`-Zdebug-info-for-profiling`), so that host
+overrides `RUSTFLAGS_AUTOFDO_CLANG` with the `-Zdebuginfo-for-profiling`
+spelling. This override is host-specific and not committed. rustc 1.82 is too
+old (`const_mut_refs` needs 1.83); 1.85 needs the same override and has not been
+proven. Commit `d85af5dfe` carries the two source-side toolchain fixes. See the
+[upstream Rust quick start](https://docs.kernel.org/6.16/rust/quick-start.html).
+`scripts/build-ack-tissot.sh` checks Rust availability and the required
+built-ins before compiling.
 
 `PSTORE_RAM` now selects CRC32 when BLOCK is enabled; run105 already has
 `CONFIG_CRC32=y`. The DT adds `max-reason = <4>` for genuine emergency and
