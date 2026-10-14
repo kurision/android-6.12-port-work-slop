@@ -219,6 +219,7 @@ capped.
 | Stall witness | `0x3f00000` | `0x3f00200` |
 | QSEE ring | `0x3f10000` | `0x3f20000` |
 | Orderly reset capture | `0x3f30000` | `0x3f40000` |
+| MDSS re-probe markers (16 tag+value slots, 8 B each; run111+) | `0x3f80000` | `0x3f80080` |
 
 Version1 preserves the 64-byte little-endian `<QQQQ8I>` header. Reserved words
 at 48/52/56/60 contain version1, payload CRC32, header CRC32, zero. Header CRC
