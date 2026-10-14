@@ -1989,3 +1989,29 @@ Last services/display lines in the final 3 s of each late silent run:
   of the display misbehavior. Fix: balance enable/disable around
   provider registration. Tracked separately from the reset hunt.
 
+## Run124 preparation: USB controller property overlay (not boot-tested)
+
+- Run123's saved log and read-only phone inspection identify a naming
+  mismatch: vendor init requests `7000000.dwc3`, but the registered UDC is
+  `7000000.usb`. Configfs requires a name from `/sys/class/udc/`; see
+  [upstream gadget documentation](https://www.kernel.org/doc/html/v5.7/usb/gadget_configfs.html#enabling-the-gadget).
+- Diagnostic init now validates `/vendor/build.prop` (regular, nonempty,
+  at most 128 KiB) and replaces exactly one complete
+  `vendor.usb.controller=7000000.dwc3` line with
+  `vendor.usb.controller=7000000.usb`. Every other byte, line ending and
+  final-newline state is preserved. Already-correct input needs no mount;
+  missing, duplicate or unexpected values fail with `EINVAL`.
+  Embedded NULs and whitespace-equivalent active controller definitions
+  are rejected rather than allowing Android's property parser to bypass
+  the uniqueness check.
+- The replacement is staged at `/dev/block/ack-usb-controller.prop` and
+  bound read-only before early logcat setup and bootdevice release.
+  Failure logs its errno and keeps the bootdevice guard closed. No stock
+  partition writes, kernel naming changes or runtime setprop loop.
+- Host ASan/UBSan harness passed 27 cases using the production transform,
+  including CRLF, no final newline, duplicate/unexpected values,
+  whitespace-equivalent keys, embedded NULs and the 128 KiB boundary.
+  Focused source checkpatch: zero errors/warnings/checks.
+- User took over building and pulling images. No run124 init binary,
+  package or device boot was produced here; USB transport remains unverified.
+
