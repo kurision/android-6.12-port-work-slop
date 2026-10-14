@@ -1801,6 +1801,49 @@ Last services/display lines in the final 3 s of each late silent run:
   (no VFS, no task, works from any context; same 0x3F80000 slots, so
   decodes unchanged). Queued as run117.
 
+## Run118 (queued): gate late mdss_hw_init on runtime-PM suspend
+
+- Runs 116/117 died within ~30 ms of `mdss_fb_open` by `mm-pp-dpps`
+  followed by `mdss_hw_init` register writes, after the re-probe had
+  completed and powered the MDP back down (`intf_sel=0`, splash
+  footswitch off). Touching MDP registers while the domain is down
+  hangs the bus. The two late `mdss_hw_init` callers now skip their
+  register writes when runtime PM reports suspended, emitting a skip
+  marker plus `pr_err` instead; the probe path is untouched
+  (byte-identical, still acquires `mdp_rev`).
+- `drivers/video/fbdev/msm/mdss_mdp.c`: `MDSS_MARK_SKIP 0x80` slot
+  added (tag `0x504B534D` "MSKP"); `mdss_mdp_idle_pc_restore` gates
+  `mdss_hw_init(mdata)` on
+  `pm_runtime_status_suspended(&mdata->pdev->dev)`; fall-through
+  (`iommu_ctrl(0)` detach, `ctl_restore`, `idle_pc=false`) unchanged.
+- `drivers/video/fbdev/msm/mdss_mdp_overlay.c`:
+  `mdss_mdp_overlay_start` applies the identical guard on
+  `&mfd->pdev->dev`; the `pm_runtime_get_sync` block and the
+  iommu-attach/`EARLY_MAP`-clear/detach surround are unchanged.
+- Deviations from the inline plan found during execution: (1) the
+  mark wrapper is file-`static` in `mdss_mdp.c`, so the overlay side
+  calls global `ramoops_diag_mark(0x80, 0x504B534D, 0)` directly
+  (identical RAM bytes; new `#include <linux/pstore_ram.h>`);
+  (2) second-opinion review caught a P0 (`MDSS_MARK_SKIP` used 600+
+  lines above its `#define`) — fixed by moving the whole slot table
+  verbatim to the file top and retargeting two pointer comments.
+- Verification so far: `checkpatch.pl --strict` clean (0/0/0);
+  second-opinion review PASS on the reworked diff (active path
+  byte-identical; fall-through is status-quo-ante since early return
+  would unbalance the iommu ref; `ctl_restore` skips powered-off
+  ctls per `mdss_mdp_ctl.c:4360`).
+- Known residual risk: the skip still falls through to
+  `ctl_restore`/`ctl_start`/smmu-attribute. If run118 hangs *with*
+  the SKIP mark set, the gate is insufficient and the follow-up is
+  power-up sequencing, not more gating.
+- Not yet built (macOS host cannot build): needs the Linux-host
+  `make O=out ARCH=arm64 LLVM=1 Image.gz
+  qcom/msm8953-xiaomi-tissot.dtb`, packaging as `boot-run118.img`
+  via `package-diag-boot.py`, then preclear/capture/pull-evidence.
+  Pass criteria: survival past the 134-137 s window, or SKIP mark
+  (`0x80=0x504B534D`) plus skip `pr_err` in kmsg; the re-probe path
+  must still complete with `mdp_rev=0x10100000`.
+
 ## Open defect (display, not reset): DSI PLL clock imbalance
 
 - Every boot warns at ~2.5 s in `mdss_8953_pll_probe`:
