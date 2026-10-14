@@ -1742,3 +1742,32 @@ Last services/display lines in the final 3 s of each late silent run:
   reads only). If EN=1/S2-enabled: enable driver + DT + pet loop and
   see deaths stop. No Kconfig/DT change in the dump commit.
 
+## Run115: both watchdogs disarmed — theory dead for our boot path
+
+- Host built `388532419` (WDT dumps): payload `c5f37244…`, banner
+  `6.12.93-4k-g388532419224`, DTB/config untouched. Packaged as
+  `boot-run115.img` (`5fbff13a…`) with unchanged `init-run110`
+  (display gate held) and identical cmdline. Preclear zero-verified
+  on a partition hash-equal to run114 evidence.
+- Silent reset at 136.54 s amid routine exits (timekeep, pm-service),
+  same profile: no ACKRESET1/panic/oops/SEA; snapshots CRC-valid
+  (seq61/62, 134.1-136.3 s). USB 564,337 bytes. No port ADB.
+- `DIAG apps_wdt en=00000000 sts=00000000 bark=00000000 bite=00000000`:
+  APPS WDT never programmed. PMIC: `poff1=0x02 poff2=0x00` (not
+  PMIC_WD/UVLO/OTST3), `wd_s1=0x0f wd_s2=0x03` but `s2ctl2=0x00`
+  (S2 reset master-disabled): PMIC WDT cannot reset the phone.
+- Stock regmap debugfs confirms live: `spmi0-00` PON block reads
+  `0808=21 080c=02 080d=00 0854=0f 0855=03 0856=08 0857=00`
+  (archived as `run115-pm8953-pon-regmap.log`). This opens post-reset
+  cause reads from stock with no bootloader in between — but note the
+  confound: every port boot follows `adb reboot bootloader`, so
+  PON/POFF as sampled in port logs describe that transition, not the
+  silent reset. A clean A/B (post-silent-reset stock dump vs
+  post-orderly-reboot stock dump) is still open.
+- Residual hole: the APPS dump used KPSS offsets; an APCS-layout WDT
+  would read zero there while armed. Extended the dump with a second
+  `apps_wdt2` line at 0x8/0xc/0x10/0x14 (queued, unbuilt).
+- [x] WDT-dump item — both blocks disarmed during our boots; neither
+  can be the resetter unless re-armed mid-boot by TZ/RPM (no evidence).
+  Watchdog theory closed for the fastboot-boot path.
+
