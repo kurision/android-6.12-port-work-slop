@@ -2541,3 +2541,69 @@ Last services/display lines in the final 3 s of each late silent run:
   `30bacf46ecf72dd6ca71de3f83601b7e1e71f8173b59c59326af2eb5f4d1b7f1`.
   Logdump was pre-cleared and readback-verified (`run136-preclear.status`).
   Return to rooted stock was a host-initiated reboot, not a spontaneous reset.
+
+## Run137/run139: both QPNP drivers bound; charging still unmeasured
+
+- **Root cause of the missing charger, found and fixed.** Run136 left the
+  charger deferred on `adc@3100`, which itself refused to probe with
+  `Please define VDD channel` (`run136-usb.log:158`). Our ported
+  `arch/arm64/boot/dts/qcom/pmi8950.dtsi` defined only `VADC_REF_625MV` and
+  `VADC_REF_1250MV`, while `drivers/iio/adc/qcom-spmi-vadc.c:810-815` makes
+  `VADC_VDD_VADC` and `VADC_GND_REF` mandatory and
+  `Documentation/devicetree/bindings/iio/adc/qcom,spmi-vadc.yaml:66`
+  requires all four reference channels. Upstream mainline omits them only
+  because its driver dropped the check; the vendor
+  `oc-test/arch/arm64/boot/dts/vendor/qcom/pmi8950.dtsi:84-92` carries both.
+  Added as `channel@e`/`ref_gnd` and `channel@f`/`ref_vdd`, pre-scaling 1/1.
+  These are calibration reference points read at `qcom-spmi-vadc.c:386-391`,
+  not just probe prerequisites.
+- **Verified in the built DTB before packaging**: `fdtget` on
+  `out-run137/.../msm8953-xiaomi-tissot.dtb` returns `channel@e`→`ref_gnd`
+  and `channel@f`→`ref_vdd`; DTB grew 60125 → 60277 bytes.
+- **Result, reproduced twice.** `run137-usb.log:396` and
+  `run139-usb.log:405`: `SMBCHG successfully probe Charger version=SCHG_LITE
+  Revision DIG:0.0 ANA:0.1 batt=1 dc=0 usb=1`, with
+  `run139-usb.log:409` carrying the stock-identical gauge line and `:404`
+  carrying `smbchg_hvdcp_enable_cb: HVDCP disabled` — that last one only
+  fires when the subtype fix has set `hvdcp_not_supported`. On the live
+  device both `qcom,fg` and `qcom,qpnp-smbcharger` have populated `driver`
+  symlinks and `/sys/class/power_supply/` holds `battery`, `bms`, `usb`.
+- **Negative result worth its two cycles: `selinux=0` is a dead end.**
+  `package-run138.json` has kernel payload `dabc20b9...` and ramdisk
+  `d12d1d73...`, both identical to run137, base `boot-run137.img`; the sole
+  difference is one appended cmdline token. run138 and run138b both reported
+  `fastboot boot ... OKAY` and then landed in recovery with 0-byte captures,
+  against 0/2 for every image without it. Hypothesis (unverified): setting
+  `selinux_enabled_boot=0` also gates `security/selinux/selinuxfs.c:2148`, so
+  `/sys/fs/selinux` never appears and init cannot proceed. Do not retry.
+- **Root could not be obtained, and that is now a documented dead end too.**
+  run139 was packaged with the packager's own `--debuggable`, which rewrites
+  `ro.secure=0`/`ro.debuggable=1` in `prop.default` and nothing else
+  (verified by re-extracting the ramdisk: only those two keys differ from
+  run137). `ro.debuggable` did reach `1` at runtime, but it settles late —
+  an early read still showed `0` — and init restores `ro.secure=1`. `adb
+  root` left adbd at `uid=2000(shell)`. SELinux itself forces enforcing, so
+  further attempts would be fighting the policy rather than informing it.
+- **Charging is unmeasured and is recorded as such.** `usb=1` at probe means
+  the charger IC saw VBUS and the phone is cabled, so charging is plausible;
+  no live `status`, `current_now`, `charge_counter` or `voltage_now` has been
+  read on this port. Every channel is closed: SELinux-denied sysfs reads,
+  `dumpsys battery` all zeros via the denied health HAL, no `su`, no SD card
+  for the `/sdlog/ack-kmsg.log` mirror, and a port kernel that cannot open
+  `PARTLABEL=logdump`. The remaining lever, if it is ever wanted, is a
+  root-context dump from `scripts/initramfs-diag/init.c` — the one record the
+  packager replaces by design — and it was not attempted.
+- **Tooling fix.** `usb-boot-capture.py` opened the CDC-ACM port on first
+  sight, but udev creates the node before applying
+  `/etc/udev/rules.d/99-ack-kernel-log.rules`, so run138 lost its whole kernel
+  log to a `PermissionError` that the catch-all recorded as a reader error.
+  `open_with_retry()` now waits up to 30 s for ownership. Confirmed working:
+  run139 recorded 436276 bytes.
+- **Provenance.** `package-run137.json` image
+  `3e9a340ef33edc3f43967462f309a0ce7365914d5e7b04ab26e1c356fdb5574b`,
+  ramdisk `d12d1d73...` (untouched run130 ramdisk); `package-run139.json`
+  image `6bc37b453bd2f16c60dd4c75bfb040493530995d98373b5e83f8ba2a32a2cf39`,
+  same kernel payload `dabc20b9...`, ramdisk `fc6a0fdb...` (the prop.default
+  edit, recorded as `"debuggable": true`). Logdump pre-cleared and
+  readback-verified before each boot. `boot-run130.img` unchanged at
+  `30bacf46ecf72dd6ca71de3f83601b7e1e71f8173b59c59326af2eb5f4d1b7f1`.
