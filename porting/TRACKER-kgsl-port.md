@@ -2706,3 +2706,105 @@ now `porting/policy/harness-genfs.cil`. Logdump pre-cleared and
 readback-verified (`run141-preclear.status`). Evidence: `run141-usb.log`
 (440169 bytes), `run141-adb-timeline.log`, `run141-host-logcat.log` (86240
 lines). run141 differs from the known-good run139 only by the appended CIL.
+
+## Run142-run145: ADSP firmware staged; boot still stalls after enable_screen
+
+### run143 -- ADSP firmware (harvested from the phone itself)
+
+The firmware was never missing from the device, only from the kernel's
+search path. Stock serves it from the modem partition:
+
+    /firmware/image/adsp.mdt + adsp.b00..b14   10.5 MB, 16 files
+
+Harvested with `adb exec-out su -c 'cat ...'` and **MD5-verified against the
+device**; `file` confirms `adsp.mdt` is an ELF QUALCOMM DSP6 image. Staged
+with the packager's `--firmware-dir`, which puts them at `lib/firmware/`.
+
+One subtlety: the cmdline's `firmware_class.path=/vendor/firmware` had to
+become `firmware_class.path=/lib/firmware,/vendor/firmware` rather than being
+dropped. Comma-delimited paths are supported and take priority over the
+default (`drivers/base/firmware_loader/main.c:541-547`), and the order matters:
+kgsl probes at 1.4 s and needs `/vendor/firmware` for `qcom/a530_pfp.fw`,
+while the ramdisk's `/lib/firmware` is where the staged ADSP lives. Dropping
+the token outright would have redirected the GPU lookup somewhere empty.
+
+Result, the first time the DSP has ever come up on this port:
+
+    remoteproc0: Booting fw image adsp.mdt, size 7516
+    remoteproc0: remote processor c200000.remoteproc is now up
+    qcom,apr remoteproc0:smd-edge.apr_audio_svc: Adding APR/GPR dev: service:4:3
+    qcom,fastrpc remoteproc0:smd-edge.fastrpcsmd-apps-dsp: no reserved DMA memory for FASTRPC
+
+WLAN still fails (`wcnss.mdt ... error -2`) -- not staged this round.
+
+### run143 boot progress -- the real blocker is now visible
+
+Boot gets much further than any previous run:
+
+    boot_progress_ams_ready        10:24:54
+    boot_progress_enable_screen     10:24:59
+
+and then stops. No further milestone, `sys.boot_completed` unset at 289 s,
+`init.svc.bootanim` still `running`. ActivityManager drops
+`system_server_pre_watchdog` (a near-watchdog hang) at 10:26:46 and then goes
+silent, while an AudioSystem `listAudioPorts failed` loop runs at 10 Hz.
+
+`/dev/kgsl-3d0` **exists** and SurfaceFlinger is registered, so the tracker's
+"GPU is the blocker" is not supported by the current evidence. The composer
+service does start (`init: starting service 'vendor.hwcomposer-2-1' ... pid 670`).
+
+### The SystemServer hang is the charger's extcon
+
+The last SystemServer frames before the hang:
+
+    ExtconUEventObserver: Unable to read .../qcom,qpnp-smbcharger/extcon/
+        extcon0/cable.1/name. This probably means the selinux policies need to be changed.
+      at com.android.server.policy.PhoneWindowManager.initializeHdmiStateInternal
+      at com.android.server.policy.PhoneWindowManager.init
+      at com.android.server.wm.WindowManagerService$6.run
+
+Same genfscon mechanism as the battery nodes. CAF labels that directory
+`sysfs_extcon` -- but `sysfs_extcon` appears 5 times in `vendor_sepolicy.cil`
+and is **never the target of an allow**, so that label grants nothing. What CAF
+labels `sysfs_graphics` is the msm-ext-disp extcon, and
+`system_server_202604`/`surfaceflinger_202604` are allowed `sysfs_graphics
+file (read write getattr open ...)`. This port has no msm-ext-disp extcon, so
+the charger's extcon *is* extcon0 and is what the HAL enumerates.
+
+run144 adds the 10 `genfscon` statements that label that subtree
+`sysfs_graphics`. **Not yet booted.**
+
+### run144 packaging bug, caught before wasting a cycle
+
+The first run144 vanished immediately after `fastboot boot ... OKAY`. Two
+causes, both mine:
+
+1. `--firmware-dir` was passed on a base that already carried the firmware, so
+   the ramdisk got a second `lib/firmware/adsp.mdt`. Records went 665 -> 701.
+   Invisible in the per-record diff the packager already asserts.
+2. The policy fragment was cumulative, and the base already held 5 of its 15
+   `genfscon` statements, so those were appended twice.
+
+I initially asserted that duplicate `genfscon` makes `secilc` reject the
+policy. **That was wrong**, and the new packager check caught it: `boot-run142.img`
+has 3 duplicated `genfscon` paths and `boot-run143.img` has 5, and run143 boots
+normally with the labels applied. `secilc` accepts a repeated `genfscon`. The
+duplicate-record check is now fatal (it is a real shipping defect) and the
+duplicate-`genfscon` check is a warning. Policy fragments are now one file per
+run, so appending the cumulative fragment to a base holding part of it cannot
+happen again.
+
+### run145 -- fastrpc DMA pool
+
+`fastrpc_rpnp_probe()` resolves `memory-region` and looks the region up
+(`drivers/of/of_reserved_mem.c:583`); with none the channel has no buffer pool
+and userspace gets ENOENT. Added a `shared-dma-pool` plus the phandle on the
+fastrpc node, dynamically allocated with no fixed `reg` to match the vendor
+`bengal.dtsi` (which is the MSM8953 file). Verified in the built DTB: both
+phandles are `0x7c`. **Not yet booted.**
+
+### State
+
+Last confirmed-good image is **run143**. Both run144 and run145 are packaged
+and verified structurally but untested; the phone went unreachable (recovery,
+as after run138) and could not be recovered from the host.
