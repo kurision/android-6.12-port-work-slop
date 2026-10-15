@@ -1,0 +1,24 @@
+;; ---------------------------------------------------------------------------
+;; mm-pp-daemon is permitted on sysfs_leds (vendor_sepolicy.cil):
+;;   (allow mm-pp-daemon sysfs_leds_202604 (dir  (... read write getattr open search)))
+;;   (allow mm-pp-daemon sysfs_leds_202604 (file (... read write getattr open ...)))
+;; and CAF's genfscon puts that label on
+;;   .../200f000.qcom,spmi:qcom,pmi8950@3:qcom,leds@d800/leds/wled
+;; which again no mainline path matches. So the label falls back to generic
+;; "sysfs", mm-pp-daemon is denied, and the display composer dies:
+;;
+;;   avc: denied { read write } for name="brightness" dev="sysfs"
+;;        scontext=u:r:mm-pp-daemon:s0 tcontext=u:object_r:sysfs:s0
+;;   Dpps: InitPrimaryContextFeatures():387 failed to init feature context ret -1
+;;   Dpps: main():33 Failed to initialize DPPS, ret = -1
+;;
+;; mm-pp-daemon then restarts every 5s with a new pid, printing
+;; "WaitForComposer():129 Waiting for composer service init" forever, which is
+;; what is still blocking sys.boot_completed after run141.
+;;
+;; Our wled registers no leds class device at all -- only the backlight class
+;; device "backlight", so our path ends /backlight/backlight where CAF's ends
+;; /leds/wled. Both the device directory and the backlight class directory are
+;; labelled, since the daemon must traverse the former to reach the latter.
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800" (u object_r sysfs_leds ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight" (u object_r sysfs_leds ((s0) (s0))))

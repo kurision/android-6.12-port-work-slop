@@ -1,9 +1,3 @@
-;; ---------------------------------------------------------------------------
-;; Harness-only: label the tissot power_supply directories with the same types
-;; the vendor policy already grants the health HAL access to. Not shippable.
-;; ---------------------------------------------------------------------------
-;;
-;; Why this exists
 ;; ---------------
 ;; vendor_sepolicy.cil labels these directories with genfscon, using literal
 ;; CAF 4.19 sysfs paths:
