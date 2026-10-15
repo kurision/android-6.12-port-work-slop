@@ -1,0 +1,48 @@
+;; ---------------------------------------------------------------------------
+;; Harness-only: label the tissot power_supply directories with the same types
+;; the vendor policy already grants the health HAL access to. Not shippable.
+;; ---------------------------------------------------------------------------
+;;
+;; Why this exists
+;; ---------------
+;; vendor_sepolicy.cil labels these directories with genfscon, using literal
+;; CAF 4.19 sysfs paths:
+;;
+;;   /devices/platform/soc/200f000.qcom,spmi/spmi-0/spmi0-02/
+;;     200f000.qcom,spmi:qcom,pmi8950@2:qcom,qpnp-smbcharger/power_supply/battery
+;;       -> sysfs_battery_supply
+;;
+;; and then allows only those types:
+;;
+;;   :17838 (allow hal_lineage_health_default sysfs_battery_supply (dir (...)))
+;;   :17841 (allow hal_lineage_health_default sysfs_battery_supply (file (...)))
+;;   :17848 (allow hal_lineage_health_default sysfs_usb_supply     (file (...)))
+;;
+;; Every component differs under mainline naming:
+;;
+;;   component     vendor (CAF 4.19)      this kernel (6.12)
+;;   root          platform/soc           platform/soc@0
+;;   bus           200f000.qcom,spmi      200f000.spmi
+;;   slave         spmi0-02               spmi-0/0-02
+;;   pmic          ...:qcom,pmi8950@2     ...:pmic@2
+;;
+;; genfscon paths are literal, so nothing matches: the nodes keep the generic
+;; "sysfs" label, the health HAL's allows above never apply, and
+;; vendor.lineage.health-service never registers IChargingControl. SystemServer
+;; then blocks in ChargingControlController.waitForDeclaredService forever
+;; (run137 logcat at 10:31, ~3.5 min in) and sys.boot_completed never fires.
+;;
+;; The three paths below are the real ones this kernel produces, captured from
+;; live avc denials rather than reconstructed (run137/run140 logcat).
+;;
+;; Renaming the DT nodes to CAF conventions was rejected: "soc@0" appears in
+;; every device path on the board, and "spmi0-02" is produced by
+;; drivers/spmi/spmi.c:473, not by the DT -- matching would mean changing the
+;; SPMI core, which risks losing every regulator on the board.
+;;
+;; Scope: battery components only, as requested. usb and bms are included
+;; because the vendor policy labels those two with the same types the same HAL
+;; reads.
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/power_supply/battery" (u object_r sysfs_battery_supply ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/power_supply/usb" (u object_r sysfs_usb_supply ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,fg/power_supply/bms" (u object_r sysfs_battery_supply ((s0) (s0))))

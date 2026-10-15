@@ -1,0 +1,27 @@
+;; ---------------------------------------------------------------------------
+;; Harness-only policy deltas. Not shippable: these grant whole-class access
+;; to sysfs to three vendor domains. See porting/TRACKER-kgsl-port.md.
+;; ---------------------------------------------------------------------------
+;;
+;; run137 evidence: 17086 denials with
+;;   scontext=u:r:hal_lineage_health_default:s0 tcontext=u:object_r:sysfs:s0
+;; on name="battery_charging_enabled" (8544) and name="charging_enabled"
+;; (8542), both under the charger's power_supply node. The Lineage health HAL
+;; therefore cannot read the battery, so vendor.lineage.health-service never
+;; registers, SystemServer blocks in waitForDeclaredService and the watchdog
+;; restarts it -- the run130 charging-control blocker.
+;;
+;; The vendor stock policy has no rule for these sysfs attributes. Same
+;; situation as the hal_usb_qti rule above (run120/121), which also names a
+;; type that is declared in the vendor policy rather than this one.
+;;
+;; run137 also shows mm-pp-daemon denied { read write } on name="brightness"
+;; 135 times (Dpps "failed to open the backlight node ... Permission denied")
+;; and 12 hal_health_default denials. All three are sysfs:file.
+;;
+;; Narrowing these to individual attribute paths would need genfscon
+;; relabelling of the sysfs paths; that is a bigger change than this harness
+;; delta should make.
+(allow hal_lineage_health_default sysfs (file (getattr open read write)))
+(allow hal_health_default sysfs (file (getattr open read write)))
+(allow mm-pp-daemon sysfs (file (getattr open read write)))

@@ -2607,3 +2607,102 @@ Last services/display lines in the final 3 s of each late silent run:
   edit, recorded as `"debuggable": true`). Logdump pre-cleared and
   readback-verified before each boot. `boot-run130.img` unchanged at
   `30bacf46ecf72dd6ca71de3f83601b7e1e71f8173b59c59326af2eb5f4d1b7f1`.
+
+## Run140/run141: the charging-control HAL blocker, found and cleared
+
+### The finding that re-ranked the backlog
+
+The tracker's standing claim was that the GPU was the confirmed
+`sys.boot_completed` blocker. run137's host logcat shows that was **stale**:
+3.5 minutes into boot there is no SurfaceFlinger activity at all, and
+SystemServer is instead wedged on a binder service:
+
+    10-09 10:31:11  Waited one second for vendor.lineage.health.IChargingControl/default
+    10-09 10:31:11  Unable to set property "ctl.interface_start" to
+                     "aidl/vendor.lineage.health.IChargingControl/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE
+
+repeating indefinitely. That is the charging-control HAL, and it was the live
+blocker.
+
+### Two things that looked like causes and were not
+
+- `/sys/class/qcom-battery/input_suspend` ("No such file or directory"). Checked
+  against the live stock device: **`/sys/class/qcom-battery` does not exist on
+  stock either**, and neither does `power_supply/battery/input_suspend`. The HAL
+  tolerates both. A 2147-line port of the donor's
+  `drivers/power/supply/qcom/battery.c` was scoped and then dropped as
+  unnecessary.
+- `selinux=0` on the cmdline, and `--debuggable` for `adb root`. Both dead ends:
+  see run138 below, and run139 in `FAILING-COMPONENTS.md`.
+
+### The actual root cause
+
+`vendor_sepolicy.cil` labels the power_supply directories with `genfscon`
+using **literal CAF 4.19 sysfs paths**, and then allows only those labels:
+
+    (genfscon sysfs "/devices/platform/soc/200f000.qcom,spmi/spmi-0/spmi0-02/
+       200f000.qcom,spmi:qcom,pmi8950@2:qcom,qpnp-smbcharger/power_supply/battery"
+       (u object_r sysfs_battery_supply ((s0) (s0))))
+    ; vendor_sepolicy.cil:17841
+    (allow hal_lineage_health_default sysfs_battery_supply (file (ioctl read write getattr ...)))
+
+Every component differs under mainline naming, so the genfscon never matched,
+the nodes kept the generic `sysfs` label, and the HAL's allow never applied.
+Confirmed directly: on stock those same nodes carry
+`u:object_r:sysfs_battery_supply:s0` (`ls -lZ`), and stock is Enforcing
+(`getenforce`, `/sys/fs/selinux/enforce` → 1), so this was never about
+permissive mode.
+
+### The fix
+
+`porting/policy/harness-genfs.cil`: three `genfscon` statements for the paths
+this kernel actually produces, captured from live avc denials rather than
+reconstructed:
+
+    /devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/power_supply/battery -> sysfs_battery_supply
+    /devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/power_supply/usb    -> sysfs_usb_supply
+    /devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,fg/power_supply/bms                  -> sysfs_battery_supply
+
+Appended at packaging time with `--policy-append`; no DT, driver or SPMI change.
+Battery components only, as requested. Verified in the image before booting:
+exact byte append to the 3305560-byte `userdebug_plat_sepolicy.cil`, run139
+prefix intact, parentheses balanced, 3 `genfscon` and 0 `allow` added.
+
+### Result (run141, 254 s uptime)
+
+| | run137/run140 | run141 |
+|---|---|---|
+| `hal_lineage_health_default` denials | 17086 | **0** |
+| HAL registration | never | `288 vendor.lineage.health.IChargingControl/default: []` |
+| `dumpsys battery` | all zeros | `USB powered: true`, `status: 2`, `level: 92`, `voltage: 4145`, `temp: 277` |
+| SystemServer | blocked in `waitForDeclaredService` | no watchdog kill, no blocked handler |
+
+**Charging is confirmed for the first time on this port.** Charge counter moved
+1959547 → 1957591 over 45 s while voltage rose 4145 → 4150 mV;
+`UsbDeviceManager: push notification:Charging this device via USB` and
+`SatelliteController: handleEventChargingStateChangedEvent: true` both fire.
+
+### Still open
+
+- **`sys.boot_completed` is still unset and `bootanim` is still running.** The
+  charging blocker is gone but boot does not finish, so there is a further
+  blocker. The GPU claim is untested again now that SystemServer is unblocked.
+- **`Max charging current: 100000` uA (100 mA)** against a DT
+  `constant-charge-current-max` of 1 A. Charging is real but may be trickling;
+  unexplained.
+- Benign: `libbinder ... Thread Pool max thread count is 0 ... IChargingControl`
+  — the HAL registers with no binder threads; logged as a warning, not fatal.
+- `shell` remains denied on `/sys/class/power_supply/*`, correctly: only the
+  HAL's domain was granted anything. `dumpsys battery` is the read channel.
+
+### Provenance
+
+`package-run141.json`: image
+`b06f5a66bd285f3f46a7a71fcaaa9a76124f1cc74fd13a48ddf8eedbe1909c6f`,
+kernel payload `dabc20b9...` (unchanged from run137/139/140), ramdisk
+`f6a30f3a...`, `policy_append_sha256`
+`dd429b9439c1a3a4ff37208456313b2fb3380f07d2b35247f136d1b8c53d928e` which is
+now `porting/policy/harness-genfs.cil`. Logdump pre-cleared and
+readback-verified (`run141-preclear.status`). Evidence: `run141-usb.log`
+(440169 bytes), `run141-adb-timeline.log`, `run141-host-logcat.log` (86240
+lines). run141 differs from the known-good run139 only by the appended CIL.
