@@ -55,6 +55,28 @@ def default_status(log: Path) -> Path:
     return log.with_suffix(log.suffix + ".status")
 
 
+OPEN_TIMEOUT_SECONDS = 30.0
+
+
+def open_with_retry(port: str):
+    """Open the CDC-ACM port, waiting out udev ownership.
+
+    The device node appears in list_ports() before udev has applied the
+    OWNER/MODE rule, so an immediate open can raise PermissionError and cost
+    the whole kernel log. Retry until OPEN_TIMEOUT_SECONDS, then give up so a
+    genuinely missing port is still reported.
+    """
+    deadline = time.monotonic() + OPEN_TIMEOUT_SECONDS
+    while True:
+        try:
+            return serial.Serial(port, BAUD, timeout=1)
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            print("waiting for udev ownership of " + port, flush=True)
+            time.sleep(0.25)
+
+
 def reader(log: Path, done: threading.Event, result: dict):
     started = time.monotonic()
 
@@ -70,7 +92,11 @@ def reader(log: Path, done: threading.Event, result: dict):
                     break
                 time.sleep(0.25)
             print(f"opening {port}", flush=True)
-            with serial.Serial(port, BAUD, timeout=1) as stream:
+            # udev creates the node before it applies
+            # /etc/udev/rules.d/99-ack-kernel-log.rules, so a first open can
+            # hit EACCES. Wait for the rule instead of losing the whole log.
+            stream = open_with_retry(port)
+            with stream:
                 while True:
                     chunk = stream.read(65536)
                     if not chunk:
