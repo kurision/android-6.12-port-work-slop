@@ -2424,3 +2424,120 @@ Last services/display lines in the final 3 s of each late silent run:
   still fails with the bank untranslated, NOMMU-bypass is dead: next is
   keeping `&gpu` `iommus` and making kgsl NOMMU program the DMA (IOVA)
   addresses instead of physical ones.
+
+## Run130: sustained ADB milestone on the 6.12 kernel
+
+- **Achievement:** the run130 kernel reached Android ADB and remained
+  accessible across repeated four-second samples. This is a usable live
+  inspection milestone after the recent splash-only attempts, not a claim
+  of a completed Android boot. `run130-adb-timeline.log:114-119` records
+  `6.12.93-4k-ga54b131a885c`, the running early-logcat service and
+  SurfaceFlinger PID; later samples also record SystemServer PIDs.
+  `run130-live-milestone.log` independently
+  records the same kernel at 356.03 s uptime.
+- Built committed HEAD `a54b131a885cefb38710be2f70f94d9bf04b1036` with
+  `scripts/build-ack-tissot.sh`, using a clean local checkout because the
+  working tree contains in-tree build outputs. Clang/LLD 22.1.8, Rust 1.82.0
+  and bindgen 0.72.1; resolved config matches run128 byte-for-byte, including
+  built-in Rust/ashmem. Build log: `run130-build-clean.log`. DT compilation
+  emitted kgsl-iommu address/size-layout warnings; no source repair was made.
+- Packaged the real `boot-run128.img` base and `init-run127`; actual
+  compressed ramdisk and header cmdline match run128 byte-for-byte.
+  `package-run130.json` records image SHA256
+  `30bacf46ecf72dd6ca71de3f83601b7e1e71f8173b59c59326af2eb5f4d1b7f1`
+  and kernel payload SHA256
+  `bdd2197a82838e9aef8f70f21a37b256f6267709a3e5f2f83409723ff047b55b`.
+  Built DTB checks confirm no gpu `iommus` property and kgsl-iommu
+  `clock-names = "gpu_ahb_clk", "gcc_bimc_gfx_clk"`.
+- `run130-preboot-state.log` records rooted stock on slot `_b`, no retained
+  early-logcat/sync-probe files, and the all-zero logdump hash. Preclear
+  readback passed (`run130-preclear.status`). `run130-capture.out` records
+  successful `fastboot boot`; no flashing or slot change. USB retained
+  426651 bytes before disconnect (`run130-usb-capture.status`).
+  `run130-usb.log:314-317` records IOMMU probe -19 and NOMMU selection.
+- User observed a **backlit black screen**. `sys.boot_completed` remained
+  unset in the live samples. `run130-host-logcat.log` captures a SystemServer
+  watchdog kill followed by a new SystemServer process; repeated PID
+  presence does not establish stable Android userspace. Shell cannot read
+  dmesg or the protected diagnostic files, `su` is absent, and an ADB root
+  request did not obtain root. The final pre-reboot ADB sample records
+  495.89 s uptime (`run130-before-stock-reboot.log`). Host logcat was stopped
+  at the user's request; 39166738 bytes were preserved.
+- Returned to rooted stock with a host-initiated normal reboot,
+  not a spontaneous port reset; stock reports boot completion and slot `_b`
+  (`run130-stock-return.log`). `run130-evidence-recovery.log` records recovery
+  of the 67108864-byte logdump, including a 3997208-byte readable prefix,
+  two CRC-verified raw-console slots and two CRC-verified periodic tails at
+  approximately 499/501 s. No valid panic/oops dmesg record was recovered;
+  this does not establish that no crash occurred. SD capture was unavailable.
+  Archived early logcat and four rotations plus sync-probe with matching
+  before/local/after SHA256 hashes (`run130-retained-diagnostics.json`);
+  phone copies remain intact. Reset decoding recovered `ACKRESET1` at
+  503.037 s, PID 1 `init`, command `shell`, with a 64976-byte kernel tail;
+  this is the deliberate host-requested reboot, not an unexplained reset.
+- Recovered kernel evidence: NOMMU selection at `run130-logdump.log:441`,
+  and repeated `CP initialization failed to idle` beginning at `:3960`.
+  The ME_INIT diagnostic at `:3491` says **`cb=unavailable`**, so its printed
+  zero register fields are not verified SMMU register readings. The source
+  change does not yet establish successful GPU initialization or completed
+  Android boot; the black-screen cause remains **unverified**. No additional
+  diagnostic boot or source fix was attempted.
+
+## Run136: first boot with the QPNP fuel gauge and charger both enabled
+
+- **Achievement, and its limit.** Run136 is the first image in this port to
+  reach ADB with **no** `initcall_blacklist` token. Runs 131/132 (identical
+  payloads, both drivers built in) and 135 (`initcall_blacklist=smbchg_init`,
+  gauge alone) all stalled with no ADB and no USB capture; run134
+  (`initcall_blacklist=smbchg_init,fg_init`) reached ADB and sustained through
+  175.79 s. Those four runs isolate the fuel gauge as *sufficient* to cause the
+  stall on its own. Run136 sustained ADB across the full 150 s poll
+  (`run136-adb-timeline.log:12-37`) with init starting services by device
+  t=42 s. `sys.boot_completed` remained unset.
+- **Two source changes, attribution not established.** `drivers/mfd/qcom-spmi-pmic.c`
+  gained the donor's PMI8950 subtype translation (raw `PMIC_SUBTYPE` is
+  `0x11`; `oc-test/drivers/platform/msm/qpnp-revid.c:210-224` reads the spare
+  register and maps `0x37`→PMI8937, `0x40`→PMI8940; offset derivation is
+  vendor-offset + 0x100, cross-checked against `REVID_FAB_ID 0xf2` ↔
+  `0x1f2`). Both drivers moved `module_init` → `late_initcall`. The subtype
+  change cannot explain the boot: the FG's `case PMI8950:`/`case PMI8940:`
+  arms at `qpnp-fg.c:8318-8320` and `:8620-8624` share one
+  `fg_8950_hw_init()` call, so the gauge's code path is identical before and
+  after. The initcall level is therefore the likely cause and the mechanism is
+  **unverified** — no oops capture exists (see below).
+- **Initcall level verified in the binary, not just in source.**
+  `nm out-run136/vmlinux` lists `__initcall__kmod_qpnp_fg__694_9285_fg_init7`
+  and `__initcall__kmod_qpnp_smbcharger__834_8491_smbchg_init7`; `out-run131`
+  shows the same two symbols with `6`.
+- **Fuel gauge confirmed correct.** `run136-usb.log:408` reads
+  `FG: fg_probe: FG Probe success - FG Revision DIG:3.1 ANA:1.2 PMIC subtype=64`,
+  byte-identical to stock `run135-stock-kernel-dmesg.log:769`. On the live
+  device `200f000.spmi:pmic@2:qcom,fg/driver` is populated and `bms` is
+  registered. This is the first verified gauge result on the port kernel.
+- **Charger still not bound, one level down.** `run136-usb.log:453` shows
+  `qpnp-smbcharger: deferred probe pending: ... adc@3100 not ready`, and
+  `:158` shows `qcom-spmi-vadc 200f000.spmi:pmic@2:adc@3100: Please define
+  VDD channel`. `drivers/iio/adc/qcom-spmi-vadc.c:810-815` makes `VADC_VDD_VADC`
+  and `VADC_GND_REF` mandatory, and
+  `Documentation/devicetree/bindings/iio/adc/qcom,spmi-vadc.yaml:66` requires
+  all four reference channels. The ported `arch/arm64/boot/dts/qcom/pmi8950.dtsi`
+  defined only REF_625MV/REF_1250MV. Consequence: `/sys/class/power_supply/`
+  held `bms` only, and the health HAL kept looping on a missing
+  `/sys/class/power_supply/battery/charging_enabled`. **The run130 charging-HAL
+  blocker is not closed.**
+- **Evidence limitations, stated plainly.** `pull-run-evidence.sh 136` read
+  0 bytes: the port kernel has no `su` and denies `/sys/fs/pstore`, so there
+  is no oops record and none of the usual proof that a crash did not occur.
+  The 428170-byte ACM capture (`run136-usb.log`) ends at the adbd handoff,
+  which per `REFERENCE-boot-testing.md` is tooling behaviour, not a fault.
+- **Provenance.** Built from a clean tree whose 21 manifest hashes were
+  re-verified byte-for-byte before the three changed files were copied in;
+  `out-run136` was seeded from `out-run131` so only the touched units rebuilt.
+  `package-run136.json`: image
+  `5deea6e457ae4ad1b55fdf25c17bf6967ae8e7d8268adca6190c47b320a827cd`,
+  ramdisk `d12d1d733d69eb08783b463dbd12b7196d3531fbdff31ef1d4a6d3033c45a6e8`
+  (the untouched run130 ramdisk), same total size as run131, command line
+  identical to run131. `boot-run130.img` re-verified unchanged at
+  `30bacf46ecf72dd6ca71de3f83601b7e1e71f8173b59c59326af2eb5f4d1b7f1`.
+  Logdump was pre-cleared and readback-verified (`run136-preclear.status`).
+  Return to rooted stock was a host-initiated reboot, not a spontaneous reset.
