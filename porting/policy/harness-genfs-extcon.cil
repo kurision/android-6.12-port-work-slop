@@ -1,0 +1,37 @@
+;; ---------------------------------------------------------------------------
+;; ActivityManager drops "system_server_pre_watchdog" (a near-watchdog hang)
+;; and then goes silent, and the last SystemServer frames in the log are:
+;;
+;;   ExtconUEventObserver: Unable to read .../qcom,qpnp-smbcharger/extcon/
+;;       extcon0/cable.1/name. This probably means the selinux policies need
+;;       to be changed.
+;;     at com.android.server.policy.PhoneWindowManager.initializeHdmiStateInternal
+;;     at com.android.server.policy.PhoneWindowManager.init
+;;     at com.android.server.wm.WindowManagerService$6.run
+;;
+;; so PhoneWindowManager.init, on the SystemServer path, cannot read the
+;; charger's extcon and hangs there. boot_progress_enable_screen is the last
+;; milestone reached and boot_completed never fires.
+;;
+;; CAF labels this directory sysfs_extcon -- but sysfs_extcon appears only 5
+;; times in vendor_sepolicy.cil and is NEVER the target of an allow, so that
+;; label grants nothing. What CAF does label sysfs_graphics is the msm-ext-disp
+;; extcon, and system_server_202604/surfaceflinger_202604 are allowed
+;; sysfs_graphics file (read write getattr open ...). This port has no
+;; msm-ext-disp extcon at all, so the charger's extcon is extcon0 and is what
+;; the HAL enumerates. Labelling the subtree sysfs_graphics therefore mirrors
+;; what CAF does for the extcon nodes SystemServer actually reads.
+;;
+;; genfscon does not cascade, so the directories and the name/state attributes
+;; are each labelled; the HAL reads cable.N/name, so that file is the one that
+;; has to carry the label.
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/name" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/state" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/cable.0" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/cable.0/name" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/cable.0/state" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/cable.1" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/cable.1/name" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/200f000.spmi:pmic@2:qcom,qpnp-smbcharger/extcon/extcon0/cable.1/state" (u object_r sysfs_graphics ((s0) (s0))))
