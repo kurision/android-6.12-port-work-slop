@@ -2334,3 +2334,93 @@ Last services/display lines in the final 3 s of each late silent run:
   initialization failed to idle`. If the boot dies silently, the
   double-claim fix was not sufficient — read the master sequence, do not
   guess again.
+
+## Run129: splash hang; no persistent log recovered
+
+- RAM-booted `boot-run129.img` (SHA256
+  `232780cd7fb3e5bcb276efbdfad7ae0dc71ed1655ba2da6ac901f3337a007032`),
+  kernel payload `2f60a289e2c0340f3460a6857ad2b2a24a66df25f61040efa2f5e710d69732bb`
+  (`ce847f02a249` build). Packaging report `package-run129.json` matches
+  run128's ramdisk, init, and cmdline; only the kernel payload changed.
+- Preboot `ack-*` files matched run128 byte-for-byte (archived in
+  `run129-preboot/`, with manifest). Preclear SHA matched run128's logdump;
+  `run129-preclear.status` records verified all-zero readback.
+- User observed the phone stuck at the fastboot splash and **force-rebooted**
+  it. The subsequent 4.19 ADB response was after that manual reboot, not
+  evidence of automatic recovery. No second diagnostic boot was performed.
+- `pull-run-evidence.sh 129 boot-run129.img` retrieved 67,108,864 bytes.
+  `run129-logdump.bin` has zero nonzero bytes (SHA256
+  `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351`).
+  `run129-ramoops.json` rejects both snapshot and both periodic-tail slots;
+  readable prefix is empty. No SD capture recovered. Neither
+  `/data/local/tmp/ack-early-logcat.log*` nor `ack-sync-probe.log` exists
+  after the manual reboot.
+- **Unverified:** failure location, panic versus hang, and whether KGSL
+  selected IOMMU mode. No new DIAG was recovered. This attempt does not
+  demonstrate that removing the duplicate bank owner resolves the splash
+  hang; it does not establish the failure mechanism either. Do not infer
+  "no panic" or a specific probe cutoff from empty evidence. Next: trace
+  the early master/probe sequence and select a visibility/control test
+  before spending another boot cycle.
+
+### Run128-to-run129 source audit (not a runtime fault localization)
+
+- Only commit `250485599` changes functional configuration: clock-name
+  resolution, deletion of the gpu master's `iommus`, and deletion of the
+  unconsumed `qcom,iommu-dma` marker. `dbbd51904` adds a diagnostic print;
+  `ce847f02a` changes documentation.
+- Run128's early return is explicit in `run128-usb.log:430-436`: clock
+  lookup fails, IOMMU probe returns -19, NOMMU is selected. Correct names
+  remove that barrier (`kgsl_iommu.c:2746-2761`). Newly reachable code
+  includes child population (`:2773`), DMA/IOMMU configuration (`:2708`),
+  **and immediate MMU initialization** (`kgsl_mmu.c:749-766`), not merely
+  the remainder of `_kgsl_iommu_probe`.
+- Initialization allocates setstate (`kgsl_iommu.c:1531`), maps registers
+  (`:1539`), creates a global pagetable (`:1560`), allocates/attaches its
+  domain (`:1203,1221`), and reads TTBR0/CONTEXTIDR (`:1188-1189`). Thus
+  the historical run36 DMA-call guard does NOT isolate the failure to
+  `of_platform_populate`; subsequent initialization is also unisolated.
+- Existing error-handling gap: `_kgsl_iommu_cb_probe` discards the return
+  from `of_dma_configure` (`:2708-2709`), including possible -EPROBE_DEFER
+  (`drivers/of/device.c:156-162`). Removing the gpu's own `iommus` also
+  removes that node's supplier dependency/configuration, so readiness must
+  be handled on the new child. This is a source-level risk, NOT a proven
+  explanation of run129's hang.
+- Do not attribute this to suspended-IOMMU register access without new
+  evidence: `qcom_iommu.c:937` already forbids runtime PM on these IOMMUs.
+  Likewise, `of_platform_populate` creates the CB child before its lookup;
+  a NULL-pdev fallback in this run has not been demonstrated.
+- Cross-checked the configuration and attach paths against online AOSP
+  `android16-6.12` sources (`drivers/iommu/of_iommu.c` and
+  `drivers/iommu/arm/arm-smmu/qcom_iommu.c`). Exact stop point still needs
+  early-visible or persistent call-boundary evidence; no further boot or
+  kernel-source modification was made for this audit.
+
+## Run130 preparation: NOMMU with an untranslated bank (not yet booted)
+
+- Run129 verdict: the `clock-names` rename in `250485599` re-opened the
+  kgsl IOMMU probe path, which is now 5/5 fatal with no recoverable log
+  (run13, run15, run34, run36, run129). run129 already had `&gpu`'s
+  `iommus` removed, so the double-owner [INFERENCE] above is not supported.
+  The splash hang (instead of run34/36's ~60 s reset) fits `panic=0` in
+  the run128/run129 cmdline (`package-run129.json`; panic=0 behaviour
+  proven by run118) — unverified for run129 itself.
+- Change: revert only the `clock-names` hunk (back to `gpu_ahb_clk`,
+  `gcc_bimc_gfx_clk`, with the DO-NOT-fix comment), keep
+  `/delete-property/ iommus` in `&gpu`. Built DTB checked with `fdtget`:
+  `gpu@1c00000` has no `iommus`; kgsl-iommu clock-names are the old pair.
+- Rationale (run128 evidence): kgsl was NOMMU (`run128-logdump.log:447-450`)
+  while qcom_iommu had turned bank 0 translating for the gpu device
+  (`:438-441`), so CP fetches of physical addresses faulted (`fsr=0x200`).
+  With the gpu no longer an IOMMU client, nothing attaches bank 0, which
+  run128 read as `sctlr=00000000 translating=0` at boot (`:382`), and
+  `dma_alloc_coherent()` becomes dma-direct (physical), matching NOMMU.
+- Untested risk: whether this secure-managed SMMU (TZ owns SMR/S2CR) passes
+  GPU traffic through with the bank's M bit clear; `fsr=0x200` was already
+  latched at boot in run128.
+- Run130 readout (run127 DIAG): `subtype='nommu'`; no `init_domain
+  master=1c00000.gpu`; at ME_INIT `translating=0` and no new `fsr` fault;
+  no `CP initialization failed to idle`; `system_server` starts. If CP
+  still fails with the bank untranslated, NOMMU-bypass is dead: next is
+  keeping `&gpu` `iommus` and making kgsl NOMMU program the DMA (IOVA)
+  addresses instead of physical ones.
