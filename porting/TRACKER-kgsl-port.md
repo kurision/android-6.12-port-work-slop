@@ -2269,3 +2269,68 @@ Last services/display lines in the final 3 s of each late silent run:
   untranslated (DRAM spans 0x10000000-0xffffffff, `L126:36-40`, so any
   32-bit IOVA is a valid physical address); and `CP initialization failed to
   idle` with `rbbm_status=800001C1`.
+
+## Run128: the context bank was translating while kgsl was NOMMU
+
+- `boot-run128.img` packaged the user's kernel `6.12.93-4k-gf75ca2ddbfb6`
+  (#47) on the run126 base: it differs from `boot-run126.img` only in the
+  kernel payload (ramdisk, cmdline and record count identical). Pull gave
+  `run128-logdump.log` (boot_id `0x63e3694e`, 54.3 s) and
+  `run128-retained-diagnostics.json` (early logcat 777,685 B `54a79101…`,
+  sync probe 30 B `18bdc208…`).
+- **The mismatch is confirmed at every ME_INIT** (`adreno_a5xx.c` DIAG added
+  by run127): `DIAG gpu_smmu: cb=gfx3d_user sctlr=000010e7 translating=1
+  ttbr0=000000001a6f9000 fsr=00000200 mmu_type=1`, with `gpuaddr ==
+  physaddr` for rb/memstore/pm4/pfp, plus `DIAG kgsl_mmu: subtype='nommu'
+  type=1 (NOMMU/physical)`. kgsl programmed *physical* addresses into the
+  ring while the bank was *translating* through a page table with no entry
+  for them (`fsr=0x200` = translation fault). Terminal state is unchanged
+  from run126: `CP initialization failed to idle`, `Can't find a memory
+  entry containing IB1BASE 0`, `start failed -110`; init shuts services
+  down at ~54.2 s and `system_server` never starts.
+- Read back at boot: `ctx probe(boot) iommu@1c48000/iommu-ctx@0:
+  sctlr=00000000 translating=0` — the bank starts bypassed, and only
+  qcom_iommu's `init_domain` turns translation on (`init_domain
+  master=1c00000.gpu cb=0 ttbr0=1a6f9000 sctlr=000010e7`, then
+  `attach_dev: 1c00000.gpu -> translated domain`). The master in both lines
+  is the **gpu device**, not the kgsl context-bank child.
+
+## Bank ownership: why the IOMMU path was dead, and the change (not yet booted)
+
+- `kgsl_mmu_probe` (`kgsl_mmu.c:745-777`) takes the first subtype whose
+  `probe()` returns 0. The IOMMU subtype (`_kgsl_iommu_probe`,
+  `kgsl_iommu.c:2715-2786`) fails at the clock lookup: the names come from
+  the board's `qcom,kgsl-iommu@1c40000` node but are resolved by
+  `devm_clk_get()` against the *gpu* device (the node never gets a platform
+  device of its own), and `gpu_ahb_clk`/`gcc_bimc_gfx_clk` do not exist
+  there -> `-ENODEV` -> silent NOMMU fallback, which is the run128 state.
+- The IOMMU path is the stock mode and the only workable one here: it
+  allocates its own domain and attaches the `gfx3d_user` child through the
+  IOMMU API (`_alloc_pt` -> `iommu_domain_alloc()`, `_attach_pt` ->
+  `iommu_attach_device()`, `kgsl_iommu.c:1112,382`) and maps IOVAs with
+  `iommu_map()`. It is also the only mode that *can* work, because
+  `dma_alloc_coherent()` on a DMA/IOMMU client hands back an IOVA while
+  `kgsl_iommu_set_pt()` writes a *physical* TTBR0.
+- So the bank needs exactly one owner, and on 6.12 it had two:
+  `msm8953.dtsi:1068` gives the **gpu device** `iommus = <&gpu_iommu 0>`
+  and the board's `gfx3d_user` child carries the same id, so two different
+  IOMMU domains program context bank 0 (qcom_iommu's default domain for the
+  gpu device, and the domain kgsl allocates for the child). Every earlier
+  attempt to make this path live kept that double claim: run13, run15 (with
+  the NULL-pdev fallback), run34 and run36 all died. [INFERENCE] The double
+  ownership is why.
+- Change (not yet booted): the board DT drops the gpu device's `iommus`
+  (`/delete-property/ iommus;` in `&gpu`), so the child is the only master;
+  the kgsl node's `clock-names` name clocks that exist on the gpu node
+  (`iface_clk`, `mem_iface_clk` — the same two phandles, same order); the
+  unconsumed `qcom,iommu-dma = "disabled"` marker is dropped (nothing in
+  this tree reads it — `qcom_iommu.c` has no `qcom,iommu-dma` support, which
+  is why the bank was programmed by the core at all). `msm8953.dtsi` is
+  left untouched.
+- Run129 expectation, to be read from the run127 DIAG: `DIAG kgsl_mmu:
+  subtype='iommu' type=0 (IOMMU/translated)`; a new `DIAG kgsl_iommu_cb:`
+  naming the master device and whether the child's platform device was
+  found; at ME_INIT `mmu_type=0` with `gpuaddr != physaddr`; and no `CP
+  initialization failed to idle`. If the boot dies silently, the
+  double-claim fix was not sufficient — read the master sequence, do not
+  guess again.
