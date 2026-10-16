@@ -3045,3 +3045,64 @@ registers a device with no pool at all.
   does not exist on this port, plus display-1 access and an AD interface.
 - **WLAN firmware**, not staged.
 - **The 5x charging-current gap** against stock on the same cable.
+
+## run148 -- node name fixed, and the next failure is exposed
+
+run148 booted with **438 KB of kernel log captured** (`run148-usb.log`), the
+first good capture in several runs, and the naming fix worked:
+
+    /dev/adsprpc-smd
+
+`adsprpcd`'s errno moved, which is the useful signal:
+
+    run147:  open_device_node failed ... errno 2  (No such file or directory)
+    run148:  open_device_node failed ... errno 16 (Device or resource busy)
+
+The node is found and opened, and the driver refuses it. `fastrpc_device_open()`
+ends at:
+
+    fl->sctx = fastrpc_session_alloc(cctx);
+    if (!fl->sctx) {
+            dev_err(&cctx->rpdev->dev, "No session available\n");
+            return -EBUSY;
+    }
+
+and `fastrpc_session_alloc()` walks `cctx->sesscount` entries for one that is
+`!used && valid`. The table is empty because entries are added by
+`fastrpc_cb_probe()` -- one per `qcom,fastrpc-compute-cb` child node -- and this
+dtsi has no cb children.
+
+### The comment that caused this
+
+The old dtsi comment read:
+
+> no cb children (no LPASS SMMU on 8953)
+
+That conflates the two independent things a cb child does. A cb child carries an
+`iommus`, which 8953 cannot supply, *and it creates a session*, which is
+mandatory. Upstream `msm8996.dtsi` has `cb@5..cb@8` with
+`iommus = <&lpass_q6_smmu N>`; the SMMU is for DMA-mapping DSP buffers, not for
+registering a session. `fastrpc_cb_probe()` reads the optional `reg` session id
+and calls `dma_set_mask(dev, DMA_BIT_MASK(32))` -- it never looks at `iommus`.
+
+run149 adds a single `cb@0` with `reg = <0>`. Built DTB verified:
+`fastrpc/cb@0`, `compatible = "qcom,fastrpc-compute-cb"`, `reg 0x0`, and driver
+coverage rises 113 → 114 nodes / 96 → 97 compiled in, so the node really binds.
+
+### Correction: audio is NOT fixed
+
+The docs said audio was cleared by run147 on the strength of `grep -c` returning
+0 in `run147-logcat-dump.log`. That was wrong to generalise, and run148 disproves
+it: **381** `AudioSystem`/`loadHwModule` errors, against 442 in run144.
+
+I checked whether the run147 dump had simply rolled over -- it had not. Both
+dumps span first-to-last timestamp of the whole boot (run147 `01-09 20:03:33` →
+`10-09 10:29:00`, run148 `01-09 20:17:14` → `10-09 10:26:35`), so run147's zero
+was real for that run. The count tracks how far `adsprpcd` gets before failing:
+at ENOENT it dies early and audio errors never accumulate; at EBUSY it gets
+further and then fails differently. Audio stays open until adsprpcd actually
+connects.
+
+The general lesson, which I have now hit twice in this bring-up: a single grep
+count on one run's log is not a component status. run147's zero was true and
+still the wrong conclusion.
