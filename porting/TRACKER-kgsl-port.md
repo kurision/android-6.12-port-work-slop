@@ -2808,3 +2808,75 @@ phandles are `0x7c`. **Not yet booted.**
 Last confirmed-good image is **run143**. Both run144 and run145 are packaged
 and verified structurally but untested; the phone went unreachable (recovery,
 as after run138) and could not be recovered from the host.
+
+## run144 (extcon labels) booted; run146 (fastrpc pool + backlight attrs) did not
+
+### run144 -- extcon genfscon works, and does not fix the hang
+
+Booted, sustained ADB, 240 s uptime. The extcon denial is **gone**:
+`grep -c ExtconUEventObserver` is 0 in `run144b-logcat-dump.log`, where
+run143 logged the failure plus the `PhoneWindowManager.init` frames. So the
+`sysfs_graphics` labelling of the charger's extcon subtree is correct and
+effective -- it just was not the whole of the SystemServer hang.
+
+`system_server_pre_watchdog` still fires and `sys.boot_completed` is still
+unset, with ActivityManager going silent at the same point as run143. The
+hang therefore has another component, still unidentified.
+
+Two things run144 did settle:
+
+- **The fingerprint SIGSEGV does reproduce.** `Fatal signal 11 (SIGSEGV),
+  code 1 (SEGV_MAPERR), fault addr 0xc0 in tid 881
+  (android.hardware.biometrics.fingerprint...)`. My earlier "no SIGSEGV in
+  run137" was wrong -- it came from a logcat window that had already rolled
+  over. This is the run130 finding, still live.
+- **The stock/port charging-current gap is real.** Same cable, same moment:
+  stock reports `Max charging current: 500000`, the port reports `100000`.
+  Five times lower. Stock sits at 100 % and reports status 3 (FULL), the port
+  sat at 92 % reporting status 2 (CHARGING), so actual current is not directly
+  comparable -- but the configured limit is not.
+
+### run142's backlight labelling was incomplete
+
+The `mm-pp-daemon` denial on `brightness` survives into run144:
+
+    avc: denied { read write } for name="brightness" dev="sysfs" ino=29830
+         scontext=u:r:mm-pp-daemon:s0 tcontext=u:object_r:sysfs:s0
+
+run142 labelled the backlight *directory* only. `genfscon` matches one path and
+does not cascade into sysfs attribute files, which are separate inodes. This is
+the same omission the extcon fragment avoided by labelling `cable.N/name` as
+well as its parent directories. `harness-genfs-backlight-attrs.cil` adds the
+four attributes actually present (`brightness`, `actual_brightness`,
+`max_brightness`, `bl_power`).
+
+### run146 -- packaged, and it did not boot
+
+`boot-run146.img` carries **two** changes on top of run145: the FastRPC DMA
+pool kernel (`e9354597`) and the backlight attribute labels.
+`fastboot boot ... OKAY`, then the device never appeared: no diag gadget, no
+adb, no USB device at all. Same shape as run138 and as run144's first attempt.
+
+**This is not yet evidence that either change is bad.** run144's first attempt
+vanished identically and then booted cleanly on the retry, and
+`REFERENCE-boot-testing.md` is explicit that one failure is not evidence. The
+bisect is already packaged and must be run before concluding:
+
+1. Boot `boot-run145.img` -- FastRPC DMA pool only, no backlight attrs.
+   If it also vanishes, the DT change is the cause; revert `msm8953.dtsi` and
+   the phandle.
+2. If run145 boots, run146's failure was either the backlight attrs (implausible
+   for a policy label) or transient.
+
+No firmware is staged twice and no cpio names are duplicated in run146
+(683 records, verified), so the two earlier packaging faults are not in play.
+
+### Charging-current gap (open)
+
+Stock and port, same cable: `Max charging current` 500000 vs 100000 µA. The
+port's DT sets `qcom,constant-charge-current-max-microamp = <1000000>` (1 A),
+so 100 mA is neither the DT value nor the stock value. Candidates not yet
+checked: which property the health HAL reads for that field (`INPUT_CURRENT_LIMIT`
+on `usb` vs `CONSTANT_CHARGE_CURRENT_MAX` on `bms`), and whether AICL has
+completed. The HAL can read the supplies through `dumpsys battery`, which is
+the channel to use.

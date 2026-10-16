@@ -1,0 +1,24 @@
+;; ---------------------------------------------------------------------------
+;; Backlight attribute files: completes run142's change. Not shippable.
+;; ---------------------------------------------------------------------------
+;; run142 labelled the backlight *directory* only, and the mm-pp-daemon denial
+;; survived: genfscon matches a single path and does not cascade into sysfs
+;; attribute files, which are separate inodes with their own dentry paths.
+;;
+;;   run144b-logcat-dump.log:
+;;     avc: denied { read write } for name="brightness" dev="sysfs" ino=29830
+;;          scontext=u:r:mm-pp-daemon:s0 tcontext=u:object_r:sysfs:s0
+;;
+;; mm-pp-daemon is permitted on sysfs_leds file (read write getattr open ...),
+;; and the label is right -- the file just never got it. This is the same
+;; omission that the extcon fragment explicitly handled by labelling cable.N/name
+;; as well as the directories above it.
+;;
+;; Files present under this device (read off the live device):
+;;   actual_brightness  bl_power  brightness  max_brightness
+;; All four are labelled: dpps opens brightness, and read-only access to the
+;; others is needed for a sane backlight read.
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/brightness" (u object_r sysfs_leds ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/actual_brightness" (u object_r sysfs_leds ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/max_brightness" (u object_r sysfs_leds ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/bl_power" (u object_r sysfs_leds ((s0) (s0))))
