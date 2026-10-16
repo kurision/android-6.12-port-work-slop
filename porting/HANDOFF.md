@@ -207,6 +207,129 @@ The packager refuses duplicate ramdisk record names (that is a real defect) and
 on a run that does not already contain the fragment you are adding, or you will
 silently ship it twice.
 
+## Inventory — what is actually on disk
+
+All under `porting/artifacts/snapshot60/`. Images are gitignored, so none of this
+survives a `rm`; recover from git history before deleting anything.
+
+### Images, newest first
+
+`kernel` is the kernel payload sha256 prefix — **the reliable way to tell two
+builds apart**, since every build reports the same `uname -r`
+(`6.12.93-4k-ga54b131a885c-dirty`).
+
+| image | kernel | size | base | policy fragment | booted? |
+|---|---|---|---|---|---|
+| `boot-run151.img` | `336a7fc23a72` | 43712512 | run149 | `210af3c87eb0` | **no — secilc abort, recovery** |
+| `boot-run150.img` | `336a7fc23a72` | 43712512 | run149 | `d55b06355e29` | **yes, current best** |
+| `boot-run149.img` | `336a7fc23a72` | 43710464 | run148 | none | yes |
+| `boot-run148.img` | `644881c2a781` | 43710464 | run147 | none | yes |
+| `boot-run147.img` | `afdc4cc452fe` | 43708416 | run144 | none | yes (after an EDL reset) |
+| `boot-run144.img` | `dabc20b927d8` | 43708416 | run143 | `f54704992603` | yes |
+| `boot-run143.img` | `dabc20b927d8` | 43708416 | run142 | `8f4477fc3138` | yes |
+
+`run145`, `run146` never booted usefully. `boot-run146.img` carries a rejected
+kernel and a policy fragment later found useless — kept for the record, not for
+use. A rejected `run144` image (duplicate firmware records) was deleted; its sha
+was recorded at `/tmp/opencode/run144-rejected.sha256`
+(`f6dff9c8136e778df...`) before removal.
+
+`package-runNNN.json` beside each image is the provenance: base image, kernel
+payload sha, cpio record count, and the policy fragment sha.
+
+### Kernel logs (`*-usb.log`, from the USB diag gadget)
+
+The most recent and most complete:
+
+| file | bytes | note |
+|---|---|---|
+| `run150b-usb.log` | 444401 | **run150b**, the most recent port boot |
+| `run150-usb.log` | 444986 | run150, same image |
+| `run149-usb.log` | 444441 | run149 |
+| `run148-usb.log` | 438053 | run148 |
+| `run151-usb.log` | 148832 | **truncated** — dies at the secilc abort, which is the point of it |
+| `run146-usb.log` | 131072 | truncated, run146 |
+| `run144b-usb.log` | 439391 | run144 (the `b` is the successful retry) |
+| `run143-usb.log` | 441851 | run143 |
+| `run141-usb.log` | 440169 | run141 |
+
+Many earlier runs have 0-byte logs — those are the splash/recovery failures.
+
+### Userspace logs (`*-logcat-dump*.log`)
+
+`run151-logcat-dump.log` (1.2 MB) is the smallest and covers run151.
+`run150b-logcat-dump.log` (3.6 MB) is run150b. `run149-logcat-dump.log` and
+`run149-logcat-dump2.log` are the same run at two points in time — the second is
+useful because the ring buffer rolls over, so a count taken from the first may
+simply have scrolled off (this is how I wrongly concluded audio was fixed).
+`run143-logcat-dump.log` / `-dump2.log` and `run144b-logcat-dump.log` are the
+largest.
+
+`run141-host-logcat.log` (14.6 MB) is the **only** log containing the
+charging-control HAL actually registering — `IChargingControl/default registered
+(binder 288)`. It is the baseline that later runs do not reproduce, so keep it.
+
+### ANR traces (`anr/`)
+
+| file | bytes | what it is |
+|---|---|---|
+| `ss-anr-102533.txt` | 424132 | **the `waitForDeclaredService` stack.** Subject `Blocked in handler on main thread (main) for 45s`. SystemServer **pid 1040** — an *older* boot, not run150b |
+| `r150b-anr.txt` | 651547 | run150b's trace (pid **1101**). Subject is `com.android.phone` ui thread; system_server included but **main is idle in `Looper.loop()`**, zero `ChargingControlController` frames |
+| `r150b-anr_2026-10-09-10-33-00-305` | 452981 | run150b-area, pulled with the same prefix |
+| `r150b-anr_2026-10-09-10-34-04-699` | 705002 | largest; pulled with the same prefix |
+| `anr_2026-10-09-10-25-42-095` | 71536 | SystemUI ANR — blocked in `BpSurfaceComposer::getGpuContextPriority` |
+| `anr_2026-10-09-10-25-42-072` | 71966 | the matching SystemUI ANR |
+
+The four files prefixed `r150b-` were pulled with `su` from stock; the two
+unprefixed SystemUI ones were pulled as plain `shell` and were readable. The
+naming is historical, not a guarantee — check the pid inside before trusting
+which run a trace belongs to.
+
+`/data/anr` on the device still holds many more, including traces whose
+SystemServer is pid 1104 (run149/150). Those have not been pulled and are worth
+checking, since they would show whether the `waitForDeclaredService` block is
+present in the 1104 runs or only in the older 1040 run.
+
+### Policy fragments (`porting/policy/`)
+
+One file per run. **Append only the fragment for the change you are testing**, to
+a base that does not already contain it — that mistake happened twice and the
+packager cannot catch a semantically-duplicated append (duplicates are merely
+warned about, because secilc accepts them).
+
+| file | statements | status |
+|---|---|---|
+| `harness-genfs-battery.cil` | 3 `genfscon` | **WORKS.** Labels the battery `power_supply` nodes so the charging-control HAL registers and `dumpsys battery` reports live values. The fix that got the original ask done. |
+| `harness-genfs-backlight.cil` | 2 `genfscon` | Labels the backlight **directory** only. Compiles, is in every image from run142 on, and is **insufficient** — it does not fix the `mm-pp-dpps` denial. |
+| `harness-genfs-extcon.cil` | 10 `genfscon` | **WORKS.** Labels the charger's extcon subtree `sysfs_graphics`. Verified: `grep -c ExtconUEventObserver` goes to 0 where run143 logged the failure plus the `PhoneWindowManager.init` frames. Did *not* clear the boot stall. |
+| `harness-genfs-backlight-attrs.cil` | 4 `genfscon` | **USELESS as written** — labels the attributes `sysfs_leds`, which is declared but never an allow target. Ships in run150/151. The comment block at the top explains the trap in full. |
+| `harness-sysfs-allow.cil` | 3 `allow` | Dead end, kept as record. The run140 experiment; it compiled (`secilc exit_code=0x0`) and did nothing. |
+
+`porting/policy/README.md` explains the CAF-vs-mainline naming mismatch, and ends
+with **why `genfscon` type validity cannot be checked offline** — read that
+before writing another one.
+
+Verified contents of the shipped images (counted from the CIL, not assumed):
+
+| image | total `genfscon` | battery | backlight dir | extcon | backlight attrs | attrs labelled |
+|---|---|---|---|---|---|---|
+| run143 | 367 | 3 | 2 | 0 | 0 | — |
+| run144 | 377 | 3 | 2 | 9 | 0 | — |
+| run147 | 377 | 3 | 2 | 9 | 0 | — |
+| run148 | 377 | 3 | 2 | 9 | 0 | — |
+| run149 | 377 | 3 | 2 | 9 | 0 | — |
+| **run150** | 381 | 3 | 2 | 9 | 4 | `sysfs_leds` (no effect) |
+| run151 | 381 | 3 | 2 | 9 | 4 | `sysfs_leds_202604` (**boots into recovery**) |
+
+So **run150 carries the full working set** — battery labels, extcon labels, and
+four inert backlight statements. run149 is the same minus the inert four.
+
+### Build trees
+
+`out-run149` and later under the repo root; `/tmp/ack-run131-source` is the tree
+the build script actually compiles (`ACK_TREE`). `/tmp` is tmpfs — do not stage
+anything there you cannot lose. ~25 GB free on `/home`.
+
 ## Artifacts
 
 `boot-run130.img` is the known-good base, sha256 `30bacf46ecf72dd6ca71de3f83601b7e1e71f8173b59c59326af2eb5f4d1b7f1`.
