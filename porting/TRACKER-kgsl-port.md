@@ -2941,3 +2941,73 @@ image. Kept on disk rather than deleted, per the artifact rule.
 - the `adsprpcd` denial on `adsprpc-smd` should be gone
 - `AudioFlinger: loadHwModule() error -19` and the 10 Hz `listAudioPorts failed`
   loop should stop
+
+## run147 -- booted; the ADSP is alive and the audio livelock is gone
+
+### First: two methodology faults of mine
+
+1. **The run146 capture script was never stopped.** It had been left polling
+   for a diag device since its own attempt, so when I booted run147 there were
+   two capture processes competing. Anything about the run146 "vanish" is
+   therefore confounded, and the bisect I designed around it was measuring the
+   wrong thing.
+2. **I cleared the logdump before a boot I had no way of capturing.** When
+   run147's first attempt died at the splash with 0 bytes of kernel log, the
+   persistent evidence was already gone. The logdump partition reads back empty
+   (`run147-failed/logdump-after-fail.bin`, 46 bytes, and those 46 bytes are
+   just `su: inaccessible or not found`).
+
+Neither is a device fact. Both are mine.
+
+### What the EDL event actually was
+
+    06:53:46  USB disconnect                (adb reboot bootloader)
+    06:54:00  18d1:d00d  EDL/Sahara, not 18d1:9008
+    06:54:03  disconnect, nothing after
+
+so the bootloader took the image and fell into EDL rather than booting it. But
+the phone came up on its own a few minutes later running the port kernel, which
+means the image did eventually boot. **The splash hang and the boot are the same
+event seen at different times**, not a determinate image failure.
+
+### The device is on a no-pool kernel
+
+`/proc/device-tree/reserved-memory/` has no `fastrpc-pool`, which rules out
+run145/run146 kernels and confirms the revert took effect. `fastrpc-pool` was
+present in run145's DT and absent here.
+
+### fastrpc binds correctly -- the node is just misnamed
+
+The rpmsg channel exists and the driver is bound:
+
+    /sys/bus/rpmsg/devices/remoteproc0:smd-edge.fastrpcsmd-apps-dsp.-1.-1/driver
+      -> ../../../../bus/rpmsg/drivers/qcom,fastrpc
+
+so `fastrpc_rpmsg_probe()` ran to completion. The node it registered is:
+
+    /dev/fastrpc-adsprpc-smd
+
+`fastrpc-` + `adsprpc-smd`. I passed `devnames[domain_id]` in place of
+`domains[domain_id]` but left the format string as `"fastrpc-%s%s"`, so the
+prefix survived. That is a third spelling that nothing in the vendor stack
+opens -- the run144 shim waited for `fastrpc-adsp`, and userspace wants
+`adsprpc-smd`. run148 drops the redundant prefix.
+
+Worth noting the binding is proof the revert was right: fastrpc probes
+perfectly well with no reserved-memory pool at all.
+
+### Real progress, independent of the naming bug
+
+Audio is clean for the first time on this port:
+
+| | run144 | run147 |
+|---|---|---|
+| `AudioSystem: listAudioPorts failed` / `loadHwModule` errors | 308 + 134 | **0** |
+| adsprpcd errors | 7454 | 8960 (still looping, node name) |
+
+The 10 Hz audio retry livelock is gone because the DSP side now initialises:
+`rpcmem_init_internal: opened ION device fd 4, configured heap IDs: system,
+contig` and `fastrpc_apps_user_init done with default domain:0`. That was
+burning CPU throughout SystemServer startup, so it is a plausible contributor
+to the boot stall -- though `system_server_pre_watchdog` still fires once and
+`sys.boot_completed` is still unset at 310 s, so the hang is not resolved.
