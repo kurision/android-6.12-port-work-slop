@@ -41,7 +41,11 @@ done
 command -v sshpass >/dev/null || { echo "missing tool: sshpass (brew install hudochenkov/sshpass/sshpass)" >&2; exit 1; }
 command -v scp >/dev/null || { echo "missing tool: scp" >&2; exit 1; }
 
-mkdir -p "$DEST"
+[[ -n "$DEST" ]] || { echo "empty destination: pass -D <local-dest-dir>" >&2; exit 2; }
+if [[ ! -d "$DEST" ]]; then
+	mkdir -p "$DEST" || { echo "cannot create destination: $DEST" >&2; exit 1; }
+	echo "-- created destination: $DEST"
+fi
 REMOTE="$USER@$HOST"
 
 # Probe the remote out dir read-only before pulling anything.
