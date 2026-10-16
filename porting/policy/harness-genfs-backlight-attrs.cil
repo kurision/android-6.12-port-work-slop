@@ -1,5 +1,32 @@
 ;; ---------------------------------------------------------------------------
-;; Backlight attribute files: completes run142's change. Not shippable.
+;; Backlight attribute files: completes run142's change.
+;;
+;; CORRECTION (run151). This fragment shipped once, in run150, labelled
+;; `sysfs_leds` -- and that was wrong, so run150 changed nothing:
+;;
+;;   avc: denied { read write } for comm="mm-pp-dpps" name="brightness"
+;;        dev="sysfs" ino=29836
+;;        scontext=u:r:mm-pp-daemon:s0 tcontext=u:object_r:sysfs:s0
+;;
+;; `sysfs_leds` is a real type, so secilc accepts it and the fragment compiles,
+;; but nothing in the policy is ever granted access to it. The allow that
+;; matters targets the *versioned* type:
+;;
+;;   (allow mm-pp-daemon sysfs_leds_202604
+;;          (file (ioctl read write getattr lock append map open watch ...)))
+;;
+;; and the policy's own sysfs_type set lists `sysfs_leds_202604`, not
+;; `sysfs_leds`. Hence `sysfs_leds_202604` below.
+;;
+;; This is the same trap as `sysfs_extcon`, which also exists as a type, is
+;; also never an allow target, and is why the extcon fix had to label the
+;; charger's extcon subtree `sysfs_graphics` instead. The rule learned twice:
+;; confirm the target type is actually named in an `allow` before using it,
+;; because a wrong-but-existing type compiles silently and does nothing.
+;;
+;; Note the contrast that made this easy to get wrong: `sysfs_battery_supply`
+;; *is* a member of sysfs_type unversioned, so the battery labels using that
+;; spelling work, and the same spelling looks right for the next component.
 ;; ---------------------------------------------------------------------------
 ;; run142 labelled the backlight *directory* only, and the mm-pp-daemon denial
 ;; survived: genfscon matches a single path and does not cascade into sysfs
@@ -18,7 +45,7 @@
 ;;   actual_brightness  bl_power  brightness  max_brightness
 ;; All four are labelled: dpps opens brightness, and read-only access to the
 ;; others is needed for a sane backlight read.
-(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/brightness" (u object_r sysfs_leds ((s0) (s0))))
-(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/actual_brightness" (u object_r sysfs_leds ((s0) (s0))))
-(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/max_brightness" (u object_r sysfs_leds ((s0) (s0))))
-(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/bl_power" (u object_r sysfs_leds ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/brightness" (u object_r sysfs_leds_202604 ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/actual_brightness" (u object_r sysfs_leds_202604 ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/max_brightness" (u object_r sysfs_leds_202604 ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/200f000.spmi/spmi-0/0-03/200f000.spmi:pmic@3:leds@d800/backlight/backlight/bl_power" (u object_r sysfs_leds_202604 ((s0) (s0))))
