@@ -3170,3 +3170,52 @@ but there is no evidence tying it to the hang -- it is a native daemon looping
 in its own process, not something SystemServer blocks on. Work now goes to the
 hang; the adsprpc ioctl port is recorded above as the scoped task it actually
 is.
+
+## run150 -- re-applying the backlight labels the lineage dropped
+
+run147 was based on run144, not run146. That silently orphaned
+`harness-genfs-backlight-attrs.cil`: run146 was the only image carrying it and
+run146 never booted. So run147 through run149 all lack it, which is why the
+denial is still in run149:
+
+    10-09 10:26:31.991  2502  2502 I auditd : avc: denied { read write } for
+        comm="mm-pp-dpps" name="brightness" dev="sysfs" ino=29836
+
+Rebasing onto run144 to get the naming fix threw away run146's other change
+without noticing. run150 = run149 + those 4 `genfscon` statements, nothing else
+(kernel unchanged at `336a7fc2`).
+
+Path re-verified against the live device before packaging, since the whole
+failure was a path that did not match:
+
+    /sys/class/backlight/backlight ->
+      ../../devices/platform/soc@0/200f000.spmi/spmi-0/0-03/
+      200f000.spmi:pmic@3:leds@d800/backlight/backlight
+
+which is exactly what `harness-genfs-backlight-attrs.cil` labels.
+
+### Why this might be the boot blocker -- stated as a hypothesis, not a finding
+
+run149 also shows `ANR in com.android.systemui` at 10:25:42, and Dpps never
+initialises:
+
+    Dpps: main():33 Failed to initialize DPPS
+    mm-pp-dpps denied on brightness
+
+Dpps is the display policy daemon and it is restarting every 5 s. If the display
+policy layer never comes up, the composer cannot complete, and SystemUI has
+nothing to draw into -- which is consistent with both the SystemUI ANR and
+SystemServer going unresponsive after `enable_screen`.
+
+That chain is plausible and it is **not verified**. What is verified is the
+denial, that `Dpps: main():33 Failed to initialize DPPS` follows it, and that
+SystemServer goes unresponsive with `system_server_pre_watchdog` shortly after.
+run150 tests the first link. If the denial clears and Dpps initialises but
+`boot_completed` is still unset, the hypothesis is wrong and the hang is
+somewhere else entirely.
+
+I still do not have SystemServer's main-thread stack: the watchdog trace goes to
+`/data/anr`, and there is no `su` on the port kernel to read it. The `watchdog`
+process is itself denied reading `transactions` from debugfs, so its self-dump
+fails too. Getting that stack is the thing that would end the guessing, and it
+needs a way to read `/data/anr` on the port.
