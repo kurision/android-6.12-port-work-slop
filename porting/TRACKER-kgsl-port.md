@@ -3649,3 +3649,42 @@ What this rules out and what it leaves:
 Next probe has to cover the bring-up sequence before ME_INIT: RBBM_STATUS at
 probe and after each step of `_adreno_start()` (ring start, hw init, GPMU init,
 firmware load), to find where bit31 first latches.
+
+### Run155: the GPU is healthy through `a5xx_start()` and hangs when the microcode is kicked
+
+Boot: `boot-run155.img`, kernel `6.12.93-4k-gc2dd623beed8-dirty`, payload
+`32793f67fdaa...`, ramdisk unchanged from run150. USB capture again ends early
+(`run155-usb-capture.status`: `reader-error` at 431,746 B, 63 s), so all of the
+value is in `run155-logdump.log` (5,909,057 B) and `run155-live/`.
+
+108 bring-up probes, and they split the run into two halves that were previously
+mixed together:
+
+| sample | RBBM_STATUS | count |
+|---|---|---|
+| **first** start in the boot, all three probes | `00000001` (idle, **no** hang bit) | 3 each |
+| every later start, `start-entry` already | `800001C1` / `C00001C1`, `int0=00800200` | 16 + 17 |
+
+Two facts fall out, and together they redirect the hunt:
+
+1. **The GPU is not hung during `a5xx_start()`.** On the first start of the
+   boot every probe — entry, after `RBBM_AHB_CNTL0`, end — reads `rbbm=00000001`
+   with `int0=0`. All three earlier "the hang predates ME_INIT" readings were
+   from *subsequent* starts, which inherit a GPU that the first failed attempt
+   already left hung.
+2. **Nothing ever clears that hang.** From the second start onwards every probe
+   reads the latched hang, so each retry starts from an already-broken GPU and
+   cannot say anything new. The recovery path (`adreno_clear_gpu_fault()`,
+   `_soft_reset()`) does not reset the core.
+
+So the only informative sample is the first start: clean through the end of
+`a5xx_start()`, and by ME_INIT submit it already reads `c00003c1` with
+`rb_ptr=C/C`. Everything between those two points is:
+
+    a5xx_rb_start()  (adreno_a5xx.c:2205-2241)
+        CP_RB_CNTL, CP_RB_BASE  ->  a5xx_microcode_load()  ->  CP_ME_CNTL = 0
+        ->  a5xx_send_me_init()   <-- first read with bits 30/31 set
+
+which places the hang in `a5xx_microcode_load()`, where the CP is actually
+started. Next probe: sample RBBM_STATUS immediately after the ring base is
+programmed and immediately after `a5xx_microcode_load()` returns.
