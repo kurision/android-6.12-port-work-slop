@@ -1,4 +1,263 @@
-# Handoff — tissot 6.12 port, state at commit `017effda6`
+# Handoff — tissot 6.12 port, update 2026-10-16 (macOS session)
+
+## Latest: run161 (2026-10-16 evening) — read this first
+
+**Last used boot image**: `porting/artifacts/snapshot60/boot-run161.img`
+(gitignored; provenance in `package-run161.json`, `kdir-run161/SHA256SUMS`).
+
+- image sha256 `ad5ce74f0534d4c70b69d0e770b8d47b6792bec8c70c9e31e816074a7f40f4a7`
+- kernel `6.12.93-4k-g8f6a13ced3c2-dirty #57`, Image.gz-dtb sha256
+  `69b9955be90d4d67e06865b133e9ba3958df81c81412c5cbb4283b1f63db2a81`
+- base `boot-run155.img` ramdisk/init/cmdline unchanged; `--debuggable
+  --keep-stock-console`. Symbols: `run161/System.map` (vmlinux pull was
+  incomplete).
+- Repackage: `package-diag-boot.py --base-image boot-run155.img --kernel-dir
+  kdir-run161 --init init-run127 --debuggable --keep-stock-console`.
+
+**State**: Android boots (`sys.boot_completed=1` ~104-110 s, bootanim
+stopped, no watchdog, no new ANRs), screen black.
+
+Commits since run155 (unpushed unless pushed by user): `ac7728da2`,
+`5ee66cef0` (probes), `4aafe26dc` (**fix**: soft reset on start without
+GPU regulators — cured `CP initialization failed to idle`), `c72069425`
+(donor A506 DT quirks; no effect), `12fd6a087`, `8f6a13ced` (fault IB dump
++ CP fetch position).
+
+**Open GPU blocker**: every GL context faults (`800001C1`, CP-only busy).
+run161: SurfaceFlinger stops at IB1 offset 0x1a0 after two IB2 calls,
+around `CP_COND_EXEC`/`CP_MEM_WRITE 0x30f48000`/`CP_WAIT_MEM_WRITES`.
+Hypothesis: CP waits on user-memory access that never completes under
+NOMMU. Next: at fault, CPU-read the CP_MEM_WRITE target and log whether the
+user buffer is physically contiguous. Preemption is disabled (NOMMU) but
+not at the stop point. Details: `TRACKER-kgsl-port.md` "Run156-158"+.
+
+**Black screen**: also backlight SELinux denials (`hal_light_default`
+write `brightness`, `tcontext=sysfs`), see `FAILING-COMPONENTS.md`.
+
+**Process**: logdump is not cleared between boots; stale tails from older
+runs follow the fresh dump (run158/159 "392 s" lines were Run155). Pull
+builds with `pull-built-kernel.sh -D <dir>` (positional dir is ignored).
+Port boot has `ro.debuggable=0`: no adb root; read kernel log from stock
+logdump.
+
+## Read this update first (newer, supersedes the rest of this file)
+
+**`sys.boot_completed` IS set on the user's manual run150 boot. The port boots
+to a complete Android.** This contradicts every "boot never completes" statement
+below, including the one-line state in the historical section. Do not act on
+those until this is reconciled.
+
+Verified 2026-10-16 on device `2819f2320604`, boot_id
+`f6a1201b-1e6f-4622-bd3e-f9d079a34fab`:
+
+- uptime **590.26 s**: `sys.boot_completed=1`, `mSystemReady=true`,
+  `mSystemBooted=true`, `dumpsys window lastanr` -> no ANR since boot.
+- Still `init.svc.bootanim=running` while booted. Cosmetic, not a stall.
+- SystemServer is now PID **4977**, SurfaceFlinger still **712**. The PID 1108
+  recorded below is dead — see the watchdog kill.
+
+### What actually happens: SystemServer is watchdog-killed, then boot succeeds
+
+From `run150-manual-live-20261016/port-logcat.log`:
+
+- `watchdog: Blocked in handler on ui thread (android.ui) for 191s` at
+  `:74356`, then `:78059` `*** WATCHDOG KILLING SYSTEM PROCESS`. The annotated
+  subject is `HardwareRenderer.nSyncAndDrawFrame` <- `syncAndDrawFrame` <-
+  `ViewRootImpl.performDraw` on `android.ui`.
+- `:78082` `Sending signal. PID: 1108 SIG: 9`; `:78201` Zygote reports exit.
+- `:80348` Zygote forks **4977** as the new SystemServer.
+- The restarted server re-runs services: `:100211` `boot_progress_enable_screen:
+  393914` (uptime ~394 s), then `:125670`+ boot completed at ~uptime **484 s**.
+
+So the stall is not permanent: the GPU-blocked UI thread is killed by the
+watchdog, the fresh SystemServer gets past the stage that blocked the first one,
+and boot finishes. This is the same wait chain the ANR traces describe
+(`adreno_drawctxt_wait`, `Fence waitForever ... timeline(kgsl-3d0_8-system_server)`),
+seen as its consequence rather than as a permanent deadlock.
+
+The still-unfixed part is the *first* SystemServer's 191 s block in
+`nSyncAndDrawFrame` — a kgsl fence that never signals. Watchdog restart currently
+masks it. That is the real remaining kernel-side target.
+
+### Evidence saved this session (no reboot, nothing cleared)
+
+- `run150-manual-snapshot-20261016/final-identity-20261016.log` — uptime, boot_id,
+  PIDs, boot state at the end of the manual boot.
+- `run150-manual-snapshot-20261016/boot-completed-confirm-20261016.log` — first
+  `boot_completed=1`, battery state.
+- `run150-manual-snapshot-20261016/logcat-post-boot-completed-20261016.log` —
+  3.86 MB full `-b all` dump taken after completion.
+
+### Still valid from the older update below
+
+Nothing was flashed, changed or cleared in this session. The device is still on
+the user's manual run150 RAM boot; the logdump on the device is untouched.
+Handoff steps 2-4 (reboot to stock, persistent pull as label 153, read the
+recovered logdump) are now **lower priority** — worth doing for the kernel-side
+fence evidence, but no longer blocking, since userspace boot is proven.
+
+
+**No kernel, init, policy, DT, firmware or boot-image changes were made in this
+session. No fix was tested. Nothing was flashed.** The supplied run150 image
+was RAM-booted as the run152 control; the user subsequently RAM-booted run150
+manually. Do not conflate these attempts or assign their evidence by date alone.
+
+### Device state at the time the older update was written
+
+- Device `2819f2320604` is reachable through ADB on **6.12**, not stock.
+- Query at the time: `6.12.93-4k-ga54b131a885c-dirty`, uptime **323.92 s**,
+  `sys.boot_completed` empty, SurfaceFlinger PID **712**, SystemServer PID **1108**.
+  That reading was taken **before** the watchdog kill and is superseded above.
+- This is the **user's manual run150 boot**. Leave its logdump intact.
+- The read-only manual-boot observer (PID **37291**, `--seconds 360`) has now
+  finished; the harness reported completion after this handoff was written.
+  Its cleanup stops its logcat child. It does NOT reboot. Recheck processes
+  before rebooting; do not leave a reader across another boot.
+- The run152 observer and USB reader were stopped. No automatic stock return
+  occurred: ADB was unavailable when that orchestration tried to recover.
+
+### Exact image and terminology
+
+`porting/artifacts/snapshot60/boot-run150.img` is the image the user supplied.
+Verified before testing and again afterward:
+
+```
+size:                  43712512
+image sha256:          6a73c408a19dc57ebb6acb9c2865a9e8bfa8689fc6434c3c5eaae1b8bcf4fce1
+kernel payload sha256: 336a7fc23a72437826ca39325cc0f8bf7f212ec36b7ed4ecc6afd50ff6839946
+ramdisk sha256:        b14782e30652aa48333f30ea0a5469ae44b0e1a37283491bbd18d4ad1ff95eef
+init sha256:           da0f2a6123838d10e36e412ba243a3eff92577b0acf58293b4fd83b3bddc08f4
+cpio records:          683
+```
+
+`package-run150.json` and `init-run127` are also present. The image embeds the
+full inherited debug ramdisk and battery/extcon policy. Do not reconstruct it.
+Run150 and run151 were both packaged from **run149** (original table below).
+Run130 is the earlier known-good ramdisk base, not run150's immediate parent.
+"Known-good" here means reaching userspace/ADB, NOT completing Android boot.
+
+### What happened in run152
+
+- Used the exact run150 image above. `run152-capture-host.log:3-6` records
+  `fastboot ... boot .../boot-run150.img`, sending and booting both OKAY.
+- Before clearing, saved and SHA-verified the existing 64 MiB logdump in
+  `run152-preparation/preexisting-logdump.bin`. Its hash/provenance is in
+  `run152-preparation/manifest.json`.
+- The five `ack-early-logcat.log[.1-.4]` files were individually copied,
+  hash-verified, then removed on-device so the next early capture was fresh.
+  Copies are in `run152-preparation/early-logcat-before-boot/`. No ANRs deleted.
+- `run152-preclear.status` proves logdump zero-readback before RAM boot.
+- Host observer ran nine minutes; at its end ADB was unavailable. USB reader
+  was explicitly terminated, so there is no normal EOF/status completion.
+- **Correction to earlier chat:** the USB capture is NOT empty. It contains
+  **214206 bytes**, ending around kernel t=32.53 s. `run152-usb.log:1034`
+  records secilc exit 0; `:1529-1535` starts service managers; `:1614` says
+  fsck reported no error. It reached userspace. This is an incomplete capture,
+  not proof of a kernel stall at its final line.
+- Because the reader remained waiting and the user manually booted run150
+  during this exchange, attribution of the partial USB bytes to the initial
+  attempt versus the manual attempt is **not established**. Do not claim two
+  reproduced outcomes from them.
+- `run152-logdump.bin` and `run152-postboot/` do NOT exist. Persistent recovery
+  never ran, and the manual boot may have overwritten the first attempt's slots.
+
+### What is established in the manual boot
+
+`run150-manual-snapshot-20261016/charging.log:1-5` shows both the Android health
+HAL and `vendor.lineage.health.IChargingControl/default` registered. Lines
+15-20 report charging status 2, level 96 and 4373 mV. Do not chase an absent
+charging HAL as the blocker for THIS boot.
+
+The snapshot's `logcat.log:6585` records `boot_progress_enable_screen` at
+90037 ms; boot completion remained unset at 323.92 s. Rootless dmesg/pstore
+and `debuggerd -b` were denied; corresponding failure logs are saved. No live
+SF stack or late kernel cause was obtained by those commands.
+
+Current logcat is dominated by repetitive FastRPC and audio errors. In a
+44-second, 11457-record tail, ten FastRPC messages each appeared about 865
+times (~76% combined), plus ~8% repeated audio-port errors. The tail showed
+no new boot milestone/watchdog event. This is NOT proof FastRPC blocks boot.
+
+### Historical ANR evidence recovered — stronger than the old hypothesis
+
+Pulled **47 traces** from `/data/anr` using stock `su` before these boots:
+
+- `anr/ANR-index.log`: per-file SystemServer PID and key frame counts.
+- `anr/ANR-gpu-wait-excerpts.log`: selected PID 1104/1101 stacks with original
+  file names and line numbers. Originals are beside these summaries.
+- PID 1104 traces `anr_2026-10-09-10-26-36-263` (45 s watchdog subject) and
+  `anr_2026-10-09-10-29-02-513` (191 s) repeat the graphics wait chain.
+- SystemServer `android.display` waits in `BpSurfaceComposer::bootFinished`.
+  SF's binder thread waits in `SurfaceFlinger::bootFinished` / `OnceFuture`.
+  RenderEngine is in shader-cache priming -> `flushGL` -> libgsl timestamp
+  wait; its kernel waiting channel is `adreno_drawctxt_wait`. The PID 1101
+  trace also contains this pattern. Main being in Looper does not exonerate SF.
+- This establishes a repeated WAIT CHAIN, not the kernel-side root cause.
+  PID alone does not uniquely identify a run; historical run mapping still
+  needs matching logs/build/process identities.
+
+Upstream cross-check: current AOSP `SurfaceFlinger.cpp`, `bootFinished()`,
+explicitly waits for `mRenderEnginePrimeCacheFuture`:
+https://android.googlesource.com/platform/frameworks/native/+/refs/heads/main/services/surfaceflinger/SurfaceFlinger.cpp
+The installed ROM reports Android **17 / API 37**. Earlier chat's assertion
+that Android 13 sources matched this ROM was wrong. Main is corroboration,
+not verified exact ROM source. The old section below's VINTF version
+registration hypothesis is unsupported: examined servicemanager declaration
+checks use package/interface/instance, not interface version. Do not patch the
+manifest version on that hypothesis alone.
+
+### Local evidence inventory added this session
+
+All paths below are under `porting/artifacts/snapshot60/`:
+
+- `stock-evidence-20261016-103115/`: stock logcat (4.48 MB), dmesg (1.17 MB),
+  identity, properties, services and process lists; vendor health binaries,
+  init RCs and VINTF manifests in its `vendor/` subtree. STOCK, not port logs.
+- `retained-port-logs-20261016/`: 24 readable retained port log files plus
+  `capture.tar`; includes the then-current early logcat and preserved run130,
+  run133 and run134 directories. Not all files describe the same boot.
+- `run152-preparation/`: preserved preboot partition and early logcat, manifest.
+- `run152-session.log`, `run152-capture-host.log`, `run152-usb.log`,
+  `run152-live/`, `run152-before-stock.log`, `run152-preclear.*`.
+- `run150-manual-live-20261016/`: bounded observer samples, timeline, streaming
+  `port-logcat.log` (12.2 MB at the last size check; capture subsequently finished).
+- `run150-manual-snapshot-20261016/`: one-time logcat, identity, battery/service
+  state, GPU access and recorded permission failures.
+
+Added operational files: `porting/RUN152-test.md` (pre-test instructions, NOT a
+result report) and `porting/logging/observe-gpu-boot.py` (read-only bounded
+collector). Stock smoke test confirmed stock logs aren't labelled port; mocked
+timeout/permission tests passed. No kernel tests or fixes claimed.
+
+### Next steps — recover this boot before another test
+
+1. Stop/wait for the manual observer and its logcat child; confirm no stale USB
+   reader. Save final identity, uptime, process IDs, boot ID and boot-completion
+   state. Do not clear any kernel evidence.
+2. Ordinary `adb -s 2819f2320604 reboot` returns a RAM boot to stock. Confirm
+   `uname -r` is 4.19 and `su -c id` succeeds before recovering the partition.
+3. Use an UNUSED label such as **153** for the MANUAL boot's persistent recovery,
+   documenting that the user booted run150 and did not preclear for this attempt.
+   From `porting/artifacts/snapshot60/`:
+   `bash ../../logging/pull-run-evidence.sh 153 boot-run150.img`.
+   Hash-check the local 64 MiB against the device. Copy `/data/anr` and fresh
+   early-logcat rotations into new manual-boot folders; never overwrite originals.
+4. Read the recovered late kernel log for CP initialization/idle failures, SMMU
+   faults and GPU completion/interrupt evidence, and correlate the new PID 1108
+   ANRs. Lack of records or access is not evidence of absence.
+5. Only then choose ONE targeted fix or diagnostic change. Keep real run150 as
+   immutable base. Do not mix FastRPC ABI work, backlight policy and GPU changes.
+   No new candidate image has been built or approved by evidence yet.
+
+Read `REFERENCE-boot-testing.md` before the next cycle. This host is macOS,
+pyserial 3.5 is available, and the USB reader enumerates macOS serial ports.
+No SD card was detected; logdump is the primary durable kernel evidence path.
+The worktree had extensive preexisting modifications/deletions; do not reset
+them. These include deleted historical images, so preserve all remaining bases.
+
+---
+
+## Previous handoff — historical state at commit `017effda6`
 
 Written for whoever picks this up next. Read this first, then
 `porting/REFERENCE-boot-testing.md`, then `porting/FAILING-COMPONENTS.md`.
