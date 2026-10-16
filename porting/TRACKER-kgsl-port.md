@@ -3219,3 +3219,74 @@ I still do not have SystemServer's main-thread stack: the watchdog trace goes to
 process is itself denied reading `transactions` from debugfs, so its self-dump
 fails too. Getting that stack is the thing that would end the guessing, and it
 needs a way to read `/data/anr` on the port.
+
+## run150/run151 -- two lost cycles on the backlight labels, and why
+
+### run150: the labels were present, correctly spelled, and did nothing
+
+run150 = run149 + `harness-genfs-backlight-attrs.cil` (4 `genfscon`,
+`sysfs_leds`). The `mm-pp-dpps` denial is unchanged:
+
+    avc: denied { read write } for comm="mm-pp-dpps" name="brightness"
+         dev="sysfs" ino=29836
+         scontext=u:r:mm-pp-daemon:s0 tcontext=u:object_r:sysfs:s0
+
+Before blaming the path I re-extracted the ramdisk and checked the CIL: run150
+carries 8 `leds@d800` genfscon lines including
+`.../backlight/backlight/brightness` -> `sysfs_leds`. They are there and the path
+is right -- confirmed independently against the live symlink, which resolves to
+exactly the labelled path:
+
+    /sys/class/backlight/backlight ->
+      ../../devices/platform/soc@0/200f000.spmi/spmi-0/0-03/
+      200f000.spmi:pmic@3:leds@d800/backlight/backlight
+
+So the label was applied to a type that grants nothing. `sysfs_leds` is declared
+(`(type sysfs_leds)`) but is never the target of any allow; `mm-pp-daemon` is
+allowed on **`sysfs_leds_202604`**.
+
+### run151: that spelling killed the boot
+
+run151 used `sysfs_leds_202604` and the phone went to recovery. The kernel log
+ends:
+
+    init: /system/bin/secilc: Type not a type or type alias
+    init: /system/bin/secilc: Failed to resolve AST
+    init: /system/bin/secilc: Failed to compile cildb: -1
+    init: secilc exit_code=0xff00
+
+`sysfs_leds_202604` is named in `vendor_sepolicy.cil` as an allow target, which
+is why it looked right, but it is not declarable in a `genfscon`. Appearance in
+an `allow` is not the same thing.
+
+Reverted in `876248591`. Two cycles lost to a guess I could have scoped more
+carefully.
+
+### The offline check I tried, and why it does not work
+
+I wrote a packager assertion that every type a `genfscon` names is declared,
+specifically to catch this without a boot. It flagged three stock types
+(`sysfs_battery_supply`, `sysfs_graphics`, `sysfs_usb_supply`) and was wrong in
+both directions: the CIL in the ramdisk is a fragment, and `vendor_sepolicy.cil`
+is read from `/vendor` at runtime,
+
+    init: Using /system/etc/selinux/plat_sepolicy_genfs_202604.cil for genfs labels
+
+so any type declared there is legitimately absent from the image. Removed rather
+than shipped as noise; written up in `porting/policy/README.md` instead.
+
+### Where this leaves the backlight
+
+Unresolved, and it needs a real answer rather than another guess. Either
+`sysfs_leds_202604` is declared somewhere I have not looked and the genfscon is
+malformed in some other way, or the grant has to be an explicit `allow` on
+`sysfs_leds` rather than a label. The second is checkable by reading the policy
+files directly rather than inferring from an `allow`.
+
+### Still the boot blocker
+
+The SystemServer hang is undiagnosed. run149/run150 both show
+`system_server_pre_watchdog` with `boot_progress_enable_screen` the last
+milestone, plus `ANR in com.android.systemui` at 10:25:42 and Dpps restarting
+every 5 s. Whether Dpps is on the causal path is still a hypothesis; the backlight
+denial is confirmed, the chain from it to the hang is not.
