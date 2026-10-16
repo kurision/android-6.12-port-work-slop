@@ -3688,3 +3688,43 @@ So the only informative sample is the first start: clean through the end of
 which places the hang in `a5xx_microcode_load()`, where the CP is actually
 started. Next probe: sample RBBM_STATUS immediately after the ring base is
 programmed and immediately after `a5xx_microcode_load()` returns.
+
+### Run156-158: the hang is a restart without reset; a soft reset fixes startup, draws still hang (2026-10-16)
+
+Correction to Run155: the hang is **not** in `a5xx_microcode_load()`, and the
+CP does not hang when it is unhalted. Busy bits read ~30 us after clearing
+ME_HALT are the CP running its own init; Run157's `me-unhalted` probe
+(`5ee66cef0`) shows it idle again by the ME_INIT sample.
+
+- Run156 (`ac7728da2`, probes at `rb-programmed`/`microcode-loaded`): the
+  automated `fastboot boot` stuck at splash with the logdump byte-identical
+  (no kernel record, `run156-analysis.json`); the user's manual boot of the
+  same kernel booted (`run156-manual-*`).
+- Run157 (`run157-logdump.log`): starts 1-2 enter with `rb_ptr=0/0` and
+  succeed; start 3 enters with `rb_ptr=C/C` (state from the previous start
+  survived) and is already hung at `rb-programmed`. Same shape in Run156.
+- Cause: no GPU regulators in the DT, so `regulators_left_on()` returned
+  false and `_adreno_start()` never soft reset the core, while runtime PM
+  keeps the GX domain on across KGSL transitions.
+- Fix `4aafe26dc`: treat unmanaged GX power as left on, so the core is soft
+  reset before every start.
+- Run158 (`4aafe26dc`, `run158-{usb.log,live/,logdump.log}`):
+  `sys.boot_completed=1` at ~104 s on the first SystemServer, bootanim
+  `stopped`, `kgsl_3d0_irq` 6603 at completion, no watchdog kill, no new
+  `/data/anr` files.
+- **Not fixed**: real draw work still hangs mid-IB. `GPU hang detected ...
+  status 800001C1` for surfaceflinger (42 s) and nexuslauncher (93-197 s),
+  `gpu fault threshold exceeded`; logcat shows `IOCTL_KGSL_GPU_COMMAND`
+  `errno 71`. Recovery restarts at ~100 MHz with RBBM already busy
+  (`80000101`). Screen stays black (see FAILING-COMPONENTS).
+- Logdump caveat: the 14 `CP initialization failed to idle` lines at
+  392-452 s in `run158/159-logdump.log` are a **stale Run155 tail** (same
+  seq 32447-35578, byte-identical last 3 KB); the logdump is not cleared
+  between boots and the fresh dump is shorter. Startup did not regress.
+- Run159 (`c72069425`, donor A506 quirks two-pass-use-wfi,
+  dp2clockgating-disable, lmloadkill-disable restored in DT): **no change**.
+  Boot completes ~110 s, 77 hangs vs 64, logcat still 7x `errno 71`. The
+  launcher faults are deterministic: every new GL context hangs on its first
+  two submissions (`ts 1` IB1 `F9850000/00c6`, `ts 8448` IB1
+  `F994C000/006e`, same addresses every time), with `rb` rptr==wptr.
+- Next: decode a GPU snapshot (`pa 0x18500000`) for the hung packet.
