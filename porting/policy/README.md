@@ -61,3 +61,51 @@ This is why the genfscon route was tried next, and it is the reason to prefer
 labelling the right objects over widening access to the wrong ones. Not a
 `neverallow`; all 228 `neverallow` rules in `vendor_sepolicy.cil` were checked
 and none touch `sysfs`. The reason this file had no effect is **unexplained**.
+## A limit worth knowing before writing more genfscon
+
+A type named in a `genfscon` cannot be validated offline.
+
+The CIL in the ramdisk is only a **fragment**. `vendor_sepolicy.cil` is not in
+it -- init reads that from `/vendor` at runtime and hands both to `secilc`:
+
+    init: Using /system/etc/selinux/plat_sepolicy_genfs_202604.cil for genfs labels
+
+So a type that is perfectly valid in the running policy can be absent from the
+image, and vice versa. Checking the image for `(type ...)` declarations produces
+false positives on types the stock policy uses constantly (`sysfs_graphics` and
+`sysfs_battery_supply` both come out "undeclared" that way).
+
+I wrote that check anyway, on the reasoning that it would have caught run151,
+and it flagged three stock types. It was wrong in both directions and has been
+removed rather than shipped as noise.
+
+The hard part is that a wrong type here fails in two very different ways:
+
+- **A declared type that nothing is allowed on** compiles cleanly and does
+  nothing. `sysfs_leds` is this. The symptom is a denial that is byte-identical
+  before and after the change, which reads like "the fix did not apply" and is
+  easy to misread as a path problem -- it is not, the path was correct and is
+  still correct.
+- **A name that is not a declared type** kills the boot. run151 used
+  `sysfs_leds_202604`, the name `mm-pp-daemon` is actually allowed on, and it
+  is named in `vendor_sepolicy.cil`:
+
+      (allow mm-pp-daemon sysfs_leds_202604
+             (file (ioctl read write getattr lock append map open ...)))
+
+  It still failed:
+
+      secilc: Type not a type or type alias
+      secilc: Failed to compile cildb: -1
+      init: secilc exit_code=0xff00
+
+  init dies and the device lands in recovery.
+
+So appearing in an `allow` is not the same as being declarable in a `genfscon`,
+and that distinction cannot be checked from the image. **Before adding a
+`genfscon` with a new type, confirm the type is declared in
+`plat_sepolicy_genfs_202604.cil` or `vendor_sepolicy.cil` itself, not merely
+referenced by an `allow`.** The battery labels work because
+`sysfs_battery_supply` is a member of the `sysfs_type` set unversioned, which is
+a different reason from `sysfs_leds_202604` being an allow target, and the
+similarity of the two spellings is what makes this easy to get wrong.
