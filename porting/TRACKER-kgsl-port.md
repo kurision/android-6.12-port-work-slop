@@ -2880,3 +2880,64 @@ checked: which property the health HAL reads for that field (`INPUT_CURRENT_LIMI
 on `usb` vs `CONSTANT_CHARGE_CURRENT_MAX` on `bms`), and whether AICL has
 completed. The HAL can read the supplies through `dumpsys battery`, which is
 the channel to use.
+
+## run147 -- adsprpc was never a DMA problem, it is a node-name mismatch
+
+### The diagnosis was wrong, and the diag ramdisk had already found it
+
+run143 and run144 both logged:
+
+    DIAG: adsprpc compat: waiting for fastrpc-adsp
+    DIAG: adsprpc compat: alias 10:267 label ret=-1 errno=95
+
+`10:267` is a real misc major/minor. That is the whole answer: **the device node
+was being created the entire time.** adsprpcd was never failing because the
+channel had no buffer pool, so the reserved-memory change I built for it
+(reverted in `a7fe6fb5a`) was treating a symptom that did not exist.
+
+What adsprpcd actually opens is visible in its own denial:
+
+    avc: denied { read } for comm="adsprpcd" name="adsprpc-smd"
+         dev="tmpfs" ino=36 tcontext=u:object_r:tmpfs:s0 tclass=chr_file
+
+and "adsprpc-smd" is the donor's own constant:
+
+    oc-test/drivers/char/adsprpc_shared.h:31  #define DEVICE_NAME "adsprpc-smd"
+    oc-test/drivers/char/adsprpc_shared.h:32  #define DEVICE_NAME_SECURE "adsprpc-smd-secure"
+
+Our driver registers the same channel as `fastrpc-%s` over
+`domains[] = {"adsp","mdsp","sdsp","cdsp","cdsp1"}`, producing
+`/dev/fastrpc-adsp` -- a path nothing in the vendor stack opens. So the diag
+ramdisk carries a shim that waits for `fastrpc-adsp` and tries to alias it to
+`adsprpc-smd`; the alias fails with errno 95 and both names stay unusable.
+
+Note "smd" is the CAF name for the apps-DSP subsystem, so the node name does
+not derive from the domain name. Added a separate `devnames[]` table for it
+rather than rewriting `domains[]`, which still matches the DT `label`
+(`fastrpc_rpmsg_probe()`, line 2333). The other four domains keep mainline
+spellings -- not enabled on this SoC, and not checked against a donor, so they
+are left as upstream has them.
+
+Renaming the node bypasses the shim entirely, which also means the failing
+alias no longer matters.
+
+### run147
+
+`boot-run147.img` = run144 base (battery + backlight + extcon `genfscon`, ADSP
+firmware staged) + kernel `afdc4cc4`. **One** change: the node name. The
+reserved-memory pool is gone, confirmed in the build -- the DT driver-coverage
+summary goes from 26 to 25 core-reserved nodes.
+
+### run146 -- why it is not in the lineage
+
+`boot-run146.img` carried the fastrpc DMA pool *and* the backlight attribute
+labels and never came up on USB. Both are now accounted for: the pool was
+removed as unjustified, and the backlight labels are correct but not in this
+image. Kept on disk rather than deleted, per the artifact rule.
+
+### What to check on run147
+
+- `DIAG: adsprpc compat:` lines should be absent (no `fastrpc-adsp` to wait for)
+- the `adsprpcd` denial on `adsprpc-smd` should be gone
+- `AudioFlinger: loadHwModule() error -19` and the 10 Hz `listAudioPorts failed`
+  loop should stop
