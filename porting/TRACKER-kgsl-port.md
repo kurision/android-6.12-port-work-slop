@@ -3602,3 +3602,50 @@ wrong `qcom,highest-bank-bit` would make it fetch the wrong words.
 `cp_status_1` bit semantics are **not decoded anywhere in this tree**, so treat the
 first run of this table as hypothesis-fitting and record which row the numbers
 actually landed in.
+
+### Run154: the ring base is programmed correctly; the CP still never fetches
+
+Boot: `boot-run154.img`, kernel `6.12.93-4k-gc5dc5fb19875-dirty`, payload
+`87f331e4a43c...`, ramdisk unchanged from run150 (683 records, init sha
+unchanged) — one change from run150: the kernel. Evidence: `run154-usb.log`
+(444,703 B, ends at kernel t=40.7 s), `run154-logdump.log` (3,287,331 B),
+`run154-live/` (bounded observer, 5 min), `run154-ramoops.json`.
+
+Userspace reproduced run153 exactly: `boot_progress_enable_screen: 89833`, then
+`WATCHDOG KILLING SYSTEM PROCESS: Blocked in handler on ui thread (android.ui)
+for 191s`. `kgsl_3d0_irq` counted 0 for the whole capture.
+
+57 GPU start attempts, every one ending in `CP initialization failed to idle`.
+The new dump, from `run154-logdump.log:4028-4034`:
+
+    DIAG CP state: cp_rb_base=00000000F9350000 want=00000000F9350000 rb_cntl=0800020C rb_ptr=C/C
+    DIAG CP state: cp_status_1=80420C28 cp_ahb_fault=050020C4 me_split=101000B0
+    DIAG CP state: rbbm_ahb_err=000013D0 rb_size=32768 gfx_rate=650000000
+
+What this rules out and what it leaves:
+
+- **Not** a ring-base programming bug: `cp_rb_base` equals `want` exactly, and
+  the ring, memstore, pm4 and pfp all live in one 32 KB-aligned block with
+  `gpu == phys` (`DIAG gpu_memdesc`, run154-logdump.log:3538), so NOMMU
+  addressing is self-consistent.
+- The AHB registers are **not** decisive. Decoded with mainline's field layout
+  (`drivers/gpu/drm/msm/adreno/a5xx_gpu.c:1157-1192`): `cp_ahb_fault` reads
+  addr 0x020C4 / "pfp write" with bit31 (`error`) **clear**, and
+  `rbbm_ahb_err` decodes to addr 0x4F4 — which is `RBBM_AHB_ERROR_STATUS`
+  itself, i.e. residue from the driver's own read, not a transaction that
+  faulted. Treat both as stale; the earlier reading of them as the fault is
+  withdrawn.
+- **The hang is latched before the first command.** `RBBM_STATUS` already reads
+  `c00001c1` at ME_INIT submit (run154-logdump.log:3436) — bit31, the same bit
+  set in `800001c1` at failure. Whatever hangs the GPU is not ME_INIT; it is
+  something earlier in `adreno_start()`.
+- Firmware is present and is the right one for this core: the driver requests
+  `a530_pm4.fw`/`a530_pfp.fw` because `adreno_gpu_core_a506` declares exactly
+  those names (`adreno-gpulist.h:311-322`), and the diag harness exfiltrated
+  19,652 and 17,108 bytes respectively (run154-logdump.log:622-671). The
+  `errno=2` on `/lib/firmware/qcom/...` is the diag reader looking in a `qcom/`
+  subdirectory that does not exist, not a load failure.
+
+Next probe has to cover the bring-up sequence before ME_INIT: RBBM_STATUS at
+probe and after each step of `_adreno_start()` (ring start, hw init, GPMU init,
+firmware load), to find where bit31 first latches.
