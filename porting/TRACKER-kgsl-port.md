@@ -3377,3 +3377,69 @@ Nothing about the adsprpc work is wrong -- that chain is real and documented.
 It simply is not what holds `boot_completed`. The next boot should answer one
 question: **what does the servicemanager actually have for
 `IChargingControl/default`**, and is the health HAL process alive.
+
+## Correction: the CAF ioctl numbering does not match mainline's at all
+
+The ioctl 12 port was done as a subagent task, and the investigation behind it
+overturned the conclusion I had recorded. **"ioctl 12 is the blocker" was an
+inference from an errno, not a measurement.** Nothing in the run149 logs records
+which `cmd` value actually arrived.
+
+The ioctl numbers do not correspond between the two trees:
+
+    CAF   oc-test/drivers/char/adsprpc_shared.h:10-27
+      1 INVOKE     2 MMAP      3 MUNMAP    4 INVOKE_FD  5 SETMODE
+      6 INIT       7 INVOKE_ATTRS  8 GETINFO  9 GETPERF  10 INIT_ATTRS
+     11 INVOKE_CRC 12 CONTROL 13 MUNMAP_FD 14 MMAP_64 15 MUNMAP_64
+     16 GET_DSP_INFO
+
+    mainline  include/uapi/misc/fastrpc.h:8-19
+      1 ALLOC_DMA_BUFF  2 FREE_DMA_BUFF  3 INVOKE   4 INIT_ATTACH
+      5 INIT_CREATE     6 MMAP           7 MUNMAP   8 INIT_ATTACH_SNS
+      9 INIT_CREATE_STATIC 10 MEM_MAP    11 MEM_UNMAP  13 GET_DSP_INFO
+
+Only nr 13 coincides, and its payload differs even there. `_IOC` encodes the
+struct size in bits 16-29, so the integer `cmd` values barely overlap: CAF
+`FASTRPC_IOCTL_INIT` is `0xd0285206`, mainline's nr 6 is `FASTRPC_IOCTL_MMAP` at
+`0xc0205206`.
+
+**So a CAF-built `adsprpcd` will hit `default: -ENOTTY` on its INIT (the
+attach/create call), MMAP, MUNMAP, INVOKE and GETINFO regardless of what this
+driver implements.** Mainline's ABI matches Qualcomm's open-source
+`external/fastrpc` userspace, not the in-tree CAF driver the vendor binary was
+built against.
+
+That also undercuts an earlier line of evidence. `remote_handle_open:
+Successfully opened handle 0x0` in run149 cannot have come from a successful CAF
+`FASTRPC_IOCTL_INIT`, because that `cmd` is not in mainline's switch at all.
+Either the vendor lib tolerates `ENOTTY` on that call or the message is printed
+before the failure is detected. This could not be closed: there is no copy of
+the CAF user source in any tree here, and `libadsprpc.so` could not be recovered
+from `vendor_a.img` (the ext4 image holds only `lost+found`).
+
+### Corrected scope for FastRPC
+
+Making audio/camera/sensors work on 8953 through the CAF adsprpc stack means a
+**CAF ABI translation layer** -- per-`cmd` mapping or making the driver speak the
+CAF ABI on this node -- not one ioctl. That is the real task. ioctl 12 is
+correct and needed but nowhere near sufficient, and it is staged unapplied at
+`porting/staged/fastrpc-ioctl12-control.patch` so it cannot ride along unnoticed
+into the next boot.
+
+Nothing about the earlier errno progression is wrong -- 2 -> 16 -> ENOTTY is
+correct and each fix was real (node name, session table). It just does not
+converge on a working adsprpc.
+
+### One corroborating detail
+
+CAF's `fastrpc_internal_control` has no SMMU arm either, falling through to
+`-EBADRQC` (errno 95). So a CAF `apps_dev_init` that probed SMMU would fail on
+the **stock** kernel too. That points away from ioctl 12 and towards KALLOC or a
+non-CONTROL ioctl such as INIT.
+
+## Next boot answers one question
+
+What the servicemanager actually holds for `IChargingControl/default`, and
+whether the health HAL process is alive. `service list`, `lshal`, and the HAL's
+own process state. That is the SystemServer hang, and it is the only thing
+standing between this port and `boot_completed`.
