@@ -3011,3 +3011,37 @@ contig` and `fastrpc_apps_user_init done with default domain:0`. That was
 burning CPU throughout SystemServer startup, so it is a plausible contributor
 to the boot stall -- though `system_server_pre_watchdog` still fires once and
 `sys.boot_completed` is still unset at 310 s, so the hang is not resolved.
+
+## run148 -- the node name, staged
+
+`boot-run148.img` = run147 base + kernel `644881c2`. One change: the
+`fastrpc-%s%s` format string in `fastrpc_device_register()` becomes `"%s%s"`, so
+the ADSP channel registers as `/dev/adsprpc-smd` rather than
+`/dev/fastrpc-adsprpc-smd`. **Not booted.**
+
+### Image lineage, and which ones are sound
+
+| Image | Kernel | Change | Outcome |
+|---|---|---|---|
+| run143 | `dabc20b9` | battery `genfscon` + ADSP firmware | booted, audio broken |
+| run144 | `dabc20b9` | extcon `genfscon` (10) | booted, extcon denial gone |
+| run145 | `e9354597` | fastrpc DMA pool | **never booted** |
+| run146 | `e9354597` | + backlight attr `genfscon` (4) | **never booted**, confounded by a leftover capture script |
+| run147 | `afdc4cc4` | pool reverted, `devnames[]` | booted; node `fastrpc-adsprpc-smd` |
+| run148 | `644881c2` | drop the `fastrpc-` prefix | **not booted** |
+
+run145's reserved-memory pool is reverted (`a7fe6fb5a`) and is not in run148.
+The pool never got a fair test and does not need one: run147's fastrpc binds and
+registers a device with no pool at all.
+
+### Still open, and not yet diagnosed
+
+- **The SystemServer hang.** `system_server_pre_watchdog` fires on every run
+  from run143 onward, `boot_progress_enable_screen` is the last milestone, and
+  `sys.boot_completed` never gets set. The extcon denial was real and fixing it
+  helped nothing here, so this is a *different or additional* cause. No
+  hypothesis has been formed yet, and I am not going to guess one.
+- **The composer/Dpps path**, blocked on a `lcd-backlight` leds-class node that
+  does not exist on this port, plus display-1 access and an AD interface.
+- **WLAN firmware**, not staged.
+- **The 5x charging-current gap** against stock on the same cable.
