@@ -3588,3 +3588,17 @@ prints the GPU-visible ring address, which is the other prime suspect on this
 port: kgsl runs **NOMMU** (`iommus` deleted in
 `msm8953-xiaomi-tissot.dts:500`), so the CP fetches *physical* addresses and a
 wrong `qcom,highest-bank-bit` would make it fetch the wrong words.
+
+### How to read the run154 dump, so the fix does not have to wait for a second boot
+
+`DIAG CP state:` prints three lines. Each outcome names one fix:
+
+| Observation | Reading | Fix candidate |
+|---|---|---|
+| `cp_rb_base` is `0000000000000000` while `want` is the ring's real GPU address | the driver never got the base into the GPU, or the GPU reset it — the CP cannot fetch at all | `a5xx_rb_start()` write path: `CP_RB_BASE`/`_HI` ordering vs the ME_INIT submit |
+| `cp_rb_base` == `want`, `cp_status_1` shows a nonzero bus/master state, `cp_ahb_fault` or `rbbm_ahb_err` nonzero | the CP fetched and then died on a transaction | decode the AHB error address; check the memory the ring/firmware sits in is reachable by the CP |
+| `cp_rb_base` == `want`, `cp_status_1` shows the CP parked with no master fault | the CP executed and stopped — firmware or bank-bit | `qcom,highest-bank-bit` (14 -> `bit = (14-13)&3 = 1`, `A5XX_TPL1_MODE_CNTL = 1<<7`, `A5XX_RB_MODE_CNTL = 1<<1`, `adreno_a5xx.c:1648-1658`) and the PM4/PFP placement; a wrong bank bit makes the CP fetch wrong words under NOMMU (`iommus` deleted, `msm8953-xiaomi-tissot.dts:500`) |
+
+`cp_status_1` bit semantics are **not decoded anywhere in this tree**, so treat the
+first run of this table as hypothesis-fitting and record which row the numbers
+actually landed in.
