@@ -3443,3 +3443,79 @@ What the servicemanager actually holds for `IChargingControl/default`, and
 whether the health HAL process is alive. `service list`, `lshal`, and the HAL's
 own process state. That is the SystemServer hang, and it is the only thing
 standing between this port and `boot_completed`.
+
+## run150b -- what the servicemanager actually holds, and a correction
+
+### Stock vs port, measured
+
+    stock  (4.19):  dumpsys -l | grep -i charg
+      vendor.lineage.health.IChargingControl/default
+      vendor.lineage.health.IFastCharge/default
+
+    port (run150b): dumpsys -l | grep -iE "charg|health|lineage"
+      android.hardware.health.IHealth/default
+      healthconnect, lineageglobalactions, lineagehardware, lineagehealth,
+      lineagelivedisplay, lineagesensitivephone, lineagetrust
+      -- no IChargingControl, no IFastCharge
+
+So the full AIDL name is `vendor.lineage.health.IChargingControl/default` (the
+VINTF `<fqname>` is the suffix), and **on the port it is not registered at all**,
+while every other lineage service is.
+
+### The HAL is not failing, it is doing nothing
+
+    ps: 686 vendor.lineage.health-service.default      state S (idle, wchan 0)
+        /vendor/etc/init/vendor.lineage.health-service.default.rc:
+            service vendor.lineage_health /vendor/bin/hw/vendor.lineage.health-service.default
+
+It runs, it is idle, and it logs **nothing** -- zero logcat lines for pid 686.
+No SELinux denial names it either (546 denials total in the run150b window;
+top comms are `android.system.*` 230, `mm-pp-dpps` 66, `watchdog` 58). So it is
+not being denied anything and not crashing. It simply never registers the
+interface.
+
+Separately, `android.hardware.health-service.qti` (pid 673) is not answering
+binder -- `android.os.Debug: Failed to get binder state info for pid: 673
+status: -2` -- and the watchdog dumps it. That one has not been chased yet.
+
+### Correction: the ChargingControl block is not present in every run
+
+The `waitForDeclaredService` stack came from `anr_2026-10-09-10-25-33-918`,
+whose SystemServer is **pid 1040**. run149/run150's SystemServer is pid 1104 and
+run150b's is pid **1101**. So that trace is from an older boot, not the recent
+ones.
+
+In run150b's own trace (`anr_2026-10-09-10-26-36-511`, pulled to
+`porting/artifacts/snapshot60/anr/r150b-anr.txt`) there are **zero**
+`ChargingControlController` frames, and SystemServer main is idle:
+
+    "main" prio=6 tid=1 Native
+      at android.os.MessageQueue.nativePollOnce
+      at android.os.Looper.loop
+      at com.android.server.SystemServer.run(SystemServer.java:1116)
+
+`startOtherServices()` completed. `system_server_pre_watchdog` still fires at
+10:26:47 and `sys.boot_completed` is still unset with `bootanim` running, so the
+boot is still incomplete -- but **not** for the reason the earlier trace showed,
+or not only for it.
+
+Note this trace's own subject is `Blocked in handler on ui thread (android.ui)`
+for `com.android.phone`; system_server was merely included in the dump. A
+snapshot of SystemServer idle in `pollOnce` alongside a pre-watchdog drop is not
+self-consistent, so the exact main-thread state at 10:26:47 is still not
+established. The ANR I pulled does not cover that instant.
+
+### What still needs answering, on the device
+
+1. Does `IChargingControl` ever appear later on the port, or never? Checked at
+   ~182 s: never.
+2. Why does the HAL not register it, given it is alive, idle and un-denied?
+   Candidates not yet separated: it never attempts registration; it registers
+   and the servicemanager drops it; it registers under a name that does not
+   match VINTF (manifest declares `vendor.lineage.health` **version 2**).
+3. What is `health-service.qti` (pid 673) blocked on.
+
+The VINTF version-2 declaration is worth checking first: if the binary
+registers v1 while the manifest declares v2, the servicemanager would mark it
+declared-but-unavailable, which is exactly the state `waitForDeclaredService`
+cannot escape.
