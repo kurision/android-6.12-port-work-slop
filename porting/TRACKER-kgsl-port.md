@@ -3106,3 +3106,67 @@ connects.
 The general lesson, which I have now hit twice in this bring-up: a single grep
 count on one run's log is not a component status. run147's zero was true and
 still the wrong conclusion.
+
+## run149 -- session allocated; the failure moves to an unimplemented ioctl
+
+run149 booted, 444 KB kernel log captured, and `cb@0` did its job: the kernel
+log no longer contains "No session available", and adsprpcd's errno moved again.
+
+    run147:  errno 2  (No such file or directory)   node absent
+    run148:  errno 16 (Device or resource busy)     session table empty
+    run149:  "Inappropriate ioctl for device"       open OK, ioctl rejected
+
+    adsprpcd: apps_dev_init: failed to setup fastrpc session in kernel
+    adsprpcd: remote_get_info failed to get attribute 257 for domain 0
+
+Each run has moved the failure one layer down, which is the useful part: the
+driver is now reaching ioctl dispatch.
+
+### The gap is real and it is not a one-liner
+
+Our header `include/uapi/misc/fastrpc.h` has no definition for ioctl 12 at all,
+and `fastrpc_device_ioctl()` ends in `default: return -ENOTTY`. CAF's userspace
+issues it from the donor:
+
+    oc-test/drivers/char/adsprpc_shared.h:24
+        #define FASTRPC_IOCTL_CONTROL  _IOWR('R', 12, struct fastrpc_ioctl_control)
+
+    oc-test/drivers/char/adsprpc.c:4755
+        case FASTRPC_IOCTL_CONTROL:
+                err = fastrpc_control(&p.cp, param, fl);
+
+`struct fastrpc_ioctl_control` carries a `req` selecting one of
+`FASTRPC_CONTROL_{LATENCY,SMMU,KALLOC,WAKELOCK,PM,DSPPROCESS_CLEAN}`. Porting it
+is not mechanical: `fastrpc_control()` dispatches to
+`fastrpc_internal_control()`, and the LATENCY arm needs both PM QoS affinitising
+**and** `fastrpc_send_cpuinfo_to_dsp(fl)` -- a message to the remote DSP, which
+is messaging infrastructure mainline fastrpc does not have. The KALLOC arm is
+one flag assignment; WAKELOCK and PM are small; DSPPROCESS_CLEAN sends a
+message too.
+
+So the honest statement is: **FastRPC is not compatible with this vendor
+userspace past ioctl dispatch.** Making audio/camera/sensors work on 8953
+through the CAF adsprpc stack means porting `FASTRPC_IOCTL_CONTROL` (and
+checking `FREE_DMA_BUFF` = 2, also unimplemented) rather than patching a
+symptom. That is a scoped piece of work, not a cycle or two, and it is not
+what is holding `boot_completed`.
+
+### Audio, again: not fixed
+
+| run | adsprpcd errors | `AudioSystem`/`loadHwModule` errors |
+|---|---|---|
+| run144 | 7454 | 442 |
+| run147 | 8960 | 0 |
+| run148 | 9025 | 381 |
+| run149 | 5900 | 623 |
+
+The run147 zero remains unexplained by anything other than where in its failure
+adsprpcd died. Audio stays open.
+
+### Pivoting to the SystemServer hang
+
+This is the boot blocker and it remains undiagnosed. adsprpcd's failure is real
+but there is no evidence tying it to the hang -- it is a native daemon looping
+in its own process, not something SystemServer blocks on. Work now goes to the
+hang; the adsprpc ioctl port is recorded above as the scoped task it actually
+is.
