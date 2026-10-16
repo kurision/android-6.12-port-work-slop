@@ -3290,3 +3290,90 @@ The SystemServer hang is undiagnosed. run149/run150 both show
 milestone, plus `ANR in com.android.systemui` at 10:25:42 and Dpps restarting
 every 5 s. Whether Dpps is on the causal path is still a hypothesis; the backlight
 denial is confirmed, the chain from it to the hang is not.
+
+## The boot blocker, finally identified from an ANR trace
+
+For six runs I had `system_server_pre_watchdog`, `enable_screen` as the last
+milestone, and no stack. The stacks were there the whole time, in
+`/data/anr`, and `shell` can read them -- it was only `cat` on the files
+themselves that needed `su`, which the port kernel does not have.
+
+Pulled from the stock boot with `su`:
+
+    porting/artifacts/snapshot60/anr/ss-anr-102533.txt
+
+Subject:
+
+    Blocked in handler on main thread (main) for 45s
+
+SystemServer main thread:
+
+    "main" prio=6 tid=1 Native
+      native: #03 android::CppBackendShim::waitForService
+      native: #04 android_os_ServiceManager_waitForServiceNative
+      at android.os.ServiceManager.waitForDeclaredService(ServiceManager.java:317)
+      at org.lineageos.platform.internal.health.ChargingControlController.<init>(:85)
+      at org.lineageos.platform.internal.health.HealthInterfaceService.onStart(:69)
+      at com.android.server.SystemServiceManager.startService(:282)
+      at org.lineageos.platform.internal.LineageSystemServer.startServices(:76)
+      at com.android.server.SystemServer.startOtherServices(SystemServer.java:3267)
+      at com.android.server.SystemServer.run(SystemServer.java:1068)
+      at com.android.server.SystemServer.main(SystemServer.java:744)
+
+### What it means
+
+`SystemServer.startOtherServices()` never returns, because
+`LineageSystemServer` starts `HealthInterfaceService`, whose constructor builds
+a `ChargingControlController` that calls `ServiceManager.waitForDeclaredService`
+-- an **indefinite** wait for the vendor charging-control HAL to appear in the
+servicemanager. No timeout, no fallback. Everything after it in
+`startOtherServices` never runs, which is why `boot_progress_enable_screen` is
+the last milestone forever.
+
+The service is declared in VINTF:
+
+    /vendor/etc/vintf/manifest/vendor.lineage.health-service.default.xml:9
+        <fqname>IChargingControl/default</fqname>
+
+so the framework is waiting for a HAL that this port has not delivered.
+
+### This is the component run141 "cleared", and clearing it was not enough
+
+run141's battery `genfscon` took the charging-control HAL from never
+registering to registering -- `IChargingControl/default registered (binder 288)`
+is in `run141-host-logcat.log`. But registering is not the same as satisfying
+`waitForDeclaredService`, and the run149/run150 logs contain **zero**
+`ChargingControl` mentions where run141 had two. So the genfscon bought
+something real (`dumpsys battery` reports live values) and did not clear this.
+
+I do not yet know why the service is not visible to the servicemanager in the
+later runs. Candidates, none of them checked yet:
+
+- the health HAL registers and then exits, so registration is transient;
+- it registers under a different instance name than `IChargingControl/default`;
+- `waitForDeclaredService` consults the *declared* set and this fragment is
+  loaded from `/vendor` after SystemServer starts waiting, so the declared view
+  never catches up.
+
+Do not guess between these from the host. Boot, and ask the servicemanager
+directly (`service list`, `lshal`, `dumpsys -l`) plus the health HAL's own
+process state.
+
+### The SystemUI ANR is downstream of the same thing
+
+    Subject: Process ... failed to complete startup
+      "main" prio=5 tid=1 Native
+        native: #04 BpSurfaceComposer::getGpuContextPriority
+        at SystemUIApplicationImpl.onCreate
+
+SystemUI is blocked in a binder call to SurfaceFlinger. Whether that is
+independent or another face of the same stall is not established. It is a
+different process with a different stack, so it is not evidence for the
+`HealthInterfaceService` cause.
+
+### What this does and does not change
+
+Nothing about the adsprpc work is wrong -- that chain is real and documented.
+It simply is not what holds `boot_completed`. The next boot should answer one
+question: **what does the servicemanager actually have for
+`IChargingControl/default`**, and is the health HAL process alive.
