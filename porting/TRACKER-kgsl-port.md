@@ -3519,3 +3519,72 @@ The VINTF version-2 declaration is worth checking first: if the binary
 registers v1 while the manifest declares v2, the servicemanager would mark it
 declared-but-unavailable, which is exactly the state `waitForDeclaredService`
 cannot escape.
+
+## Run153: the GPU hangs at ME_INIT; the stall is a GPU hang, not a userspace wait (2026-10-16)
+
+Recovered after the user rebooted the manual run150 boot to stock 4.19:
+
+- `run153-logdump.bin` (67,108,864 B, sha256 verified by the puller) and its
+  readable prefix `run153-logdump.log` (7,485,580 B). **This is the kernel log
+  of the manual run150 boot** — the first complete one on record. Both ramoops
+  slots are CRC-valid with no panic record, so the boot did not crash; it hung.
+- `run153-manual-anr/`: all 53 `/data/anr` traces (24 MB), pulled with stock
+  `su`. `ANR-sspid-index-run153.log` maps each trace to its SystemServer pid.
+
+### The boot does complete, via a watchdog restart
+
+`sys.boot_completed=1`, `mSystemBooted=true`, no ANR since boot, verified twice
+66 s apart (uptime 524 s and 590 s). It completes because the first SystemServer
+is killed, not because the stall clears:
+
+- `port-logcat.log:74356,78059` — `Blocked in handler on ui thread
+  (android.ui) for 191s`, then `*** WATCHDOG KILLING SYSTEM PROCESS`; `:78082`
+  `SIG: 9` to pid 1108.
+- `:80348` Zygote forks pid **4977**; `:100211` `boot_progress_enable_screen:
+  393914` (uptime ~394 s); `:125670` `TransparencyService: Boot completed`
+  (~uptime 484 s).
+- `anr_2026-10-09-10-34-04-599` is pid **4977** with the same subject for
+  **193 s** — the restarted server blocks too. `init.svc.bootanim` is still
+  `running` at 590 s: the boot animation never swapped a completed frame.
+
+**Correction to every "boot never completes" statement in this repo**: the port
+boots to a complete Android, and it takes ~484 s and one SystemServer restart.
+
+### Root cause of the stall: the GPU never starts
+
+`run153-logdump.log:4018-4036` (repeated at every start, 20+ times):
+
+    kgsl kgsl-3d0: CP initialization failed to idle
+    kgsl kgsl-3d0: rb=0 pos=C/C rbbm_status=800001C1/00000000 int_0_status=00800200
+    kgsl kgsl-3d0:  hwfault=00000000
+    kgsl kgsl-3d0: Can't find a memory entry containing IB1BASE                0
+    kgsl kgsl-3d0: start failed -110
+
+- `int_0_status` bit 23 is `A5XX_INT_MISC_HANG_DETECT` (`a5xx_reg.h:33`,
+  callback `adreno_hang_int_callback`, `adreno_a5xx.c:3071-3072`) and
+  `RBBM_STATUS` bit 31 is latched from the same hang. The GPU is not merely
+  unclocked or unpowered: **it is hung**, on every single start.
+- `pos=C/C` — CP_RB_RPTR/WPTR never moved past the start of the ring, and
+  `IB1BASE=0`, so the CP never fetched the ring buffer.
+- `/proc/interrupts` from the bounded observer: `kgsl_3d0_irq` **0** for the
+  whole boot while `MDSS` counts at ~125/s. No GPU interrupt is ever delivered,
+  so `drawqueue_retire_timelineobj()` (`adreno_dispatch.c:394-408`) never runs
+  and no fence is ever signalled — which is why `HardwareRenderer.
+  nSyncAndDrawFrame` never returns.
+- `gfx3d_clk_src: rcg didn't update its configuration` (`clk-rcg2.c:133`,
+  `update_config()`) 50 times, in `kgsl_clk_set_rate` on the start/stop path.
+  Consequence of the hang, not the cause: it is logged after the first
+  `CP initialization failed to idle`.
+
+### Next step (run154, one boot)
+
+Commit `e512b2983` adds `a5xx_dump_cp_state()` — read-only, success path
+unchanged — which prints at the failed spin the registers that separate "CP
+never fetched the ring" from "CP stalled on a bad AHB transaction":
+`CP_STATUS_1`, `CP_AHB_FAULT`, `RBBM_AHB_ERROR_STATUS`,
+`RBBM_AHB_ME_SPLIT_STATUS`, the programmed `CP_RB_BASE` next to
+`rb->buffer_desc.gpuaddr`, plus `CP_RB_CNTL` and the ring pointers. It also
+prints the GPU-visible ring address, which is the other prime suspect on this
+port: kgsl runs **NOMMU** (`iommus` deleted in
+`msm8953-xiaomi-tissot.dts:500`), so the CP fetches *physical* addresses and a
+wrong `qcom,highest-bank-bit` would make it fetch the wrong words.
