@@ -1,6 +1,191 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
-## Current handoff — run199, 2026-10-17 (read before the historical sections)
+## Current handoff — run202-run206, 2026-10-17 (read first)
+
+### Next session: start here
+
+State at hand-off: phone on stock 4.19 with root (serial 2819f2320604,
+boot_id `bd02ae0a`), no capture/observer running, run205 + run206 evidence
+pulled into `snapshot60/`. Device logdump still holds run206 (archived as
+`run206-logdump.bin`). Everything from runs 201-206 is **uncommitted** in the
+working tree; `/tmp/ack-run164-source` matches it (cmp-verified for
+`adreno.c`; re-check all modified files before building).
+
+What is established (details below):
+- The A506 zap shader **loads and authenticates** (run205: all 7 ZAPSTAGE
+  records, every ret=0, `auth_and_reset=0`).
+- run204/run205's reset was **our DIAG CPU read of `RBBM_SECVID_TRUST_CNTL`
+  (0xf400) after the zap load** -> SEA -> PANIC_ON_OOPS -> reset. run206
+  removes that read when `zap_loaded`.
+- run206 failed **differently** and the cause is **unverified**: no persistent
+  record after 39.55 s, no ZAPSTAGE at all, reset ~35 s later than run205.
+
+Do next, in order:
+1. Ask the user what the panel showed during run206 (not yet answered).
+2. With the user's OK, **re-boot `boot-run206.img` unchanged** (sha256
+   `c595cfdf...0fe4`) to tell an intermittent hang from a systematic one.
+   Procedure as BUIL_TISSOT.md: verify device logdump sha == archived
+   `run206-logdump.bin` before `clear-logdump.sh`; observer + fastboot
+   capture as in `run206-host-timeline.log`; file it as run207 (copy/symlink
+   not needed, pull script takes the image path: `pull-run-evidence.sh 207
+   boot-run206.img`).
+3. **Immediately after any reset**, once stock is up, save the stock PMIC
+   reason: `adb shell "su -c 'dmesg | grep -i -E \"power-on reason|power-off
+   reason\"'" > runNNN-stock-pon.txt` (run206's is saved; run205's was lost).
+4. Decode: ZAPSTAGE slots at `0x3f01000` (16 x 512 B); snapshot slots at
+   `0x3c00000`/`0x3d00000`-area via the pull report. **If a slot is reported
+   torn (magic 0), still read its payload** (`logdump.bin[slot_off+4096 :
+   +1 MiB]`) — run205's crash was only visible there. Grep for `DIAG zap`,
+   `DIAG secvid` (now prints the CP_SET_SECURE_MODE switch `ret`), `SEA`,
+   `Internal error`, `UCHE`, `GPU hang`.
+5. If run207 gets past the GPU start: report the `DIAG secvid ... ret=`
+   value, UCHE/GPU-hang counts and ask for the panel. The open question is
+   whether leaving secure mode via the zap shader removes the UCHE fault.
+6. Known residual hazard: `a5xx_legacy_snapshot_registers` (used when the
+   crash dumper does not complete, incl. the silent SMMU-stalled return in
+   `_a5xx_do_crashdump`) reads 0xF400 over AHB and would SEA after a zap
+   load. Guard it if a hang snapshot ever takes that path.
+
+Rules: don't boot without asking; `pgrep -f`/`pkill -f` on the observer
+command line also matches your own shell (kill by PID after `ps -o
+pid,ppid,cmd`); builds incremental in `out/`, no clean build.
+
+**run202 — full stock GPU regime, fault unchanged.** `qcom_iommu.c` GPU bank
+back to ARM_64_LPAE_S1 ias=39 (reverts run199's misread) and
+`KGSL_MMU_64BIT` re-enabled in `adreno.c` (stock is arm64). Readback:
+`KGSL_MMU_64BIT enabled`, `init_domain ... ias=39 aarch64=1`, `addr_mode=1`.
+The UCHE fault is identical: first trap `addr=000000050001f000` (offset 0 of
+a 4 KiB memtype-9 `gl` buffer), `cp_status=80423c68`, IB2 again at `...0140`
+(userspace HLSQ state upload: `HLSQ_CONTROL_0_REG`, `HLSQ_UPDATE_CNTL`
+`0x020fffff`), 22 hangs in ~100 s, panel lit black, screencap identical.
+Leaf PTE `006000003c00fe43` correct. **The fault is independent of the whole
+MMU/VA family** (format, ias, 32/64-bit, PTE bits, impl-defs). Also seen: kgsl
+sysfs nodes are labelled generic `sysfs` (port path `/devices/platform/soc@0/
+1c00000.gpu/...` misses vendor genfscon) - `gpu_model` unreadable; GL driver
+falls back. Not the fault; fix later.
+
+**Lead: the zap shader was never loaded.** `adreno-zap-compat.h` returned
+`-ENXIO` and the a5xx path was gated on `mmu.secured` (false only because the
+port has no gfx3d_secure bank). Stock loads `a506_zap` via PIL (PAS id 13,
+`/vendor/firmware/a506_zap.*`, `gpu_region` 8 MiB in 0x80000000-0x90000000);
+mainline msm8953.dtsi has a `zap-shader` child (`zap@81800000`, 8 KiB; the
+only PT_LOAD segment is 0x1444 B) and `a5xx_hw_init` uses it to leave secure
+mode. Without it the GPU likely stays secure - **unverified**.
+
+- **run203** (zap load via mainline sequence, non-fatal fallback): no output
+  at all (0 B USB, logdump untouched) - most likely the known intermittent
+  RAM-boot hang.
+- **run204** = retry of `boot-run203.img` (filed as 204: pull script needs a
+  numeric run): port reached userspace (USB to 40.80 s), last snapshot
+  39.55 s, **board reset between 40.8 and 41.6 s = first GPU start** (run202:
+  41.3 s), no ACKRESET record -> TZ/watchdog-level reset in the zap path.
+- **run205** (`boot-run205.img`, sha256 `ea7907ca...2f33`): same load split
+  into steps with a FUA stage record before/after each SCM call
+  (`ramoops_stage_write`, logdump `0x3f01000 + stage*512`, magic
+  `"ZAPSTAGE"`, struct in `adreno-zap-compat.h`). Stages: 0 enter, 1 fw
+  loaded, 2/3 pas_init (init_image + mem_setup), 4 segments copied, 5/6
+  auth_and_reset. The highest stage present names the fatal step.
+  Decode: read 512-byte slots at `0x3f01000` of `run205-logdump.bin`.
+
+**run205 result — the zap load WORKS; the reset was our own DIAG read.**
+Booted 15:05 (logdump zero-verified pre-boot), reset at 41.6 s, back on stock
+(boot_id `c8a450af`). All 7 ZAPSTAGE records present, every `ret=0`
+(41.598-41.622 s, `mem_phys=0x81800000 size=8192`): init_image, mem_setup,
+segment copy and `auth_and_reset` all succeed. The console up to the reset
+survives in the *torn* snapshot slot 1 (seq 20, header magic 0, payload
+intact; extract `logdump.bin[63967232+4096 : +1 MiB]`): `zap ... 
+auth_and_reset=0`, `ME_INIT submit ... zap_loaded=1`, then
+`SEA: ESR=96000210 far_pa=0x1c3d000` in `readl_relaxed <- adreno_regread <-
+adreno_set_unsecured_mode <- a5xx_rb_start`, x21=`0xf400` =
+`A5XX_RBBM_SECVID_TRUST_CNTL`. That is the run203 DIAG readback, executed
+after `adreno_switch_to_unsecure_mode`; `PANIC_ON_OOPS=y` + `panic=1` turned
+the Oops into the board reset (run204 is the same image, same 41 s reset).
+After authentication TZ blocks CPU access to that register (drm/msm
+a5xx_hw_init comment: "access to the RBBM_SECVID_TRUST_CNTL register will be
+blocked and a permissions violation will soon follow"; runs <=202 wrote it
+fine pre-zap). Stock (`oc-test` adreno.c 2027) and drm/msm never touch it from
+the CPU when the zap is loaded. Not yet known: whether CP_SET_SECURE_MODE 0
+itself completed (its ret was never printed) and whether leaving secure mode
+changes the UCHE fault.
+
+- **run206** (`boot-run206.img`, sha256 `c595cfdf...0fe4`, built on
+  `boot-run205.img`; ramdisk/init/cmdline/embedded config identical, only
+  `adreno.o` rebuilt; NOT booted): readback skipped when `zap_loaded`; the
+  `DIAG secvid` line still prints `ret` (switch result). Residual risk: on a
+  hang, `a5xx_legacy_snapshot_registers` (used only when the crash dumper does
+  not complete) reads 0xF400 over AHB and would SEA the same way; runs
+  200-202 never hit "Crash dump timed out", but the SMMU-stalled early return
+  in `_a5xx_do_crashdump` also falls back silently.
+
+**run206 result — different failure, cause UNVERIFIED.** Booted 15:11:42
+(logdump zero-verified; pre-clear sha matched archived run205 copy), back on
+stock (boot_id `bd02ae0a`). USB normal to 41.10 s (`gpu`, `surfaceflinger`
+started, nothing abnormal). But **nothing persistent after 39.55 s**: no
+snapshot seq 20 (due ~41.6 s; slots hold seq 18/19 only), **no ZAPSTAGE
+record at all** (stage 0 was at 41.609 s in run205), QSEE ring identical to
+run205 and ending at 37.8 s. Phone off adb for 132 s vs 96 s in run205, and
+the USB reader disconnected at host 93.7 s vs 59.0 s -> the port stayed
+powered ~35 s longer before resetting. Pattern = whole-system stop (or
+logdump I/O stall) between 39.55 s and the GPU start, then a delayed
+reset, not an Oops. Stock PON after the reset (`run206-stock-pon.txt`):
+"Hard Reset ... 'cold' boot", power-off "PS_HOLD" - no run205 baseline, so
+not distinguishing. The run206 change only affects code after stage 6, and
+stage 0 never appeared, so nothing ties this to the change - but that is
+inference from absence. Next: repeat `boot-run206.img` once to tell
+intermittent from systematic; capture stock PON after every reset.
+
+Tooling notes: a torn snapshot slot (header magic 0) still carries a readable
+console payload - run205's crash was only visible there. `pgrep -f` on the
+observer command line also matches the calling shell; filter by PPID.
+
+Builds are incremental in `out/` (user request; `out-run201/` is the older
+tree). Staged source `/tmp/ack-run164-source` must `cmp` the repo.
+
+## Previous handoff — run201, 2026-10-17 (corrects run198/run199)
+
+**run201 result: no change.** Panel lit black (user observation), 149
+`GPU hang detected`, first UCHE trap `0x139000`, screencap byte-identical to
+run200 (`d1d094a5...`). Image `boot-run201.img` sha256 `90a80267...9a26`,
+built on `boot-run200.img`; ramdisk/init/cmdline unchanged, kernel + DT only.
+Observer stopped early at ~160 s uptime after the panel verdict
+(boot_completed=1); logdump CRC-valid through ~201 s.
+
+What run201 tested and what it showed (`run201-logdump.log`):
+
+- **CAF's SMMU impl-defs and ACTLR.** 4.19 CAF arm-smmu writes
+  `attach-impl-defs` (`msm-arm-smmu-impl-defs-8953.dtsi`) and the GPU bank
+  ACTLR on every SMMU power-up; mainline qcom_iommu writes neither. kgsl now
+  writes them (`_apply_impl_defs`, `kgsl_iommu.c`). Readback before the write:
+  9 of 10 impl-defs **already** at the CAF value (firmware sets them); `0x6000`
+  is the micro-MMU halt/status register, mismatch meaningless. ACTLR was
+  `0x3` and is now `0x70000000` as on CAF — **no effect** on faults. Closed.
+- **Real leaf PTE** for the trapped buffer (walker fixed; run200's walker
+  indexed by page and kept bit 55, so its output was garbage):
+  `va=139000 lvl=3 desc=006000002a37de43` = page, AttrIndx 0 (NC), AP=1,
+  SH=OS, AF, nG, XN — the same bits CAF `prot_to_pte`/`init_pte` produce.
+  The SMMU leg (TTBR0 identity, table, leaf attributes, impl-defs) is clean.
+
+**CORRECTION — stock is NOT 32-bit.** Item 2 of the run199 handoff below says
+"stock CAF 4.19 is 32-bit so the A506 never enters" 64-bit mode. Wrong: the
+stock kernel is `aarch64`, `CONFIG_64BIT=y`, and surfaceflinger is a 64-bit
+ELF (checked live on the device, 2026-10-17). So on stock
+`adreno_support_64bit()` is true (A506 has `ADRENO_64BIT`,
+`oc-test/drivers/gpu/msm/adreno-gpulist.h`), KGSL sets `KGSL_MMU_64BIT`,
+programs every `*_ADDR_MODE_CNTL=1`, reports bitness 48, and places 64-bit
+processes' VA at `0x500000000+`. Item 3 is also wrong: CAF picks
+`ARM_64_LPAE_S1` whenever the SMMU supports AArch64 (`oc-test` arm-smmu.c
+2547-2568, and stock dmesg prints `AARCH64 is supported for
+...gfx3d_user`); `qcom,use-3-lvl-tables` only caps ias at 39. Commit
+`0fc24c807` (ARM_32_LPAE_S1, ias=32) therefore moved *away* from stock.
+
+**The port has never run stock's complete GPU regime**: ARM_64_LPAE_S1 ias=39
+**together with** `KGSL_MMU_64BIT` and 64-bit address mode. run187/198 had the
+format without 64-bit; run185 had 64-bit (CP-init failed 28x with real
+translation faults on globals around `0xfc0a8000-0xfc0c61e0`, inside
+`capturescript_regs`), and is the starting point. Next: understand run185's
+global TFs, then run the full stock regime.
+
+## Previous handoff — run199, 2026-10-17
 
 Three defects found today (display bring-up, GPU address mode, page-table
 format); the visible-display goal is still open and the reason is now known
