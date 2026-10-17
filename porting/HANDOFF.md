@@ -15,6 +15,8 @@ Commits:
   run208 startup diagnostics, supplied handoff and package reports.
 - `a6684a45d`: **new first-open/idle diagnostics, NOT BUILT OR BOOTED**.
   This is newer than every existing image and the staged build source.
+- The asynchronous stage guard described below is also **NOT BUILT OR
+  BOOTED**. Include it when comparing the repo against the staged tree.
 - Keep committing completed changes, as requested by the user. No
   Assisted-by or co-author trailers.
 
@@ -88,7 +90,43 @@ ACTIVE error, EBUSY requeue, model/zap gating, repeat open, one-shot races,
 metadata, errno, FUA/SYNC flags, slot 31 acceptance/32 rejection and QSEE
 separation passed. Strict checkpatch: zero errors, warnings or checks.
 Kernel compilation and device behavior of these additions are unverified.
-Synchronous diagnostic writes can perturb timing or block on storage.
+Those checks covered the synchronous version in `a6684a45d`; see the
+additional queue checks below for the current source.
+
+### Storage-stall guard — asynchronous stage recording, unbuilt
+
+`fs/pstore/ram.c` now copies all GPU stage records into a preallocated
+32-entry FIFO under a short spinlock. An ordered workqueue performs the
+existing FUA writes after releasing that lock. GPU callers neither take
+the witness mutex nor allocate or wait for storage. The stage helper in
+`adreno-zap-compat.h` also no longer prints synchronously. The record
+format, slot offsets and event timestamps are unchanged; worker console
+lines report `DIAG stage slot=... write_ret=...` after each write returns.
+
+This guards the stage caller against waiting on its own diagnostic I/O;
+it does not repair stalled storage or establish run208's reset cause.
+Queue success means accepted into RAM, **not persisted**. A reset can lose
+any recent stages, including authentication. Full queues return `-ENOSPC`,
+and unavailable workers return `-ENODEV`; the diagnostic caller skips the
+record. The first-visit guard is still consumed by a rejected attempt.
+Missing records therefore cannot establish that a path was not reached.
+There is no synchronous fallback, retry or panic-time queue flush.
+Runs through run208 used the earlier synchronous writer: their recorded
+evidence and interpretation are unchanged.
+
+Removal disconnects producers before draining accepted work; an in-flight
+storage operation can still delay removal. Witness, QSEE and snapshot
+writers remain synchronous and share storage resources. This change
+does not bound their waits or eliminate system-wide storage effects.
+
+`python3 porting/logging/test_ramoops_stage_queue.py` compiles the actual
+queue/worker/lifecycle functions with pthread workqueue and storage stubs.
+It passed blocked-storage/non-waiting producer, full/unavailable queue,
+slot/length bounds, owned copies, FIFO/wrap, write-error continuation,
+allocation failure, and concurrent teardown checks. This is host proof,
+not kernel compilation or device validation. Upstream cross-check:
+[Linux 6.12 workqueue documentation](https://www.kernel.org/doc/html/v6.12/core-api/workqueue.html)
+specifies `alloc_ordered_workqueue()` for ordered execution.
 
 ### Run207 — unchanged run206 image retried
 
@@ -151,7 +189,9 @@ not a reset cause.
   activity.
 - The new `a6684a45d` stage writes are synchronous FUA I/O issued under
   the KGSL device mutex (`kgsl_open`, `kgsl_pwrctrl_change_state`). If the
-  logdump I/O stalls, they stall the GPU path too.
+  logdump I/O stalls, they stall the GPU path too. The later asynchronous
+  guard above addresses this stage-writer risk in source only; neither
+  version of the new first-open/idle diagnostics has been built or booted.
 
 User observation: run208 showed backlight only, then became completely
 black. The user also reported a panel blink before resetting during the
