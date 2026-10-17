@@ -154,12 +154,25 @@ prediction on a newly built image; it would not establish the reset cause.
 ACK's definitions at `arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts:
 278-281,298-301,323-326` do not carry those constraints.
 
-ACK display VDD/VDDIO reference L17/L6 in
-`msm8953-xiaomi-tissot-mdss.dtsi:306-309`; the rails also have other consumers,
-including touch hardware. This is a concrete policy difference worth tracing
-through provider behavior and disable/enable transitions. Do not blindly add
-always-on: ACK already tolerates regulator-enable errors on the panel path,
-and provider semantics and effects on other consumers require separate proof.
+The port originally bound panel VDD/VDDIO to L17/L6. Further investigation
+found that this was not the donor's effective topology: Tissot includes
+`donor/.../msm8953-qrd-sku3.dtsi:87-90`, which explicitly deletes DSI0
+`vdd-supply`. Read-only inspection of the running stock DT confirms absence;
+stock regulator_summary assigns panel VDD to the dummy regulator, not L17.
+
+**Source-only correction applied:** removed the port-only DSI0 VDD-to-L17
+binding. Normal 6.12 `regulator_get()` supports the same dummy fallback.
+Before/after host DT compilation and resolved-phandle comparison show only
+this supply connection removed. L6/LAB/IBB and all other semantic DT
+properties remain unchanged. See
+`artifacts/snapshot60/panel-supply-source-check.json`.
+
+The donor's always-on constraints remain an outstanding policy difference;
+they were not added. Stock and 6.12 both enable always-on regulators during
+registration and propagate errors. Provider behavior must be verified before
+moving an RPM enable into registration. No RPM timeout was suppressed and
+no new kernel image was built or booted. This correction does not diagnose
+run210's reset or prove visible rendering.
 
 ### 3. Already carried: do not rediscover these as missing fixes
 

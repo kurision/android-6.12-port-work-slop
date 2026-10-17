@@ -1,5 +1,30 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
+## Current source-only update — panel supply topology
+
+Removed the port-only DSI0 `vdd-supply = <&pm8953_l17>` binding from
+`msm8953-xiaomi-tissot-mdss.dtsi`. Donor Tissot includes SKU3's explicit
+deletion of this property. Read-only inspection of the running stock DT
+confirmed it is absent; stock regulator_summary shows DSI0 consuming the
+dummy supply, L6, LAB and IBB, with L17 held only by its deviceless consumer.
+Run194's failed `vdd` enable was therefore on an operation absent from stock.
+This does not establish why that RPM transaction timed out or run210 reset.
+
+Normal `regulator_get()` dummy fallback remains supported in 6.12; no
+transport or regulator-core workaround was added. Android common's RPM
+transport is byte-identical to this port. Resource type/IDs and basic V0
+request/KVP layouts agree with donor; no wire-protocol cause was established.
+The upstream shared-completion/late-ACK limitation is not diagnosed here.
+
+Before/after host DT preprocessing and compilation passed. Resolving
+renumbered phandles showed only the DSI0 VDD-to-L17 connection removed;
+L6/LAB/IBB and every other semantic DT property are unchanged.
+Evidence: `artifacts/snapshot60/panel-supply-source-check.json` and
+`panel-supply-stock-{summary,properties}.txt`. No new kernel/boot image was
+built and no device boot or regulator write was performed.
+Always-on constraints, voltage settings, RPM errors and pinctrl remain
+unchanged; the prior panel-policy fix is also still unbooted.
+
 ## Current source-only update — panel policy, 2026-10-17
 
 **Approved panel-policy correction is in source only: NOT BUILT OR BOOTED.**

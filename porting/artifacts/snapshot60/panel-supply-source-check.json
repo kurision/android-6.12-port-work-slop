@@ -1,0 +1,23 @@
+{
+  "scope": "source-only DT preprocessing/compilation, not kernel or boot-image build",
+  "semantic_changes": [
+    {
+      "node": "/soc@0/qcom,mdss_dsi@0/qcom,mdss_dsi_ctrl0@1a94000",
+      "property": "vdd-supply",
+      "before": [
+        "/remoteproc/smd-edge/rpm-requests/regulators/l17"
+      ],
+      "after": null
+    }
+  ],
+  "numeric_phandles": "renumbered by dtc; compared resolved provider paths",
+  "remaining_supplies_unchanged": [
+    "vddio-supply",
+    "lab-supply",
+    "ibb-supply"
+  ],
+  "dtc_warnings": "<stdin>:3260.3-30: Warning (reg_format): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000:reg: property has invalid length (8 bytes) (#address-cells == 2, #size-cells == 1)\n<stdin>:2891.33-2896.5: Warning (unit_address_vs_reg): /reserved-memory/qseecom_region@0: node has a unit name, but no reg or ranges property\n<stdin>:2814.20-2837.5: Warning (unit_address_vs_reg): /soc@0/spmi@200f000/pmic@3/labibb@0: node has a unit name, but no reg or ranges property\n<stdout>: Warning (pci_device_reg): Failed prerequisite 'reg_format'\n<stdout>: Warning (pci_device_bus_num): Failed prerequisite 'reg_format'\n<stdout>: Warning (simple_bus_reg): Failed prerequisite 'reg_format'\n<stdout>: Warning (i2c_bus_reg): Failed prerequisite 'reg_format'\n<stdout>: Warning (spi_bus_reg): Failed prerequisite 'reg_format'\n<stdin>:3258.38-3281.4: Warning (avoid_default_addr_size): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000: Relying on default #address-cells value\n<stdin>:3258.38-3281.4: Warning (avoid_default_addr_size): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000: Relying on default #size-cells value\n<stdout>: Warning (avoid_unnecessary_addr_size): Failed prerequisite 'avoid_default_addr_size'\n<stdout>: Warning (unique_unit_address): Failed prerequisite 'avoid_default_addr_size'\n<stdin>:1065.11-1073.7: Warning (graph_child_address): /soc@0/usb@70f8800/usb@7000000/ports: graph node has single child node 'port@0', #address-cells/#size-cells are not necessary\n",
+  "stock_live_dt": "vdd-supply absent; vddio/lab/ibb present",
+  "runtime_result": "not tested on 6.12",
+  "warning_categories_unchanged": true
+}
