@@ -17,6 +17,8 @@ Verify that archive/hash before any later clear.
 
 ### Build and tested changes
 
+Source, host regressions and run210 result metadata: commit `5f5f8ccce`.
+
 - `kgsl.c`: use 6.12 reservation-locking DMA-BUF map/unmap wrappers;
   unmap successful mappings on failed imports and publish metadata only
   after SG validation. Caller retains its DMA-BUF reference on failure.

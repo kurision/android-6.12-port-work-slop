@@ -4,8 +4,8 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 (`libGLESv2_adreno.so`, 2020 QC blob), sdm HWC and gralloc work unchanged
 — the "GPU 3D" row of `porting/FAILING-COMPONENTS.md` (backlog #1).
 
-Worktree: `../ack-kgsl`, current branch `mdss-bisect`; the port began on
-`kgsl-port` (from `driver-fix` a1e4992dc). Tested driver changes are uncommitted.
+Worktree: `../ack-kgsl`, current branch `master`. Run210 source, host
+regressions and result metadata are checkpointed in `5f5f8ccce`.
 Last update: 2026-10-17 — run210 builds and RAM-boots the 6.12 DMA-BUF
 locking/cleanup and SCM source-owner conversion fixes. Rendering remains open.
 
