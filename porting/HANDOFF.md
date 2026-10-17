@@ -1,6 +1,146 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
-## Current handoff — run202-run206, 2026-10-17 (read first)
+## Current handoff — run207-run208, 2026-10-17 (read first)
+
+### Next session: start here
+
+Last confirmed device state: rooted stock 4.19, serial `2819f2320604`,
+boot_id `92f04e57-964d-46fa-b847-c60860996ba4`. No capture/observer remains.
+Device logdump holds run208, archived in `porting/artifacts/snapshot60/`.
+Before clearing it, verify the device SHA equals `run208-logdump.bin`:
+`3b7ceabe525a6a3f4e09e165bee8bee46a272613ee81ce802617f4a40316b9ab`.
+
+Commits:
+- `c9a84d881`: checkpoint of the previously uncommitted run201-206 work,
+  run208 startup diagnostics, supplied handoff and package reports.
+- `a6684a45d`: **new first-open/idle diagnostics, NOT BUILT OR BOOTED**.
+  This is newer than every existing image and the staged build source.
+- Keep committing completed changes, as requested by the user. No
+  Assisted-by or co-author trailers.
+
+What run208 actually recorded: zap authentication, secure-mode switch,
+post-start and GPU startup all returned zero. Stage 10 persisted at
+47.556380762 s. No first-submission or GPU-snapshot/fallback marker
+persisted. **The subsequent reset cause is UNVERIFIED.** The next diagnostic
+target is first-open completion, process/page-table setup and initial idle
+or power transitions. Missing records do not prove those paths never ran.
+
+Do next, in order:
+1. Read `REFERENCE-boot-testing.md` before any boot. **Ask before building
+   or booting**; neither is authorized merely by this handoff. Run209 image
+   and package report did not exist at handoff; re-check before using 209.
+2. Before the next authorized build, sync these four files from the repo
+   into `/tmp/ack-run164-source`, then compare all tested/modified sources:
+   `drivers/gpu/msm/adreno-zap-compat.h`, `drivers/gpu/msm/kgsl.c`,
+   `drivers/gpu/msm/kgsl_pwrctrl.c`, `fs/pstore/ram.c`.
+   The staged tree currently carries run208, not `a6684a45d`.
+3. Build **incrementally in `out/`**, preserving its merged config. Use the
+   pinned Rust/bindgen environment in `BUIL_TISSOT.md`, with `CC=clang`
+   and `/usr/bin` first in PATH. Spelling it `CC=/usr/bin/clang` triggered
+   unrelated recompilation during run208; that invocation was stopped and
+   the build completed with the original `CC=clang`. No clean was run.
+4. Package from the real `boot-run208.img`, retaining its ramdisk, init,
+   DTB and **`panic=60`**. The user specifically requested 60 seconds before
+   reboot on panic. Do not append a second panic token. Verify embedded
+   config, payload hashes and header fields before asking to boot.
+5. For an approved boot: archive early logcat, verify prior logdump SHA,
+   clear and prove zero, start one reader and four-second ADB observation.
+   After any reset, save stock PMIC reasons immediately, then pull evidence.
+   Find observers by PID; `pgrep -f` also matches the calling shell.
+6. Decode **32** stage slots at `0x3f01000` for the next image, plus both
+   snapshot payloads even if a header is torn. Existing images through
+   run208 only write slots 0-15. New bank ends at `0x3f05000`, before the
+   QSEE ring at `0x3f10000`; witness/reset offsets are unchanged.
+
+### New diagnostic map — committed, unbuilt
+
+The 40-byte little-endian record is unchanged: `<QIiQQQ` = magic, stage,
+signed ret, uptime_ns, mem_phys, size. Magic is `0x454741545350415a`.
+Slot stride is 512 bytes. Slots 0-15 retain their run208 meanings. New
+slots 16-30 record the first visit per stage; slot 31 is reserved.
+
+| Slots | Event |
+|---|---|
+| 16 / 17 / 18 | First-open: GPU start returned / ACTIVE change returned / active-count put returned |
+| 19 | `kgsl_open_device` returned to `kgsl_open` |
+| 20 / 21 / 22 | Process setup entered / returned / final `kgsl_open` return |
+| 23 / 24 | Idle work entered / returned |
+| 25 / 26 | ACTIVE transition entered / returned |
+| 27 / 28 | NAP transition entered / returned |
+| 29 / 30 | SLUMBER transition entered / returned |
+
+For slots 16-22, `mem_phys` carries PID and `size` carries current KGSL
+state. For slots 23-30 they carry current/requested state, respectively.
+These are software values, not register reads. State bits:
+INIT=1, ACTIVE=2, NAP=4, SUSPEND=16, AWARE=32, SLUMBER=128, RESET=256.
+Match PID/timestamps: first records from different stages need not belong
+to the same open or idle attempt. The original ignored ACTIVE-change
+result and other error handling are preserved; the result is now recorded.
+
+Cross-checks: [AOSP kgsl.c](https://android.googlesource.com/kernel/msm/+/0ba0fc238751acb47afdb023edb5152111fc2ca0/drivers/gpu/msm/kgsl.c)
+has the same first-open start/ACTIVE/active-count-put ordering;
+[Linux block documentation](https://origin.kernel.org/doc/html/v6.12/block/writeback_cache_control.html)
+describes FUA completion durability.
+
+Host harnesses exercised the actual open, first-open, idle, state-change,
+record-helper and stage-backend functions: success, error cleanup, ignored
+ACTIVE error, EBUSY requeue, model/zap gating, repeat open, one-shot races,
+metadata, errno, FUA/SYNC flags, slot 31 acceptance/32 rejection and QSEE
+separation passed. Strict checkpatch: zero errors, warnings or checks.
+Kernel compilation and device behavior of these additions are unverified.
+Synchronous diagnostic writes can perturb timing or block on storage.
+
+### Run207 — unchanged run206 image retried
+
+`boot-run206.img` SHA `c595cfdf543335b63ad0c7449832f6fe0653a4c66dad7a55da260ec606990fe4`.
+Phone reset and returned to stock. All seven zap stages returned zero;
+`run207-ramoops-slot1-seq20-ns41661687379-snapshot-console.log:3491`
+reports authentication success, and line 3497 reports
+`DIAG secvid: zap_loaded=1 ret=0 trust_cntl=00000000` at 41.410971 s.
+The trust value is a placeholder, not a hardware read. Console text survives
+through 41.639321 s; no recorded UCHE/GPU hang/SEA in that captured window.
+Both snapshot payloads were inspected. Run206's absent zap records did not
+repeat, but neither run's reset cause is established.
+
+### Run208 — startup completes, later reset unverified
+
+Image SHA `e0d594c7db1c39e925c96fcd09e8eb60a98dcf4d95d0ce795fa9642a0ec0b494`.
+Built incrementally in `out/`, packaged on the real run206 base. Config,
+DTB, ramdisk and init were byte/hash checked against run206; only the
+diagnostic kernel and appended `panic=60` changed. Build and package
+reports are in `snapshot60/`. The BTF duplicate-ID warnings also occurred
+in run206. Run208 itself includes stages 7-15, not the new 16-30 additions.
+
+Primary result: `run208-zap-stages.txt:12-16` decodes stages 6-10 from the
+separate logdump bank: authentication at 47.547933522 s, secure-mode switch
+at 47.551572324 s, post-start return at 47.554986856 s, startup completion
+at 47.556380762 s, every ret=0. Slots 11-15 are entirely zero. This does
+not establish that the first-submit or snapshot paths were never reached.
+
+Capture limit: snapshot headers are CRC-valid at 41.635/43.872 s; latest
+periodic tail header is 47.371510970 s, but its **text ends at 42.259087 s**.
+The later durable stage records therefore carry the GPU progress that
+the console captures lack. Both raw snapshot payloads were inspected;
+no retained reset/panic record explains the death. QSEE ring ends with a
+returned keymaster call at 38.893939 s; witness canary=35, quiet=0.
+
+User observation: run208 showed backlight only, then became completely
+black. The user also reported a panel blink before resetting during the
+preceding investigation. Run206 observation was fastboot splash off,
+backlight on, fully black, then dim backlight.
+
+Stock returned roughly 168 s after the run208 reboot request versus 104 s
+for run207. This is consistent with a 60-second panic delay, **not proof
+that a panic occurred or identification of its cause**. Stock PMIC reasons
+were saved immediately in `run208-stock-pon.txt`: Hard Reset/cold boot and
+PS_HOLD, as in run207; they do not identify the reset caller.
+
+Residual hazard unchanged: CPU snapshot fallback reads locked 0xf400 after
+zap authentication. Run208 has no persisted snapshot-entry/fallback marker;
+do not present that hazard as this run's diagnosed cause. UCHE/rendering
+outcome remains unverified because no first-submission record survived.
+
+## Previous handoff — run202-run206, 2026-10-17 (historical)
 
 ### Next session: start here
 
