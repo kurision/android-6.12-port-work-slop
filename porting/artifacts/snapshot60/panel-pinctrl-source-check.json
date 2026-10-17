@@ -1,0 +1,56 @@
+{
+  "scope": "host DT compile only; no kernel image build or boot",
+  "existing_property_changes": [
+    {
+      "node": "/soc@0/pinctrl@1000000/mdss_dsi_active/mux",
+      "property": "output-high",
+      "before": null,
+      "after": ""
+    },
+    {
+      "node": "/soc@0/pinctrl@1000000/mdss_dsi_active/mux",
+      "property": "pins",
+      "before": "6770696f3631006770696f323400",
+      "after": "6770696f363100"
+    },
+    {
+      "node": "/soc@0/pinctrl@1000000/mdss_dsi_suspend/mux",
+      "property": "pins",
+      "before": "6770696f3631006770696f323400",
+      "after": "6770696f363100"
+    },
+    {
+      "node": "/soc@0/qcom,mdss_dsi@0/qcom,mdss_dsi_ctrl0@1a94000",
+      "property": "pinctrl-0",
+      "before": [
+        "/soc@0/pinctrl@1000000/mdss_dsi_active"
+      ],
+      "after": [
+        "/soc@0/pinctrl@1000000/mdss_dsi_active",
+        "/soc@0/pinctrl@1000000/mdss_te_active"
+      ]
+    },
+    {
+      "node": "/soc@0/qcom,mdss_dsi@0/qcom,mdss_dsi_ctrl0@1a94000",
+      "property": "pinctrl-1",
+      "before": [
+        "/soc@0/pinctrl@1000000/mdss_dsi_suspend"
+      ],
+      "after": [
+        "/soc@0/pinctrl@1000000/mdss_dsi_suspend",
+        "/soc@0/pinctrl@1000000/mdss_te_suspend"
+      ]
+    }
+  ],
+  "new_nodes": [
+    "/soc@0/pinctrl@1000000/mdss_te_active",
+    "/soc@0/pinctrl@1000000/mdss_te_active/mux",
+    "/soc@0/pinctrl@1000000/mdss_te_suspend",
+    "/soc@0/pinctrl@1000000/mdss_te_suspend/mux"
+  ],
+  "approved_pin_values_verified": true,
+  "supply_topology_unchanged": true,
+  "dtc_warning_categories_unchanged": true,
+  "dtc_warnings": "<stdin>:3277.3-30: Warning (reg_format): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000:reg: property has invalid length (8 bytes) (#address-cells == 2, #size-cells == 1)\n<stdin>:2908.33-2913.5: Warning (unit_address_vs_reg): /reserved-memory/qseecom_region@0: node has a unit name, but no reg or ranges property\n<stdin>:2831.20-2854.5: Warning (unit_address_vs_reg): /soc@0/spmi@200f000/pmic@3/labibb@0: node has a unit name, but no reg or ranges property\n<stdout>: Warning (pci_device_reg): Failed prerequisite 'reg_format'\n<stdout>: Warning (pci_device_bus_num): Failed prerequisite 'reg_format'\n<stdout>: Warning (simple_bus_reg): Failed prerequisite 'reg_format'\n<stdout>: Warning (i2c_bus_reg): Failed prerequisite 'reg_format'\n<stdout>: Warning (spi_bus_reg): Failed prerequisite 'reg_format'\n<stdin>:3275.38-3298.4: Warning (avoid_default_addr_size): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000: Relying on default #address-cells value\n<stdin>:3275.38-3298.4: Warning (avoid_default_addr_size): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000: Relying on default #size-cells value\n<stdout>: Warning (avoid_unnecessary_addr_size): Failed prerequisite 'avoid_default_addr_size'\n<stdout>: Warning (unique_unit_address): Failed prerequisite 'avoid_default_addr_size'\n<stdin>:1065.11-1073.7: Warning (graph_child_address): /soc@0/usb@70f8800/usb@7000000/ports: graph node has single child node 'port@0', #address-cells/#size-cells are not necessary\n",
+  "hardware_validation": "not performed"
+}

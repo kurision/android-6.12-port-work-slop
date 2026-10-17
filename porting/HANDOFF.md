@@ -1,5 +1,26 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
+## Current source-only update — reset/TE pinctrl
+
+Approved donor pinctrl fidelity change is applied to
+`msm8953-xiaomi-tissot-mdss.dtsi`: reset GPIO61 has its own GPIO states,
+active 8 mA/no pull/output-high and suspend 2 mA/pull-down. TE GPIO24
+has separate active/suspend `mdp_vsync` states, both 2 mA/pull-down.
+DSI0 selects both reset and TE groups for each state.
+
+Android common 6.12's MSM8953 mux table and pinconf driver support these
+settings directly; both inspected drivers are byte-identical to the local
+versions. No pinctrl/GPIO driver API workaround was added.
+Before/after host DT preprocessing/compilation passed. Resolved-phandle
+comparison verified only the approved pinctrl changes, with all supply
+topology unchanged and the same DTC warning categories.
+Evidence: `artifacts/snapshot60/panel-pinctrl-source-check.json`.
+
+No kernel/boot-image build, boot or device pin write was performed.
+The supply-topology and panel-policy corrections below remain unbooted too.
+Reset waveforms, panel completion, rendering and the reset cause are
+unverified on hardware. Board-guard, audio and fingerprint work remain queued.
+
 ## Current source-only update — panel supply topology
 
 Removed the port-only DSI0 `vdd-supply = <&pm8953_l17>` binding from

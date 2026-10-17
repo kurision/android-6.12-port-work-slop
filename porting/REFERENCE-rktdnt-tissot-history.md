@@ -189,13 +189,22 @@ run210's reset or prove visible rendering.
   donor duplicate-include fix is a useful integration lesson, not an identified
   missing fix in this port.
 
-### 4. Additional lower-confidence display differences
+### 4. Reset/TE pinctrl: source-only fidelity correction applied
 
-Donor reset pinctrl actively drives output high, and GPIO24 TE uses
-`mdp_vsync`. ACK's `msm8953-xiaomi-tissot-mdss.dtsi:529-545` groups GPIO61/24
-as GPIO, without active `output-high`. Driver reset operations occur later;
-necessity of the TE mux for this video-mode/ESD-disabled configuration is
-unproven. These differences predate rktdnt's two display/board patches.
+Before this correction ACK grouped GPIO61/24 as GPIO and omitted reset's
+active `output-high`. The approved DT change separates reset GPIO61
+(active GPIO/8 mA/no pull/output-high, suspend GPIO/2 mA/pull-down) from
+TE GPIO24 (active and suspend `mdp_vsync`/2 mA/pull-down). DSI0 selects
+both groups. These donor settings predate rktdnt's display/board patches.
+
+Android common 6.12 supports the function and pinconf properties directly.
+Before/after host DT compilation and resolved-phandle comparison verified
+exact pins, functions, strengths, bias/output settings, state references and
+unchanged supply topology. Evidence:
+`artifacts/snapshot60/panel-pinctrl-source-check.json`.
+No kernel image build, boot or device pin write was performed; necessity
+of TE muxing for this video-mode/ESD-disabled configuration and any
+rendering/reset effect remain unverified.
 
 Donor LAB/IBB initialization asks for 5.7 V; ACK has translated standard
 regulator constraints/operations. Its driver records 5.5-V stock selector
