@@ -19,7 +19,7 @@ locking/cleanup and SCM source-owner conversion fixes. Rendering remains open.
   No first-submit marker persisted; asynchronous absence is inconclusive.
 - Phone reset to rooted stock; no 6.12 ADB window observed at four-second
   cadence. No valid panic/oops or ACKRESET1 identifies the reset cause.
-  Physical panel observation and rendering are unverified for this run.
+  User reports **"backlit blink reset"**; no rendered frame confirmed.
 - Raw logdump is device-hash-verified, SHA256
   `4fe66152b7b7c123e7c7670639dd6b78ddbcdfca0818831dc415f33ca8bdeb60`.
   Full evidence/limits: `artifacts/snapshot60/run210-summary.json` and

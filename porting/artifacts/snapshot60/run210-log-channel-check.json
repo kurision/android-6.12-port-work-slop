@@ -1,0 +1,86 @@
+{
+  "qsee_last_record": {
+    "seq": 108,
+    "ktime": 38450747380,
+    "boot_id": 3532175919,
+    "event": 2,
+    "pid": 395,
+    "smc": 805306374,
+    "arginfo": 34951,
+    "ret": 0,
+    "args": [
+      65537,
+      4278386688,
+      141,
+      4278386829,
+      40819,
+      4278378496,
+      32,
+      0,
+      0,
+      0
+    ],
+    "rets": [
+      0,
+      60929,
+      65537
+    ],
+    "extra": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "comm": "keymaster@3.0-s"
+  },
+  "witness": {
+    "magic": "0x5354414c4c574751",
+    "canary": 35,
+    "jiffies": 4294902912,
+    "quiet": 0,
+    "boot_id": 880840,
+    "limit": "Witness lags one sample; quiet=0 does not rule out a later stall or blocked storage writer."
+  },
+  "fatal_signature_matches": {
+    "run210-usb.log": [],
+    "run210-logdump.log": [],
+    "run210-ramoops-slot0-seq19-ns39610565817-snapshot-console.log": [],
+    "run210-ramoops-slot1-seq20-ns41695802639-snapshot-console.log": [],
+    "run210-printk-tail-slot0-seq19-ns39622112744-periodic-printk.log": [],
+    "run210-printk-tail-slot1-seq20-ns41788425087-periodic-printk.log": [],
+    "run210-postboot/ack-early-logcat.log": [],
+    "run210-live/stock-dmesg.log": [
+      {
+        "line": 170,
+        "text": "[    0.211488] Call trace:"
+      },
+      {
+        "line": 216,
+        "text": "[    0.215636] Call trace:"
+      },
+      {
+        "line": 298,
+        "text": "[    0.291229] Call trace:"
+      },
+      {
+        "line": 971,
+        "text": "[    5.829700] Call trace:"
+      },
+      {
+        "line": 992,
+        "text": "[    5.830243] Call trace:"
+      }
+    ],
+    "run210-live/stock-logcat.log": []
+  },
+  "caution": "Stock dmesg/logcat are the subsequent 4.19 boot, not port crash logs.",
+  "entire_raw_image_marker_counts": {
+    "Kernel panic": 0,
+    "Internal error": 0,
+    "UCHE:": 0,
+    "GPU hang detected": 0,
+    "SEA:": 0,
+    "ACKRESET1 ": 0
+  },
+  "postreset_stock_pstore_files": []
+}

@@ -316,7 +316,7 @@
   "port_adb_observed": false,
   "stock_return_host_elapsed_seconds": 167.96,
   "final_stock_boot_id": "a21fd043-16cd-43ed-a8b3-ec5768722bc7",
-  "physical_panel_observation": "not yet supplied by user",
+  "physical_panel_observation": "User reports: backlit blink reset",
   "rendering": "unverified",
   "reset_cause": "unverified",
   "limitations": [

@@ -67,12 +67,13 @@ Source, host regressions and run210 result metadata: commit `5f5f8ccce`.
   saved immediately. PMIC reports Hard Reset/cold boot and PS_HOLD,
   without naming the reset caller. Elapsed time does not prove panic.
 - `run210-postboot/ack-early-logcat.log` is 85,476 B, device-hash-verified,
-  no NULs; ends before graphics initialization. Physical panel observation
-  has not yet been supplied. Do not carry run209's observation forward.
+  no NULs; ends before graphics initialization.
+- User's run210 panel observation: **"backlit blink reset"**. This confirms
+  backlight/blink before reset, not a rendered frame or the reset cause.
 
-Next: obtain the panel observation; the next diagnostic boundary remains
-post-open ioctl/mmap/userspace initialization and independent panel
-completion. Do not infer a rendering fix or reset cause from missing
+Next diagnostic boundary remains post-open ioctl/mmap/userspace
+initialization and independent panel completion. Do not infer a rendering
+fix or reset cause from the blink or missing
 records. Ask before new instrumentation or another build/boot.
 Summary: `artifacts/snapshot60/run210-summary.json`.
 
