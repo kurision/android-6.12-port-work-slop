@@ -1,9 +1,10 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
-## Current handoff — run198, 2026-10-17 (read before the historical sections)
+## Current handoff — run199, 2026-10-17 (read before the historical sections)
 
-Two defects found and fixed today; the visible-display goal is still open and
-the reason is now known precisely.
+Three defects found today (display bring-up, GPU address mode, page-table
+format); the visible-display goal is still open and the reason is now known
+precisely. All three fixes are committed in `4d4fcc1`.
 
 **1. The display bring-up was broken and is fixed.** run194's logdump named it:
 `mdss_dsi_panel_power_on: failed to enable vregs for PANEL_PM` ->
@@ -29,6 +30,19 @@ descriptors. All three uses are now gated on
 `KGSL_PROP_DEVICE_BITNESS` no longer advertises 48 over a 32-bit pool.
 **This was ruled out as the fault cause**: run198 still traps at exactly
 `0x139000` with `cp_status=80423c68`.
+
+**3. The GPU page-table format also differed from stock, and was also ruled
+out.** Stock CAF sets `qcom,use-3-lvl-tables` on this very SMMU
+(`msm-arm-smmu-8953.dtsi:29`), which selects `ARM_32_LPAE_S1` — 32-bit
+stage-1 descriptors. The port derived `use_aarch64_pt` from compatible strings
+alone and got `ARM_64_LPAE_S1` with `.ias=39`. run199 forces the stock format
+(`ias=32 aarch64=0 tcr=80802020 tcr2=00038002`) and the trap is unchanged:
+same `0x139000`, same `cp_status=80423c68`, `screencap` byte-identical to
+run196-198 (`d1d094a5...`), panel still backlit with no render.
+
+So every axis on which the port could have disagreed with stock about
+addresses is now closed and verified: hardware address mode, page-table
+format, MMU mapping, software walk, and SMMU context-bank state.
 
 **Why the screen is still black — measured, not inferred.** On a live port boot
 `screencap` was decoded by hand: 1080x1920, 42,625 sampled pixels, **one
@@ -58,14 +72,24 @@ store. Working files are intact. `drivers/video/fbdev/msm/mdss_dsi.c` was
 restored from `~/.cache/run126-rust.oFKCctgK/source-ee66fc52d/` after an
 editor error duplicated it.
 
+**Repository note.** `.git` was a worktree pointer into the deleted
+`ack-android16-6.12`. It has been replaced by a fresh `git init` with
+`origin = git@github.com:kurision/android-6.12-port-work-slop.git` and one
+import commit `4d4fcc1`. `git ls-remote` currently fails with
+`Permission denied (publickey)` — the local `id_ed25519`
+(`kumalanil34@gmail.com`) is not authorised on that remote, so the tree is
+committed locally but not pushed.
+
 Evidence: `artifacts/snapshot60/run196-live/display-analysis.md`,
-`artifacts/snapshot60/run198-live/gpu-analysis.md`,
+`artifacts/snapshot60/run198-live/gpu-analysis.md` (all three GPU runs and the
+method notes),
 `artifacts/snapshot60/FAILING-COMPONENTS.md` (top table).
 
-Next: the UCHE out-of-bounds trap itself. It is now known to be a startup
-fault on the first GL submission, at a structurally invariant SVM address,
-with the hardware in stock's address regime and the buffer proven to map and
-translate.
+Next: the UCHE out-of-bounds trap itself. It is a startup fault on the first
+GL submission, at a structurally invariant SVM address, with the hardware in
+stock's address regime, stock's page-table format, and the buffer proven to
+map and translate. What is left is the GPU's own address generation or the
+command stream, not the port's MMU/SMMU programming.
 
 ## Previous handoff — run188, 2026-10-17
 

@@ -99,3 +99,51 @@ The display bring-up defect is fixed and verified (see
 accepts commands, signals completion and produces no pixels. That fault is
 still open; this run removed one real divergence from it and ruled that
 divergence out as the cause.
+## run199 — page-table format: also ruled out
+
+**Change (one line, `drivers/iommu/arm/arm-smmu/qcom_iommu.c`):**
+`qcom_iommu->use_aarch64_pt` had been derived from compatible strings alone,
+which gave the GPU bank `ARM_64_LPAE_S1` with `.ias=39`. Stock CAF sets
+`qcom,use-3-lvl-tables` on this very SMMU
+(`kernel_xiaomi_msm8953/.../msm-arm-smmu-8953.dtsi:29`), which selects
+`ARM_32_LPAE_S1` — 32-bit stage-1 descriptors, the format the A506 walk was
+validated against. run199 sets `use_aarch64_pt = false` to match stock.
+
+**Result: no change.** `screencap` sha256 `d1d094a5…` — byte-identical to
+run196, run197 and run198. Panel observation: "still just backlit no render at
+all". `sys.boot_completed=1`, SurfaceFlinger 709, system_server 1109, and the
+launcher dead again.
+
+So both hardware/software-agreement axes are now closed:
+
+| axis | state | verdict |
+|---|---|---|
+| hardware address mode (`ADDR_MODE_CNTL`) | `addr_mode=0`, matching stock (run198) | fixed, **not the cause** |
+| page-table format (`ARM_32_LPAE_S1` vs `ARM_64_LPAE_S1`) | stock format (run199) | **not the cause** |
+| MMU mapping / software walk | resolves to the right page, all traps | not the cause |
+| SMMU context bank state | translating, no fault bits, `far=0` | not the cause |
+
+The UCHE still rejects the same address. What remains is inside the GPU's own
+address generation or the command stream, not in how the port programs the
+MMU, the SMMU or the address mode.
+
+## Method notes worth keeping
+
+* `module_param` does **not** work on this kernel's boot command line:
+  `start_kernel()` calls `parse_args()` with `min_level = max_level = -1`
+  and `parse_one()` drops any param whose `level` falls outside that window.
+  Use `early_param("name", fn)` — and note `__setup_param` takes the *string*
+  as its first argument, so an unquoted identifier fails to compile.
+* Never leave two `fastboot-boot-capture.py` readers alive: both claim
+  `/dev/ttyACM0` and every boot then produces a 0-byte capture. That cost three
+  runs today and looked exactly like an image fault. `port-boot-retry.py`
+  now serialises attempts.
+* The RAM boot is intermittent independently of that: `fastboot boot` reports
+  Sending/Booting OKAY and the device returns to stock without the kernel ever
+  running. Only `uname -r` confirms a boot.
+* Editor mistakes are expensive. A python string-splice with an `end` index
+  found earlier than `start` silently duplicated ~240 lines of
+  `mdss_dsi.c` and produced "redefinition of mdss_dsi_on". When the staged
+  copy is overwritten at the same time there is no undo — keep a pristine
+  copy (`~/.cache/run126-rust.oFKCctgK/source-ee66fc52d/` was the fallback
+  here, though it was stale relative to the run188 tree).
