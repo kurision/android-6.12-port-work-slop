@@ -1,6 +1,40 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
-## Current handoff — run210, 2026-10-17 (read first)
+## Current source-only update — panel policy, 2026-10-17
+
+**Approved panel-policy correction is in source only: NOT BUILT OR BOOTED.**
+No new device observation or reset-cause conclusion follows from this patch.
+Run210 below remains the latest device baseline; existing images do not
+contain the panel-policy change.
+
+- `drivers/video/fbdev/msm/mdss_dsi.c`: move Tissot suspend reset/power
+  assignment out of the command-line-only, compile-gated finder into
+  `mdss_dsi_config_panel()`, after successful node selection and before
+  panel initialization. Both command-line and DT preferred-panel selection
+  now use the actual selected node via `of_node_name_eq()`, not its
+  human-readable panel-name property.
+- Retain the runtime Tissot condition and both flags' mappings:
+  TD4310=1, OTM1911=2, FT8716=3. Unknown selected Tissot nodes reset both
+  flags to zero; no selection and non-Tissot selection do not reassign them.
+- Reset waveform/timings, regulator flags/voltages, clocks and pinmux are
+  unchanged. No kernel build, packaging, boot or device operation
+  was performed for this source-only update.
+- Added `logging/test_mdss_panel_policy.py`, a focused host regression
+  extracting the actual C selection/configuration functions and OF name
+  comparison. Covers command-line and DT fallback, mappings/defaults,
+  stale flags, unresolved names/controller fallback, no-panel cases, policy
+  visibility before init and runtime-machine isolation with the old config
+  gate disabled/enabled. **Host regression passed**, and failed against
+  the original functions. Validation command from repo root:
+  `python3 porting/logging/test_mdss_panel_policy.py`.
+
+The inherited globals still represent shared panel policy; this patch does
+not redesign ownership. Hardware sequencing, panel completion, rendering
+and run210's reset cause remain UNVERIFIED. The host check cannot establish
+electrical behavior. See `REFERENCE-rktdnt-tissot-history.md`, section 1.
+No build/boot is authorized; request separate approval before either.
+
+## Latest device handoff — run210, 2026-10-17
 
 **Built and RAM-booted the two approved KGSL 6.12 compatibility fixes.
 The phone reset and returned to rooted stock; rendering and reset cause

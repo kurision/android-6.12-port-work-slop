@@ -1,7 +1,8 @@
 # rktdnt: Tissot donor bring-up commit record
 
-Recorded 2026-10-17. This is a history/source investigation, not a patch plan
-or a diagnosed explanation for run210's reset.
+Recorded 2026-10-17. The history/source investigation is not a diagnosed
+explanation for run210's reset. The approved source-only panel-policy
+correction is recorded below; it has not been built or booted.
 
 ## Scope and attribution
 
@@ -85,10 +86,11 @@ patches, even though the committer identity is rktdnt.
 Paths below are relative to ACK unless prefixed `donor/`, which means the
 inspected `oc-test` tree. These are source comparisons, not device validation.
 
-### 1. Strongest concrete gap: panel policy assignment can be skipped
+### 1. Panel policy assignment gap: source-only correction applied
 
 Inherited OTM1911 policy sets `panel_suspend_reset_flag = 2` and
-`panel_suspend_power_flag = 2`. In ACK:
+`panel_suspend_power_flag = 2`. Before the approved correction, ACK had
+the following gap (line references in this baseline list predate the patch):
 
 - `drivers/video/fbdev/msm/mdss_dsi.c:3296-3309` still wraps the assignments
   in `IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)`. That symbol is absent from
@@ -105,17 +107,45 @@ Inherited OTM1911 policy sets `panel_suspend_reset_flag = 2` and
   choose high/low/high/low reset pulses with 10-ms delays during disable;
   otherwise it just drives reset low.
 
-**[INFERENCE]** On this build/selection route, the inherited OTM1911 reset
-flag remains zero, so the donor's special disable waveform is not selected.
-This is a behavior-preservation gap, **not proof of run210's system-reset
-cause**. Merely adding the old config symbol would not fix the DT-fallback
-route. The relevant future change would resolve policy after the actual
-panel node is selected, covering both routes, with exact edits approved first.
+**[INFERENCE, pre-patch]** On this build/selection route, the inherited
+OTM1911 reset flag remained zero, so the donor's special disable waveform
+was not selected. This is a behavior-preservation gap, **not proof of
+run210's system-reset cause**. Merely adding the old config symbol would
+not fix the DT-fallback route.
 
-Smallest discriminating observation: the flag value after panel selection
-and at panel disable, plus whether that disable path is reached. Flag 2 and
-the matching waveform would falsify the predicted inactive branch. No such
-instrumentation or device test was performed in this investigation.
+**Approved correction applied, source-only:** `mdss_dsi_config_panel()`
+now sets Tissot policy after successful node selection and before
+`mdss_dsi_panel_init()`, covering command-line selection and DT fallback.
+The old `CONFIG_MACH_XIAOMI_TISSOT`-gated assignment was removed from
+`mdss_dsi_find_panel_of_node()`. The runtime Tissot check remains.
+`of_node_name_eq()` compares the actual selected node, not the human-readable
+`qcom,mdss-dsi-panel-name` property: OTM1911's node is
+`qcom,mdss_dsi_otm1911_fhd_video`, whereas its human label is
+`otm1911 fhd video mode dsi panel`. Both flags retain TD4310=1,
+OTM1911=2 and FT8716=3; an unrecognized selected Tissot node resets both
+to zero rather than retaining stale policy. No selected node means no
+policy reassignment. Non-Tissot selections leave this policy untouched.
+
+`porting/logging/test_mdss_panel_policy.py` extracts and compiles the actual
+selection/configuration functions and OF node-name comparison, with host
+boundaries for OF lookup and panel initialization. It checks both routes,
+all mappings, unknown-node defaults from stale flags, failed command-line
+lookup/controller fallback, no-panel behavior, policy visibility at init,
+and the runtime machine condition with the old config gate both off and on.
+Validation command (passed on the corrected source):
+
+```sh
+python3 porting/logging/test_mdss_panel_policy.py
+```
+
+Reset waveform/timings, regulator flags/voltages, clocks and pinmux were not
+changed. No kernel build, packaging, boot or device operation was performed;
+existing images and run210 evidence do not contain or validate this change.
+The host regression passed; the original functions failed its policy assertion.
+The flag value after selection and at panel disable, plus whether disable is
+reached, remain discriminating device observations requiring separate approval.
+Flag 2 with the matching waveform would falsify the earlier inactive-branch
+prediction on a newly built image; it would not establish the reset cause.
 
 ### 2. Retained donor power-policy difference: always-on LDOs
 
@@ -193,5 +223,7 @@ git for-each-ref --contains=f6b2180a52c8 --format='%(refname)'
 
 The commit inventory, reachability, duplicate patch IDs and relevant diffs
 were exercised against local Git; the selected current-source differences
-were inspected. No kernel source/config changes, build, boot or electrical
-measurements were performed. Run210 evidence remains the device baseline.
+were inspected. The history-inspection phase made no kernel source/config
+changes, build, boot or electrical measurements. The subsequent approved
+source-only policy correction and validated host regression are recorded in
+section 1. Run210 evidence remains the device baseline.
