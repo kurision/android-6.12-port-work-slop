@@ -213,6 +213,25 @@ clocks/GDSC use translated 6.12 providers, not identical downstream bindings.
 
 ### 5. Useful non-display lessons, not immediate rendering patches
 
+Follow-on applicability audit: after the panel-policy correction, remaining
+Tissot/family compile guards in the imported display stack cover a panel
+pointer with no imported consumer or redundant machine-header includes.
+Other guarded runtime paths target other Xiaomi boards, not Tissot.
+No additional functional guard change is justified; obsolete config symbols
+were not enabled merely to expose dead/unconsumed branches.
+
+The remaining audio/fingerprint work crosses a subsystem boundary:
+run210 enables mainline QDSP6 and MAX98927, but this board DT has no sound
+card/DAI-link endpoints and no donor `msm8952` machine/legacy routing stack.
+The upstream codec already acquires the reset GPIO using descriptor APIs.
+Donor MBHC/AUXPCM/DSM patches therefore cannot be applied to matching
+existing machine-driver paths. Fingerprint FPC1020/Goodix implementations,
+their kernel-side vendor ABI support and board nodes are absent from this port.
+Restoring either function needs a separately scoped 6.12 integration,
+not guard broadening or the addition of unbound DT nodes. Neither is
+implemented by the display changes recorded above.
+
+
 - **Guard coverage:** `5a0bd0c28fa0` explicitly broadened compilation gates;
   an unconditional machine helper alone does not preserve donor behavior.
 - **One implementation per hardware function:** `5efaf041e96f` avoids two

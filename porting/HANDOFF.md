@@ -21,6 +21,16 @@ The supply-topology and panel-policy corrections below remain unbooted too.
 Reset waveforms, panel completion, rendering and the reset cause are
 unverified on hardware. Board-guard, audio and fingerprint work remain queued.
 
+Follow-on board-guard audit found no further functional Tissot branch to
+enable in the imported stack: remaining Tissot gates wrap an unconsumed
+panel pointer; family gates wrap includes, while other runtime branches
+belong to other boards. No config symbols were enabled.
+Audio/fingerprint comparison found no corresponding donor machine/routing
+or fingerprint drivers in this port. Mainline QDSP6/MAX98927 exist, but no
+board sound-card links; the codec already uses reset GPIO descriptors.
+Those functions require separately scoped integration, not mechanical
+application of the remaining donor patches. They remain unimplemented.
+
 ## Current source-only update — panel supply topology
 
 Removed the port-only DSI0 `vdd-supply = <&pm8953_l17>` binding from
