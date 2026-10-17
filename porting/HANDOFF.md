@@ -1,6 +1,81 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
-## Current handoff — run209, 2026-10-17 (read first)
+## Current handoff — run210, 2026-10-17 (read first)
+
+**Built and RAM-booted the two approved KGSL 6.12 compatibility fixes.
+The phone reset and returned to rooted stock; rendering and reset cause
+remain UNVERIFIED.** No partition was flashed. No further build/boot is
+authorized by this result.
+
+Final serial `2819f2320604`, stock kernel
+`4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot_id
+`a21fd043-16cd-43ed-a8b3-ec5768722bc7`. Observers/capture have stopped.
+Device logdump holds run210, archived and device-hash-verified as
+`artifacts/snapshot60/run210-logdump.bin`, SHA256
+`4fe66152b7b7c123e7c7670639dd6b78ddbcdfca0818831dc415f33ca8bdeb60`.
+Verify that archive/hash before any later clear.
+
+### Build and tested changes
+
+- `kgsl.c`: use 6.12 reservation-locking DMA-BUF map/unmap wrappers;
+  unmap successful mappings on failed imports and publish metadata only
+  after SG validation. Caller retains its DMA-BUF reference on failure.
+- `secure_buffer_compat.c`: use a fresh local `u64` source VMID bitmask
+  per SG extent, validate inputs, and preserve donor `-EADDRNOTAVAIL`
+  quarantine semantics after failed SCM assignment. Caller VMIDs are
+  not overwritten. Secure-context enablement remains unchanged.
+- Both behavioral host checks failed before and passed after, including
+  ASan/UBSan. Secure adapter strict checkpatch passed; two focused reviews
+  found no issues. Device execution of DMA-BUF imports or secure-memory
+  transfers is not established by this boot's evidence.
+- `/tmp/ack-run164-source` had disappeared. Restored 87,556 source files
+  at the same path, preserving mtimes; checksum-compared all restored
+  files against the repo. Kept `out/` and its merged config; no clean.
+  Rust availability and pinned clang/Rust/bindgen verified.
+- `boot-run210.img` SHA256:
+  `c59807e72412aa2ef939df881952dbf584af7d12524f1ecfd42a31c9f0ee1025`.
+  Real run209 base. Embedded config, DTB, compressed ramdisk, init and
+  command line match run209; exactly one inherited `panic=60`.
+  DTC emitted reg/address-cell and prerequisite warnings, but DTB bytes
+  are unchanged. Same eight BTF duplicate-ID warning categories and
+  inherited duplicate-genfscon package warning.
+  See `run210-build.log`, `package-run210.json`,
+  `run210-source-verification.json`, `run210-build-verification.json`.
+
+### Device result and capture limits
+
+- Prior run209 device/local logdump SHA matched before clear; zero
+  readback verified. Early logcat archived and hash-verified before
+  removing only its diagnostic output. Both fastboot operations returned
+  OKAY; USB captured fresh `6.12.93-4k #7` execution.
+- Zap authentication, secure-mode-switch call, post-start and GPU-start
+  all returned zero. Stages 16-22 prove hwcomposer thread PID680 completed
+  first open/process setup; final open returned zero at 42.088811858 s.
+  Initial idle work and ACTIVE/NAP transitions also returned zero.
+- Stages 11-15, 29-30 and reserved31 are zero. Recording is asynchronous
+  best-effort: this does not prove no submit/snapshot/slumber path ran.
+- USB text ends at 41.742269 s; logdump text prefix at 41.504700 s.
+  Both entire 1 MiB snapshot payloads, including dmesg areas, were
+  inspected: CRC-valid samples at 39.611/41.696 s, no valid panic/oops.
+  Latest periodic header is 41.788425087 s, its text ends 41.674714 s.
+  No panel cold/completion diagnostic or DSI status triple was captured;
+  panel completion cannot be inferred.
+- No ACKRESET1 record. Four-second ADB observation saw no 6.12 window.
+  New stock boot observed at host elapsed 167.960 s; stock dmesg/logcat
+  saved immediately. PMIC reports Hard Reset/cold boot and PS_HOLD,
+  without naming the reset caller. Elapsed time does not prove panic.
+- `run210-postboot/ack-early-logcat.log` is 85,476 B, device-hash-verified,
+  no NULs; ends before graphics initialization. Physical panel observation
+  has not yet been supplied. Do not carry run209's observation forward.
+
+Next: obtain the panel observation; the next diagnostic boundary remains
+post-open ioctl/mmap/userspace initialization and independent panel
+completion. Do not infer a rendering fix or reset cause from missing
+records. Ask before new instrumentation or another build/boot.
+Summary: `artifacts/snapshot60/run210-summary.json`.
+
+
+## Previous handoff — run209, 2026-10-17 (historical)
 
 ### Next session: start here
 

@@ -6,10 +6,27 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, current branch `mdss-bisect`; the port began on
 `kgsl-port` (from `driver-fix` a1e4992dc). Tested driver changes are uncommitted.
-Last update: 2026-10-17 — run188 walks the faulting IOVA in software: the mapping
-is correct, the UCHE fault persists. Visible rendering remains unresolved.
+Last update: 2026-10-17 — run210 builds and RAM-boots the 6.12 DMA-BUF
+locking/cleanup and SCM source-owner conversion fixes. Rendering remains open.
 
-## Current verdict — run186/run187/run188
+## Current verdict — run210
+
+- Both compatibility fixes are kernel-built and booted; embedded config,
+  DTB, ramdisk, init and command line match run209. See
+  `artifacts/snapshot60/run210-build-verification.json`.
+- GPU startup, hwcomposer PID680 process setup/final open, and first
+  ACTIVE/NAP idle transitions returned zero (final open 42.088811858 s).
+  No first-submit marker persisted; asynchronous absence is inconclusive.
+- Phone reset to rooted stock; no 6.12 ADB window observed at four-second
+  cadence. No valid panic/oops or ACKRESET1 identifies the reset cause.
+  Physical panel observation and rendering are unverified for this run.
+- Raw logdump is device-hash-verified, SHA256
+  `4fe66152b7b7c123e7c7670639dd6b78ddbcdfca0818831dc415f33ca8bdeb60`.
+  Full evidence/limits: `artifacts/snapshot60/run210-summary.json` and
+  [current handoff](HANDOFF.md). Next: post-open ioctl/mmap boundary;
+  ask before instrumentation/build/boot. Nothing flashed.
+
+## Historical verdict — run186/run187/run188
 
 Use [BUIL_TISSOT.md](../BUIL_TISSOT.md) for procedures and the
 [current handoff](HANDOFF.md) for exact hashes, register corrections and capture
