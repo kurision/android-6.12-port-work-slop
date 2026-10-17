@@ -1,0 +1,35 @@
+{
+  "run": 209,
+  "source_commit": "e83d1d5fe7a31a46b84a82efa361a930ea2208b4",
+  "source_sha256": {
+    "drivers/gpu/msm/adreno-zap-compat.h": "a93f29541b0bdf5f654472d717a6fb3974591261f503a3abd16e4349f444676c",
+    "drivers/gpu/msm/kgsl.c": "9e135dc7423b5761644cfbe9f0ac26791cb2d008148d9bcadbd9385ca851062b",
+    "drivers/gpu/msm/kgsl_pwrctrl.c": "8637210db8a40fcdbd4e45b444791c212c6473a84da2d26844220383c931566d",
+    "fs/pstore/ram.c": "8c66436a967130146eb47b011781e28d3145cbe3a7f1ca88c8b4869dcb53136b"
+  },
+  "image_sha256": "64c4e1a82d47f06cdca6a35c43a1708d1d6ecf23d021b64573f77f29876dae1e",
+  "base_image_sha256": "e0d594c7db1c39e925c96fcd09e8eb60a98dcf4d95d0ce795fa9642a0ec0b494",
+  "config_sha256": "392660a74ea54e85a6f3ae913661ba19927bd29563b4cc7ef87b5635f71d7e04",
+  "dtb_sha256": "fb98fc6e40200af8ba83ae3890eae12188ef5cffdddf5041aca32837b1ea80b3",
+  "checks_passed": [
+    "incremental build and rustavailable",
+    "stage queue host harness",
+    "witness-open host harness",
+    "strict checkpatch: zero issues",
+    "staged diagnostic sources match repo",
+    "embedded config equals run208 and prebuild config",
+    "DTB equals run208",
+    "compressed ramdisk byte-identical to run208",
+    "init hash equals run208",
+    "cmdline byte-identical; single panic=60",
+    "header differences restricted to kernel size and image ID",
+    "packaged kernel matches fresh staged payload"
+  ],
+  "warnings": "Same eight BTF duplicate-ID warning categories as run208; package reports inherited duplicate genfscon paths.",
+  "booted": false,
+  "limitations": [
+    "Device behavior unverified",
+    "Queued stage records may be lost on reset",
+    "Other diagnostic writers remain synchronous"
+  ]
+}
