@@ -1,6 +1,78 @@
 # Handoff — tissot 6.12 port, update 2026-10-17
 
-## Current handoff — run207-run208, 2026-10-17 (read first)
+## Current handoff — run209, 2026-10-17 (read first)
+
+### Next session: start here
+
+Phone returned to rooted stock 4.19 after the approved run209 RAM boot.
+Serial `2819f2320604`, boot_id `88133e7c-f87f-46ed-a1d2-68741776e2d0`.
+Capture and observation have stopped. Device logdump holds run209; its
+64 MiB archive is `porting/artifacts/snapshot60/run209-logdump.bin`, SHA256
+`7d35b50cee75ded5fb926c6eaf1b7e069c6853c5b40b2769c2109cd7f816d648`.
+Verify that hash before any later clear.
+
+The first-open/idle diagnostics and asynchronous stage writer are now
+**BUILT AND BOOTED in run209**. Older unbuilt notes below are historical.
+Source commit `e83d1d5fe`; build/package verification commit `a41604a6f`.
+`boot-run209.img` SHA256:
+`64c4e1a82d47f06cdca6a35c43a1708d1d6ecf23d021b64573f77f29876dae1e`.
+Incremental build in `out/`, pinned tools and `CC=clang`; embedded config,
+compressed ramdisk, init, DTB and command line match run208. Exactly one
+`panic=60` is inherited. Same eight BTF duplicate-ID warning categories;
+the packager's duplicate genfscon warning concerns inherited base records.
+The four diagnostic sources in `/tmp/ack-run164-source` were synced and
+verified against the repo. Re-check before any later build.
+
+**Run209 recorded more progress, but the reset cause remains UNVERIFIED.**
+`run209-zap-stages.txt:6-37` decodes all 32 slots. Authentication completed
+at 47.043165658 s; the secure-mode-switch call returned zero at
+47.043598471 s, as in run208. This is a function result, not a direct
+readback of the protected register. GPU startup and post-start returned
+zero. New stages 16-22 all carry ret=0 and PID 678 (hwcomposer): first
+start, ACTIVE change, active-count put, device open, process setup and
+the final `kgsl_open` success-return marker at 47.044159148 s.
+Stages 23-28 record successful first idle work, ACTIVE (AWARE=32 to
+ACTIVE=2) and NAP (ACTIVE=2 to NAP=4) transitions. Process setup/final
+open sample state NAP=4. The asynchronous writer persisted these records
+after the GPU caller queued them; that does not establish later progress
+or rule out storage effects elsewhere.
+
+Slots 11-15 (first submission/snapshot/fallback), 29-30 (SLUMBER) and
+reserved 31 are all zero. With asynchronous best-effort recording, absence
+does not prove a path never ran. UCHE faults, GPU hangs and rendering after
+startup remain unverified. The locked-register CPU snapshot fallback
+hazard remains; no persisted marker identifies it as this reset's cause.
+
+Capture limits and reset evidence:
+- `run209-usb.log:3559-3562`: panel cold bring-up and the same three DSI
+  status errors at 41.748388-41.748477 s. No `dsi_on: done` was captured.
+  USB continues beyond those errors through 46.447013 s (line 3580), then
+  the ACM reader disconnects. Thus the panel errors are not themselves
+  the last captured kernel activity. Panel completion remains unverified.
+- Both entire 1 MiB snapshot payloads were inspected, including dmesg
+  areas. Both headers/payload CRCs validate (39.674/41.723 s), with no
+  valid panic/oops record. Latest periodic tail header is 46.822961335 s,
+  but its text ends at 41.719660 s; the USB stream contains later text.
+  Stage records at 47.044 s are later still. Why captures stop is unverified.
+- No ACKRESET1 record. QSEE ring last returns at 38.404299 s; this alone
+  does not identify what subsequently reset the board. Stock dmesg and
+  logcat were saved immediately on ADB return, about 168 s after the
+  bootloader reboot request. PMIC reports Hard Reset/cold boot and
+  PS_HOLD, without identifying the reset caller. `panic=60` and elapsed
+  time do not prove a panic occurred.
+- User panel observation: **backlit, then completely black**. No 6.12 ADB
+  window was observed at four-second cadence. New early logcat is archived
+  and hash-verified in `run209-postboot/`; its tail is incomplete/NUL-filled.
+  Prior early logcat was preserved in `run209-preboot/` before clearing.
+
+Do next: inspect the paths after successful first open (ioctl/mmap and
+userspace initialization), while checking panel completion independently.
+Do not diagnose a cause from a missing stage or this single run. Any new
+instrumentation needs the user's exact-edit confirmation; **ask before
+another build or boot**. Keep builds incremental in `out/`, preserve real
+base images, and find observers by PID. Keep committing without co-authors.
+
+## Previous handoff — run207-run208, 2026-10-17 (historical)
 
 ### Next session: start here
 
