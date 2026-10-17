@@ -124,6 +124,35 @@ the console captures lack. Both raw snapshot payloads were inspected;
 no retained reset/panic record explains the death. QSEE ring ends with a
 returned keymaster call at 38.893939 s; witness canary=35, quiet=0.
 
+**Where the run208 console stops: panel DSI errors.** The last text in both
+run208 payloads is the panel cold bring-up followed by three error-IRQ lines
+on CPU0 (`run208-printk-tail-slot0-seq21-ns47371510970-periodic-printk.log`,
+end of file):
+`[42.259026][T671] DIAG dsi_on: ctrl=0 cold bring-up`,
+`[42.259039][C0] mdss_dsi_fifo_status: status=44441000`,
+`[42.259069][C0] mdss_dsi_ack_err_status: status=10000000`,
+`[42.259087][C0] mdss_dsi_timeout_status: status=1`.
+`dsi_on: done` never appears. Runs 201/202/205/207 have none of these lines
+and log `dsi_on: done ... rc=0` around 41.4 s. The same triple is in
+`run194-logdump.log` and `run196a-logdump.log`, and both still reached
+`dsi_on: done`, so on its own it is an intermittent panel bring-up error,
+not a reset cause.
+- The kernel kept running after console text stopped: snapshot headers
+  at 43.872/47.372 s, stage records at 47.53-47.56 s. More than 5 s without
+  any new console line during init is abnormal. Console capture is
+  unreliable after 42.259 s in run208; the stage records are the only
+  evidence past it. Why the console stopped is **not established**.
+- GPU start came ~6 s late (stage 0 at 47.527 s vs 41.4-41.6 s in run205/207).
+  T671 (hwcomposer, the kgsl opener) was inside `dsi_on`, so one
+  **unverified** explanation is a ~5 s panel-on timeout before the GPU
+  open. Matches the run208 panel observation (backlight only, then black).
+- When decoding the next run, grep for `mdss_dsi_.*_status` and check that
+  `dsi_on: done` is present before treating a GPU-side record as the last
+  activity.
+- The new `a6684a45d` stage writes are synchronous FUA I/O issued under
+  the KGSL device mutex (`kgsl_open`, `kgsl_pwrctrl_change_state`). If the
+  logdump I/O stalls, they stall the GPU path too.
+
 User observation: run208 showed backlight only, then became completely
 black. The user also reported a panel blink before resetting during the
 preceding investigation. Run206 observation was fastboot splash off,
