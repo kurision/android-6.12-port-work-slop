@@ -136,17 +136,39 @@ The generic target SPM driver and its other SoCs are not changed.
   wrapper against MMIO/IPI mocks. It does NOT validate real IPI delivery,
   hotplug/RT scheduling, MMIO timing, probe, DT schema or supplier lifetime.
 
+### SPM-backed APC rail regulator
+
+`drivers/regulator/qcom-msm8953-spm-regulator.c` and
+`CONFIG_REGULATOR_QCOM_MSM8953_SPM`. Derived from donor
+`drivers/regulator/spm-regulator.c`:
+
+- Binds `qcom,spm-regulator` on the PM8953 S5/S6 SMPS child node, reads the
+  PMIC type/subtype over the parent SPMI regmap and keeps the donor's type
+  detection and per-type voltage ranges rather than hardcoding FTS2.
+- Voltage requests go through the SAW4 provider (`msm8953-spm.h`) so the SPM
+  keeps ownership of the PMIC VSET. A direct SPMI write is only used for
+  `qcom,bypass-spm` or after a failed SPM request, matching the donor fallback.
+- The optional child node registers the AVS minimum/maximum limit regulator
+  that CPR4 enables. Enable/limits map to `msm8953_spm_set_avs` and
+  `msm8953_spm_set_avs_limits`.
+- Deliberate divergences from the donor, each recorded: no `qcom,cpu-num`
+  (the SAW4 handle is one shared domain), no `qcom,recal-mask`/SMC
+  recalibration (absent from the MSM8953 DT), no probe-time SPM seed write
+  (the donor only reads at init), and a non-zero maximum-voltage-step floor to
+  prevent an infinite ramp loop.
+- Host test `test-msm8953-spm-regulator.py` compiles the real conversion,
+  selector and step-rate functions and checks 870000 uV / level 174 and
+  1200 uV/us against the donor boot log. It is not a probe, regmap or hardware
+  test. The driver is disabled and unwired until CPR4 and the clock provider
+  exist.
+
 ## Remaining implementation / review gates
 
-1. **SPM/AVS first.** Donor `msm8953-pm.dtsi:16-34` uses system-CCI SAW at
-   0xb1d2000, all CPUs in cpu-vctl-list, 500 us voltage timeout.
-   `drivers/soc/qcom/spm_devices.c` provides probe_done, get/set_vdd and AVS
-   limit/enable/disable. `drivers/regulator/spm-regulator.c:355-429,609-718`
-   uses these for the APC rail and its hardware-AVS limit regulator.
-   The isolated SAW4 MMIO provider now supplies this service, but the APC rail
-   and AVS-limit regulator consumers remain to be ported. Trace PMIC subtype,
-   voltage range/encoding, settling and fallback semantics before connecting
-   them. Do not stub probe_done or AVS calls to success.
+1. **SPM/AVS and APC rail.** The isolated SAW4 MMIO provider and the
+   SPM-backed APC rail regulator (with its AVS-limit child) now exist as
+   disabled, unwired sources. What remains is the CPR4 consumer and the board
+   DT declaration of the PM8953 S5 node, its `qcom,saw` link and the AVS-limit
+   child. Do not stub probe_done or AVS calls to success.
 2. **CPR4 closed loop.** Preserve fuse interpretation, speed-bin filtering,
    per-corner target quotients, voltage floor/ceiling, APM threshold crossing,
    memory-ACC order, hardware loop limits, locking and error rollback.
