@@ -309,16 +309,95 @@ moving a branch is the user's call.
 
 ## Unverified / open
 
-- Nothing in this CPU stack has run on hardware. No probe, no clock rate, no
-  corner, no OPP, no cpufreq policy, no CPU info change.
-- The compile checks are against `out/.config` from a different source copy
-  (`/tmp/ack-run164-source`); a real configuration with these symbols selected
-  has not been generated or built.
-- The PLL VCO range and the mux parent set are now decided (plan, gate 3):
-  652.8-2016 MHz, and all three parents kept.
-- The provider is compiled and schema-checked only. It has never probed, has
-  never moved a mux, has never voted a corner, and the PLL rate notifier has
-  never fired. Nothing about gate 3 has run on hardware.
-- The device's state as last observed this session: port kernel `6.12.93-4k
-  #22`, boot_id `7f816860-1f81-497c-95ce-1bba25b78cf2`, no `su`. Not re-checked
-  since.
+- Nothing in this CPU stack has run on hardware *in any functional sense*. The
+  run238 boot proves the whole block compiles, ships and boots; it does not
+  probe a driver, set a clock rate or vote a corner. See "run238 boot" below.
+
+
+
+Base `boot-run237.img` (`aa2c85a3…`), because that base reaches the ROM with adb.
+Packaged `boot-run238.img` (`cc2e3c9b…`) with
+`porting/logging/package-diag-boot.py --keep-stock-console` and the run237
+`init`. `fastboot boot` only, nothing flashed.
+
+Everything except the kernel payload is provably identical to the base: ramdisk
+sha256, init sha256, cpio record count, cmdline, and the DTB — the packaged dtb
+is byte identical to the one inside `boot-run237.img`. That also retires the
+panel-size worry recorded above: `touchscreen-size-y` 1920 is what run237
+already shipped; 2041 was only in run236.
+
+Device evidence, `snapshot60/run238-summary.json` and `run238-live/`:
+
+- `fastboot` send OKAY 0.929 s, boot OKAY 1.196 s.
+- `/proc/version` on the device is exactly the banner of the image built here,
+  `#3 SMP PREEMPT Sun Oct 18 23:32:56`, so the port kernel that booted is this
+  build and not run237's.
+- `/proc/config.gz` pulled from the running kernel: all seven symbols are `=y`,
+  so `apcc-msm8953.c`, the CPR3/CPR4 port, APM, SAW4 SPM, the memory-ACC and the
+  SPM regulator are all live in the kernel that reached userspace.
+- New boot id `791cef7c-f9dc-4b20-99fa-dddeef72793e`, `sys.boot_completed=1`,
+  no kernel panic, no reboot and no kernel watchdog in the 23300-line all-buffer
+  log. The crash buffer holds only stale Oct 9 ROM tombstones from an earlier
+  boot, including one `droid.bluetooth` SIGABRT that is not this run.
+
+No runtime evidence for the provider itself, as expected: it has no DT node, so
+it never probes, never moves a mux and never votes a corner, and the pstore
+diagnostic still owns the c1 mux exactly as before. Gate 4 is still the first
+step that changes hardware behaviour.
+
+Capture gap: this run produced no kernel console log. `dmesg` needs root and
+this device has no `su`, the logcat kernel buffer is empty, and the diagnostic
+USB gadget stream (`run238-usb.log`) is 0 bytes. The clock-state lines from
+`root-audit-20261018T145300Z/preboot-logdump.bin` therefore could not be
+re-observed; next run should pull the diag gadget or read pstore instead.
+
+Still open:
+
+- The PLL VCO range and the mux parent set are decided (plan, gate 3):
+  652.8-2016 MHz, all three parents kept.
+- The provider has a DT node from run239 but has still never probed, moved a
+  mux or voted a corner; its PLL notifier has never fired. The regmap fix
+  above is compile verified only.
+- The device's state after run239: **stock 4.19**
+  (`4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`), boot_id
+  `d1843a2b-d6ac-4419-89ab-e8fb2ff82549`, after `adb reboot`. Nothing was ever
+  flashed; every port boot was `fastboot boot`.
+
+## run239 — first boot of the wired CPU nodes, and what it broke
+
+Gate 5a landed: `arch/arm64/boot/dts/qcom/msm8953-cpu.dtsi` (APCC clock
+controller, SAW4, PM8953 S5 rail plus its AVS limit child, APM, memory-ACC
+selector, CPR4 with the donor's per bin tables, CPU0-3 on `APCC_CPU0_CLK` and
+CPU4-7 on `APCC_CPU4_CLK`), three new bindings, and `msm8953.dtsi` including
+it. `dt_binding_check` clean on all four; `dtbs_check` reports no new warning
+for any new node (the run cannot finish on this host: the installed
+`dt-validate` rejects the kernel's dtb argument). The board file is untouched.
+
+`boot-run239.img` (`0afa363b…`) on the run237 base, RAM boot only. It booted
+Android and adb came back, but the wiring is not yet functional:
+
+| node | result |
+|---|---|
+| `qcom-msm8953-apm` | bound |
+| `qcom-msm8953-spm` | bound |
+| `b116000.clock-controller` (APCC) | not bound |
+| `b018000.cpr4-ctrl` (CPR4) | not bound |
+| `pm8953_s5`, `apc_corner` | never registered |
+
+Chain: no S5 rail -> no `apc_corner` -> CPR4 deferred on `vdd-supply` -> APCC
+deferred on `vdd-cl-supply`.
+
+Root cause found offline, in the port and not in the DTS:
+`qcom_spm_reg_probe()` used `dev_get_regmap(pdev->dev.parent, NULL)`, but
+neither the SPMI core nor the PMIC driver registers a regmap on the parent, so
+every rail owned by this driver failed probe with "no parent SPMI regmap".
+Fixed in `f7ffd961f` by creating it over the PMIC parent with
+`devm_regmap_init_spmi_base()`, as `drivers/regulator/mt6315-regulator.c` does
+for its own SPMI parent. Compile verified, W=1 clean, **not yet booted**.
+
+What the DTS got right, from stock's own `regulator_summary` (the working
+donor kernel): `pm8953_s5` is enabled at 1090 mV with 400-1140 mV limits and
+`apc_corner` exists, i.e. the copied USID-1 node, register window and voltage
+range are the ones that work on this phone. `test-msm8953-spm.py` still fails
+to build its host mock (`READ_ONCE`, `EPROBE_DEFER` undeclared); pre-existing,
+not touched.
