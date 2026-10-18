@@ -160,6 +160,22 @@ It checks retry cleanup and cached success without contacting hardware.
 Git retains only snapshot43 run-10/run-11 capture evidence; older logs stay
 ignored locally. Raw capture bytes are not whitespace-normalized.
 
+KGSL source-only smoke checks (host C compiler required; no phone access):
+
+```sh
+python3 porting/logging/test_kgsl_sg.py
+python3 porting/logging/test_kgsl_a5xx_start.py
+python3 porting/logging/test_kgsl_dmabuf.py
+python3 porting/logging/test_kgsl_secure_buffer.py
+```
+
+The first two compile actual driver functions with UBSan: physical mapping
+and modeled GPU cache visibility must cover DMA-coalesced SG tails, cache
+endpoint wrapping must be rejected, and ZAP errors must stop CP startup
+while successful A506 authentication remains cached. All four checks passed
+with both `cc` and Clang.
+These do not replace an ARM64 kernel build or a device rendering/reset test.
+
 `package-diag-boot.py --base-image IMG --kernel-dir DIR --init BIN --out OUT
 --report JSON` builds a RAM-boot image from a base boot image: new kernel,
 only the ramdisk `init` record replaced, cmdline console set to `ttynull`. It
@@ -281,6 +297,7 @@ capped.
 | Stall witness | `0x3f00000` | `0x3f00200` |
 | QSEE ring | `0x3f10000` | `0x3f20000` |
 | Orderly reset capture | `0x3f30000` | `0x3f40000` |
+| Previous boot's reset-marker page (4 KiB header + 4 KiB payload) | `0x3f40000` | `0x3f42000` |
 
 MDSS re-probe markers (run117+) live in 4K carved from the ramoops
 dmesg area (payload offset `0x76000`, 118 dmesg zones remain; last 8
@@ -342,3 +359,85 @@ block I/O is added to panic or IRQ-disabled paths.
 Relevant kernel contracts:
 [pstore-blk driver and panic_write](https://docs.kernel.org/admin-guide/pstore-blk.html),
 [ramoops persistence](https://docs.kernel.org/admin-guide/ramoops.html).
+
+## Non-sleeping reset-path markers
+
+With `ramoops.reset_capture=1`, the existing 4 KiB diagnostic page also
+records first visits to panic, emergency restart, PSCI reset and direct
+PS_HOLD. Each disjoint 256-byte record has version, source boot ID, monotonic
+timestamp, CPU/PID/comm, bounded panic text and CRC32; its `RST1` magic is
+written last. The writer uses the probe-time mapping only: no allocation,
+mapping, printk, sleeping lock or block I/O in the reset path. Capture is
+inactive before validated probe and when the opt-in parameter is disabled.
+Missing/torn markers do not prove that a path did not execute.
+
+The next port boot copies the previous page before clearing it, then uses the
+existing process-context header/payload/flush transaction to persist it at
+`0x3f40000`. `ACKPATH1` identifies the recovery container; its timestamp is
+from the recovery boot, while the page and each marker identify the source
+boot. Disk commits are not attempted from panic/IRQ-disabled context.
+
+**Stock must not boot between capture and recovery.** It does not reserve this
+RAM. Press and hold Volume Down when the phone begins resetting. Release it
+once fastboot appears, before RAM-booting recovery. Do not hold Power or keep
+Volume Down pressed during the recovery boot. Firmware/bootloader RAM survival
+is not guaranteed.
+First validate the entire path with a separately labeled controlled panic;
+that control is not evidence about the spontaneous reset's cause.
+
+Build standalone diagnostic init from the existing source:
+
+```sh
+aarch64-linux-gnu-gcc -Os -static -DRESET_PATH_DIAG -DRESET_PANIC_TEST \
+  scripts/initramfs-diag/init.c -o /tmp/init-reset-panic-test
+aarch64-linux-gnu-gcc -Os -static -DRESET_PATH_DIAG \
+  scripts/initramfs-diag/init.c -o /tmp/init-reset-recovery
+```
+
+Neither init launches Android. Both stream kmsg over the diagnostic ACM
+gadget; the control triggers SysRq-c only after the normal 45-second capture
+completes. Retain `panic=60` and `ramoops.reset_capture=1`. Recovery init never
+triggers a panic and stays alive after capture. For these standalone images,
+blacklist `kgsl_3d_init`; do not apply that blacklist to the Android experiment.
+Package with the real verified base and fresh kernel/DTB; changing init is
+intentional for these two controls, not for the Android experiment.
+
+1. Preserve/hash-verify the current device logdump and early-logcat evidence
+   before any clear. Use fresh run tags and start a bounded USB capture.
+2. RAM-boot the controlled-panic image. Record its source `DIAG mark boot_id`,
+   deliberate trigger and fastboot return. Press Volume Down at reset; release
+   it once fastboot appears.
+3. **Do not clear logdump or boot stock.** Pause orchestration until the user
+   confirms both buttons are released, then RAM-boot recovery and require
+   `DIAG: previous reset page commit ret=0`. Preserve USB output.
+4. After recovery evidence is committed, stop capture before returning to
+   rooted stock. Pull/hash-verify the full logdump with the normal collector.
+5. Decode and match the source boot ID and controlled SysRq panic reason:
+
+   ```sh
+   python3 porting/logging/decode-reset-path.py path/to/run-recovery-logdump.bin
+   python3 porting/logging/test_decode_reset_path.py
+   ```
+
+The decoder rejects incomplete containers and corrupt headers/payloads,
+validates each marker's CRC/version/slot/boot identity, and reports invalid
+records without attributing their contents. Only a valid control recovered
+through this exact no-stock sequence establishes observed retention.
+Then repeat with the Android experiment and the same recovery sequence.
+If the control loses RAM, do not interpret missing experiment markers:
+use independent UART capture instead. No partition flashing is needed.
+
+### Observed retention control — run215/run216
+
+The actual-C writer/next-boot-copy harness (UBSan), strict marker/container
+decoder checks, four snapshot commit checks and stage queue regression passed.
+Pinned ARM64 kernel/control/recovery init builds passed with run211 config/DTB.
+Run215 intentionally triggered SysRq-c; run216 recovered source `0xcf40c366`
+with valid panic marker, CPU5/PID1 `init`, reason `sysrq triggered crash`,
+timestamp `64075048412` ns. User released Volume Down in fastboot before
+recovery; no stock boot/clear intervened. Raw container CRCs and device SHA
+verified; its payload equals the page reconstructed from USB marker words.
+Both raw snapshots also retain duplicate copies of that one controlled panic.
+Emergency/PSCI/PS_HOLD markers were missing; their runtime recording is not
+validated by this control. Run211's spontaneous reset cause remains unknown.
+Evidence: `../artifacts/snapshot60/run216-summary.json`.

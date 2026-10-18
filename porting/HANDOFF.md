@@ -1,4 +1,262 @@
-# Handoff — tissot 6.12 port, update 2026-10-17
+# Handoff — tissot 6.12 port, update 2026-10-18
+
+## Source adaptation — Qualcomm KGSL reference, not device-tested
+
+Reference is the user's read-only `../kgsl` checkout of
+[qualcomm-linux/kgsl](https://github.com/qualcomm-linux/kgsl/tree/2b2d762c0b843c560d2ae2203f6b3cfe1474fb3f),
+commit `2b2d762c0b843c560d2ae2203f6b3cfe1474fb3f`. API/secure-transition
+contracts checked against Android common `android16-6.12`,
+[`49f96790cc7636a02b5b36d2f486a318b80031f2`](https://android.googlesource.com/kernel/common/+/49f96790cc7636a02b5b36d2f486a318b80031f2/).
+This is a focused adaptation, not a driver replacement.
+
+- `kgsl_iommu.c`: full and offset physical SG mapping now use `orig_nents`.
+  DMA attachment mapping can reduce `nents` without reducing the original
+  physical list. Using that count let full mapping report success with an
+  unmapped buffer tail. Qualcomm's `_iommu_map_sg()` uses `orig_nents`;
+  ACK's `iommu_map_sg()` consumes physical addresses and `sg->length`.
+- `kgsl_sharedmem.c`: physical cache-range traversal also uses `orig_nents`,
+  covering the imported buffer tail rather than silently skipping it.
+  DMA attachment ownership/unmap handling is unchanged.
+- `adreno_a5xx.c`: removed the duplicate no-secure-context load branch that
+  swallowed every ZAP error. Both paths now propagate load/authentication
+  errors before CP microengine startup. Keep ZAP loading without a secure
+  MMU bank, A506 CPZ retention, and the existing resume condition.
+- `kgsl_sharedmem.c`: host-cache endpoint overflow now uses an integer
+  `ULONG_MAX` bound rather than undefined pointer-wrap arithmetic. Clang
+  rejected the old guard; a wrapped-endpoint regression also reached the
+  cache backend instead of returning `-ERANGE` before the fix. Wrapped and
+  valid host ranges are now checked.
+- Actual-C host regressions `logging/test_kgsl_sg.py` and
+  `logging/test_kgsl_a5xx_start.py` each failed before their correction and
+  passed afterward with UBSan using both `cc` and Clang. They exercise
+  full/offset mappings and modeled cache visibility across DMA-coalesced
+  physical entries, cache endpoint bounds, failed ZAP startup, successful
+  cached authentication and A506 retention. Existing DMA-BUF and
+  secure-buffer host regressions also passed with both compilers.
+
+No A506 feature/64-bit/quirk, DT, secure-bank, ASID, clock, bus or governor
+policy changes. No kernel-image/DTB build, packaging or device access in this
+adaptation. These source changes are **not in any previously tested image**.
+They do not establish a reset fix: run218 authenticated ZAP successfully,
+and DMA coalescing during that run has not been observed. Last device
+observation remains run221 below. Other comparison findings are recorded
+separately in the [KGSL tracker](TRACKER-kgsl-port.md).
+
+## Latest isolation control — run221, KGSL initialization disabled
+
+**No early spontaneous reset observed with KGSL disabled.** User ended the
+test and requested an ordinary reboot. This implicates a KGSL-enabled or
+GPU-dependent path, not a specific KGSL/ZAP/shared-component fault.
+
+- `boot-run221.img` differs from run218's `boot-run217.img` **only inside the
+  boot command-line field**, adding `initcall_blacklist=kgsl_3d_init`.
+  Same #9 kernel, DTB, config, Android init and ramdisk; no rebuild/flash.
+  Image SHA256:
+  `8a96968bfcd33f95e3f63e867da4b1448b5875496c8c5f9ede76b956394554eb`.
+- Kernel log confirms the initcall was blacklisted. All 98 saved port ADB
+  samples share boot_id `acef1f91-8a88-4228-a9e0-0bb736c2559a`;
+  `/dev/kgsl-3d0` absent and `/dev/ashmem` present. Last ADB uptime
+  **436.84 s (7 min 17 s)**. Not a completed eight-minute observation.
+- User reports the panel **blinking while ADB remains available**. Blinking
+  alone is not a reset or rendered-frame witness.
+- Requested logcat dump 1,976,706 bytes, plus continuous host logcat preserved.
+  SurfaceFlinger repeatedly SIGABRTs: missing KGSL device -> EGL_BAD_ALLOC ->
+  `no suitable EGLConfig found`. These are expected control-induced graphics
+  failures, not the diagnosed cause of the original GPU-on reset.
+  Android boot completion/rendering not established; this workload differs
+  from the GPU-on case.
+- Stopped observers at the user's request, then `adb reboot` returned zero.
+  ACKRESET1 confirms orderly action1/PID1 `init`, command `shell`,
+  timestamp `444862316652` ns. This is the **requested endpoint**, not a
+  spontaneous failure. Two raw console/tail samples CRC-valid through ~443 s;
+  no recovered panic/oops dump.
+- Archived and device-SHA-verified 64 MiB `run221-logdump.bin`:
+  `f7b7e9dbf5ed284d6413276e42bff712e0843e49313965eecbed988d1b311255`.
+  Verify this archive/hash before any later clear. Full evidence:
+  `artifacts/snapshot60/run221-summary.json`, package verification,
+  `run221-live/`, preboot/postboot identity/hash, panel note and raw capture.
+- Final serial `2819f2320604`, rooted stock
+  `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot_id
+  `78a78b58-d2cd-4342-8fab-0ae86a9dfa14`. Observers stopped; nothing flashed.
+
+No EGL workaround or GPU fix was applied during run221. Next isolation must retain this
+one-variable discipline and distinguish KGSL itself from GPU-dependent
+userspace/shared hardware activity. Ask before another build/boot.
+
+## Previous Android reset — run218; recovery attempts run219/run220
+
+**The real Android reset reproduced with instrumentation, but its final
+reset-marker page was NOT recovered. Reset cause remains UNKNOWN.**
+No new kernel changes, rebuild or flash. Run218 retried verified
+`boot-run217.img` (#9), SHA256
+`0de81d4892bd1f022c6b1fe903b425055b84371891d0ad6ada16b437c087de4e`,
+with original Android init/ramdisk/cmdline and no KGSL blacklist.
+
+- Fresh source boot ID `0xf916de56`; Android first stage captured, no port
+  ADB sample. USB 446,901 bytes, last kmsg 42.000767 s. User reports
+  **backlight / blink, then reset**, not a confirmed rendered frame.
+- GPU stages prove authentication, secure-mode switch, startup, PID673
+  process setup and final open succeeded; final open 42.283279202 s.
+  Initial idle and ACTIVE/NAP transitions returned zero. Missing submit,
+  snapshot and slumber stages are asynchronous absence, not nonexecution.
+- Watched reset returned to fastboot at host elapsed 91.832 s. Both buttons
+  released before RAM-booting `boot-run213.img` for recovery as run219;
+  no stock boot or clear between Android and the initial recovery command.
+- Run219 Sending/Booting both OKAY, but zero USB; reader timed out after
+  120 s. Its kernel execution and previous-page commit are unproven.
+  Stock subsequently booted. Do not interpret this as a successful recovery.
+- Prepared `boot-run220.img` using the same recovery kernel/init/ramdisk,
+  changing only `ramoops.reset_capture=1` to `=0`, to avoid overwriting
+  an already-saved ACKPATH1 container. **It was never sent**: the next
+  observer already saw rooted stock and fastboot never appeared.
+- Retrieved 64 MiB as `run219-logdump.bin`; its snapshots identify Android
+  run218 (`0xf916de56`), not recovery execution. Device SHA matches archive:
+  `bfd4010acb3424ab8169c99c52ac0f3de83dcdec8e21ce14ef1c599feb13da39`.
+  Verify this archive/hash before any later clear.
+- Saved samples 39.609516390/41.663661494 s; no valid panic/oops dump or
+  ACKRESET1. ACKPATH1 header/payload CRCs validate, but its previous-page
+  MARK identity is zero/invalid, so it does NOT recover the source reset
+  markers. This is not evidence that any software reset path was absent.
+  Stock has since run and remaining source RAM cannot be trusted.
+- Early logcat 85,690 bytes, device-hash-verified. Raw evidence, GPU stage
+  JSON, USB/timelines, panel observation and validation metadata are under
+  `artifacts/snapshot60/`; summary `run218-219-summary.json`.
+- Final serial `2819f2320604`, rooted stock
+  `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot_id
+  `4c57d2a4-4284-4fc0-a8e1-60b56dd678a2`. All capture/observers stopped.
+
+The controlled run215/run216 panic-retention proof remains valid, but actual
+reset recovery is not reliable. Before another Android repeat, establish
+reliable recovery execution or independent UART capture. Do not turn
+invalid marker-page identity into a watchdog/firmware diagnosis. Ask before
+another build/boot; no driver fix is established by this result.
+
+## Previous Android attempt — run217
+
+Repackaged the validated instrumented `#9` kernel from `kdir-run212` with
+run211's original Android diagnostic init/ramdisk/cmdline. No KGSL blacklist,
+no panic-test init, no source changes or rebuild required; staged source and
+compiled-source hashes match. Image SHA256
+`0de81d4892bd1f022c6b1fe903b425055b84371891d0ad6ada16b437c087de4e`.
+Fastboot Sending/Booting both OKAY, but **kernel execution is unproven**:
+zero USB bytes, no port ADB window, and all 67,108,864 logdump bytes are zero
+after verified preclear. New stock boot observed at host elapsed 156.043 s.
+Stock booted before the intended RAM recovery; no source marker page was
+recovered. This does not diagnose a kernel, firmware or bootloader failure.
+
+Device/local raw hashes match:
+`3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351`.
+Final rooted stock 4.19, serial `2819f2320604`, boot_id
+`6593789a-1354-41ca-a784-cf77c542f43e`. Observers stopped; nothing flashed.
+Evidence: `artifacts/snapshot60/run217-summary.json`, package/build verification,
+USB command output, preclear, live stock dmesg/logcat and raw logdump.
+The controlled panic-retention proof below remains valid; no instrumented
+Android reset diagnosis exists yet. Ask before retrying. Physical reset
+observation is required even if the USB-readiness signal never appears.
+
+## Previous diagnostic handoff — run215 control / run216 recovery
+
+**Non-sleeping panic-marker retention is now validated on hardware through
+fastboot, with no intervening stock boot. This was a deliberate SysRq panic,
+NOT a diagnosis of run211's spontaneous reset.** Nothing flashed.
+
+- Added opt-in reset-path records under `ramoops.reset_capture=1` in the
+  existing reserved diagnostic page. Panic, emergency restart, PSCI reset
+  and direct PS_HOLD have disjoint first-event records with source boot ID,
+  timestamp, CPU/PID/comm, bounded panic reason, CRC32 and magic-last commit.
+  The reset writer uses only the pre-mapped page: no allocation, mapping,
+  sleeping locks, printk or disk I/O. Disabled before validated probe.
+- Next diagnostic boot copies the previous page before clearing it and
+  commits it to logdump at `0x3f40000` via the existing flushed CRC transaction.
+  `logging/decode-reset-path.py` checks container and per-record identity/CRC.
+  See `logging/README.md`, "Non-sleeping reset-path markers".
+- Actual-C writer/next-boot-copy host harness with UBSan passed, including
+  disabled/invalid path, first-event preservation, truncation and torn-record
+  decoding. Four snapshot commit checks and stage queue regression passed.
+  Pinned Image.gz/DTB and static ARM64 standalone init builds passed.
+  Embedded config, Rust/ashmem and DTB equal run211. Inherited warnings remain.
+- `boot-run212.img` is the standalone panic control; `boot-run213.img` is
+  standalone recovery. Both use fresh `6.12.93-4k #9`, keep `panic=60` and
+  blacklist KGSL for the controls only. Neither launches Android/adbd.
+  Run212/213 attempts did not validate the planned control: no deliberate
+  trigger captured, then no recovery USB. Button instructions were ambiguous;
+  those captures do not establish why the phone returned to fastboot.
+  Run214 later completed recovery but recovered a different source boot
+  `0x9135b57c` with empty path slots; its bytes are preserved separately.
+- Clean run215 captured the deliberate trigger and source boot `0xcf40c366`.
+  User held Volume Down at reset, then confirmed both buttons released before
+  run216 recovery. No stock boot or logdump clear between those two boots.
+  Run216 recovered **valid panic marker**, CPU5/PID1/comm `init`,
+  uptime `64075048412` ns, reason `sysrq triggered crash`.
+  Emergency/PSCI/PS_HOLD slots are missing; do not infer nonexecution.
+- Run216 USB reconstructed page equals the raw recovered payload byte-for-byte.
+  Header/payload CRCs and source boot ID validate. Both raw snapshots also
+  retain the same controlled panic dump; two copies are not two crash events.
+  Device SHA matches archived 64 MiB `run216-logdump.bin`:
+  `c775021ea3d7ff403cd788e7f7cda485596b441ae88796914bacf6619370424e`.
+  Verify this archive/hash before a later clear.
+- Final serial `2819f2320604`, rooted stock
+  `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot_id
+  `e11451db-bdad-4562-bfd8-1fa8de740bb4`. Capture/observers stopped.
+  Evidence: `artifacts/snapshot60/run216-summary.json`, `run216-reset-path.json`,
+  run215/run216 USB/timelines, `run212-build-verification.json` and package reports.
+
+The instrumented Android experiment has not run. It must use original
+Android diagnostic init and no KGSL blacklist, followed by the same
+no-stock recovery handoff. Ask before that build/package/boot. Missing
+markers remain inconclusive; retention is not guaranteed for all resets.
+
+## Latest device handoff — run211, 2026-10-18
+
+**Current panel-policy, supply-topology and reset/TE pinctrl changes are
+built and RAM-booted. The phone returned to rooted stock; rendering,
+panel completion and reset cause remain UNVERIFIED.** Nothing flashed.
+The source-only sections below describe their historical validation state;
+run211 supersedes their unbuilt/unbooted status, not their hardware limits.
+
+- Staged source `/tmp/ack-run164-source` checksum-compared against 87,567
+  inventoried files after synchronization. Retained `out/` and run210 config.
+  Pinned clang 22.1.8, Rust 1.99.0 and bindgen 0.73.2; `rustavailable`,
+  Image.gz/DTB build and panel-policy host regression passed.
+- Embedded config equals run210/prebuild/output, including Rust/ashmem.
+  Run210 base ramdisk, init and command line are byte-identical; DTB contains
+  the approved supply and reset/TE changes. Inherited BTF/DTC/genfscon warnings.
+  Existing failed `run211-build.log` was preserved; successful build is
+  `run211-build-attempt2.log`. See `run211-build-verification.json`.
+- Image `boot-run211.img` SHA256:
+  `45368c57638c33dfe10ec171f51d0400dc168f7de2d0cc6e28c01bb48a5bb0f2`.
+  Fastboot Sending/Booting both OKAY. USB and logdump contain fresh
+  `6.12.93-4k #8` execution. Prior run210 archive/device hashes matched
+  before clear; 64 MiB zero readback verified. Old early logcat archived,
+  hash-verified and removed before boot.
+- GPU authentication, secure-mode switch, post-start and startup returned
+  zero; process-open entry PID672 at 42.014360921 s persisted. ACTIVE/NAP
+  transitions returned zero. Process-open completion/final-open, idle-done,
+  submit and snapshot markers did not persist. Best-effort asynchronous
+  absence does not establish path failure or nonexecution.
+- USB captured 452,191 bytes through 41.722582 s; logdump prefix ends
+  41.210654 s. Both full 1 MiB snapshot payloads validated, samples
+  39.612919463/41.661731546 s, diagnostic boot mark `0x985b6fa2`.
+  Periodic tail latest header 41.695554879 s, text ends 41.655467 s.
+  No valid panic/oops dmesg record, ACKRESET1 or panel-completion diagnostic.
+- Four-second ADB observation saw no port window; new stock boot observed
+  at host elapsed 168.467 s. PMIC reports Hard Reset/cold boot and PS_HOLD,
+  without identifying the reset caller. Early logcat 85,608 bytes,
+  device-hash-verified, no NULs, ends before graphics initialization.
+  SD capture unavailable. Physical panel observation requested, not supplied.
+  `/dev/ashmem` presence and Android boot completion on the port unobserved.
+- Final serial `2819f2320604`, rooted stock
+  `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot_id
+  `88d54774-2d32-4707-b37c-767bd229f52e`. Capture/observers stopped.
+  Device logdump matches archived `run211-logdump.bin` SHA256
+  `93736e7d12d27ccc78846dea9743f50234e3fd25e178c1bb0fbf395393c9dac0`.
+  Verify this archive/hash before any later clear.
+
+Evidence under `artifacts/snapshot60/`: `run211-summary.json`,
+`run211-source-verification.json`, `run211-build-verification.json`,
+`run211-zap-stages.json`, `run211-ramoops.json`, `run211-log-channel-check.json`,
+`run211-live/`, `run211-preboot/`, `run211-postboot/` and raw USB/logdump.
+No new instrumentation or repeat boot performed. Ask before another run.
 
 ## Current source-only update — reset/TE pinctrl
 

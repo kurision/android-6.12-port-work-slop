@@ -6,10 +6,103 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, current branch `master`. Run210 source, host
 regressions and result metadata are checkpointed in `5f5f8ccce`.
-Last update: 2026-10-17 — run210 builds and RAM-boots the 6.12 DMA-BUF
-locking/cleanup and SCM source-owner conversion fixes. Rendering remains open.
+Last update: 2026-10-18 — run221 KGSL-off control avoids the early reset
+through observed uptime436.84 s; user-requested reboot ends the test.
 
-## Current verdict — run210
+**Source adaptation, not device-tested:** pinned Qualcomm reference
+`../kgsl` at `2b2d762c0b843c560d2ae2203f6b3cfe1474fb3f`.
+Physical IOMMU/cache SG walks use `orig_nents`; the no-secure-bank A5xx path
+now propagates ZAP failures instead of continuing CP startup. The host-cache
+endpoint guard uses an integer bound instead of undefined pointer arithmetic.
+Both new actual-C/UBSan regressions failed before and passed after; existing
+DMA-BUF/secure-buffer checks passed. All four passed with `cc` and Clang.
+No new kernel image or device run.
+See [handoff](HANDOFF.md#source-adaptation--qualcomm-kgsl-reference-not-device-tested)
+for evidence and limits; reset/rendering remain unresolved.
+
+Other concrete comparison findings **not changed in this focused patch**:
+- `kgsl.c:kgsl_open()`: failed `pm_runtime_get_sync()` retains its usage
+  reference; the modern reference still has this misuse.
+- `kgsl_iommu.c:kgsl_iommu_start()`: global-map failure bypasses clock release.
+- `kgsl_pwrctrl.c:_aware()`: failed non-GMU enable still commits AWARE.
+- `adreno.h:counter_delta()`: abnormal backward busy-counter reads skip
+  updating the baseline, unlike the reference's A5xx accounting.
+These need separate failure/transition checks, not a power-state rewrite.
+None is established as run218's cause; its startup/open returned success.
+
+**Latest isolation: run221.** Only `initcall_blacklist=kgsl_3d_init` differs
+from the GPU-on baseline image; kernel/DTB/config/Android ramdisk unchanged.
+Blacklist execution and missing KGSL node confirmed. Same 6.12 ADB boot
+through 436.84 s (98 samples), no spontaneous reset observed; not a full
+eight-minute pass. Panel still blinks. SurfaceFlinger crash-loops because
+the GPU device is intentionally absent (ENOENT -> EGL_BAD_ALLOC -> no EGLConfig).
+No successful Android/rendering verdict. User requested `adb reboot`;
+ACKRESET1 command `shell` at444.862316652 s is that orderly endpoint.
+Evidence `artifacts/snapshot60/run221-summary.json`; verified raw SHA256
+`f7b7e9dbf5ed284d6413276e42bff712e0843e49313965eecbed988d1b311255`.
+Final rooted stock boot_id `78a78b58-d2cd-4342-8fab-0ae86a9dfa14`.
+KGSL-enabled/GPU-dependent activity implicated, exact fault unproven.
+Observers stopped; no flash; ask before another test.
+
+Latest real reset **run218** (`boot-run217.img`, original Android init, no
+blacklist): fresh boot `0xf916de56`, GPU startup/process setup/final open
+return zero (42.283279202 s), then reset to fastboot. User reports backlight/
+blink/reset. Run219 recovery accepted but no USB/commit proof; stock later
+booted. Run220 was not sent because fastboot never appeared.
+Archived raw snapshots still identify run218; no panic/oops/ACKRESET1.
+ACKPATH1 container CRCs pass but previous-page MARK identity is invalid,
+so final reset markers remain unavailable, not proven absent.
+Device-hash-verified 64 MiB archive `run219-logdump.bin` SHA256
+`bfd4010acb3424ab8169c99c52ac0f3de83dcdec8e21ce14ef1c599feb13da39`.
+Final rooted stock boot_id `4c57d2a4-4284-4fc0-a8e1-60b56dd678a2`.
+See `artifacts/snapshot60/run218-219-summary.json`. Nothing flashed;
+observers stopped. Reliable recovery/UART needed before another repeat.
+
+Latest Android attempt run217: validated `#9` kernel with original Android
+init and no blacklist accepted by fastboot, but zero USB and an entirely
+zero, device-hash-verified logdump; execution unproven. Stock returned before
+RAM recovery. Reset cause unknown; no rendering verdict.
+`artifacts/snapshot60/run217-summary.json`; rooted stock boot_id
+`6593789a-1354-41ca-a784-cf77c542f43e`. Nothing flashed; ask before retry.
+
+## Current diagnostic verdict — run215/run216
+
+- Non-sleeping panic/emergency/PSCI/PS_HOLD markers built in `6.12.93-4k #9`.
+  Existing opt-in and reserved page reused; next-boot recovery commits
+  previous page to `0x3f40000`. No reset-path sleeping disk I/O.
+- Controlled SysRq panic run215 -> fastboot -> recovery run216, no stock
+  between: CRC-valid panic marker matches source `0xcf40c366`, PID1 `init`,
+  reason `sysrq triggered crash`. Raw payload equals USB-reconstructed page.
+  Emergency/PSCI/PS_HOLD slots empty; nonexecution is not established.
+- SHA-verified 64 MiB raw archive:
+  `c775021ea3d7ff403cd788e7f7cda485596b441ae88796914bacf6619370424e`.
+  Final rooted stock boot_id `e11451db-bdad-4562-bfd8-1fa8de740bb4`.
+  Nothing flashed; observers stopped. `artifacts/snapshot60/run216-summary.json`.
+- This validates the diagnostic path, **not run211's reset cause**.
+  Controls used standalone init with KGSL blacklisted, not Android.
+  Ask before the instrumented Android experiment and recovery pair.
+
+## Current verdict — run211
+
+- Pinned build, Rust availability and panel-policy host regression passed.
+  Embedded config equals run210, including Rust/ashmem; ramdisk/init/cmdline
+  unchanged. Approved panel DT changes shipped. Image SHA256
+  `45368c57638c33dfe10ec171f51d0400dc168f7de2d0cc6e28c01bb48a5bb0f2`.
+- Fresh `6.12.93-4k #8` execution captured after Sending/Booting OKAY.
+  GPU startup and ACTIVE/NAP transitions return zero; PID672 process-open
+  entry persists, completion/final-open/submit do not. Asynchronous missing
+  markers do not establish a failed or unexecuted path.
+- Returned to rooted stock at host elapsed 168.467 s; no port ADB window.
+  No valid panic/oops, ACKRESET1 or panel completion captured. Physical
+  observation requested, not supplied; rendering and reset cause unverified.
+- Device logdump matches 64 MiB archive SHA256
+  `93736e7d12d27ccc78846dea9743f50234e3fd25e178c1bb0fbf395393c9dac0`.
+  Final boot_id `88d54774-2d32-4707-b37c-767bd229f52e`.
+  Observers stopped, nothing flashed. Evidence:
+  `artifacts/snapshot60/run211-summary.json` and [current handoff](HANDOFF.md).
+  Ask before new instrumentation or another build/boot.
+
+## Historical verdict — run210
 
 - Both compatibility fixes are kernel-built and booted; embedded config,
   DTB, ramdisk, init and command line match run209. See
