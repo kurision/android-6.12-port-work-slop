@@ -83,12 +83,31 @@ def reader(log: Path, done: threading.Event, result: dict):
     count, reason, recent = 0, "waiting", b""
     try:
         with log.open("xb", buffering=0) as out:
-            print("waiting for 18d1:9008 serial tissot-diag", flush=True)
+            print("waiting for 18d1:9008 (diag gadget, serial tissot-diag)",
+                  flush=True)
+            # Match on VID:PID only. run223 failed to open even though the
+            # user's manual boot of the same image enumerated 18d1:9008 with
+            # serial "tissot-diag": nothing was printed between the match test
+            # and the open, so a serial_number that did not match (or was
+            # unreadable) was indistinguishable from "no device at all".
+            # 18d1:9008 is unique to this gadget (stock is 4e11, fastboot is
+            # d00d), so VID:PID alone identifies it. Every candidate seen is
+            # logged so a 0-byte outcome is diagnosable after the fact.
+            seen: set[str] = set()
             while True:
                 hits = [p for p in list_ports.comports()
-                        if p.vid == VID and p.pid == PID and p.serial_number == SERIAL]
+                        if p.vid == VID and p.pid == PID]
+                for h in hits:
+                    tag = f"{h.device} serial={h.serial_number!r}"
+                    if tag not in seen:
+                        seen.add(tag)
+                        print("diag vid:pid seen: " + tag, flush=True)
                 if hits:
                     port = hits[0].device
+                    if hits[0].serial_number != SERIAL:
+                        print(f"WARNING: 18d1:9008 serial is "
+                              f"{hits[0].serial_number!r}, expected {SERIAL!r}; "
+                              f"opening {port} anyway", flush=True)
                     break
                 time.sleep(0.25)
             print(f"opening {port}", flush=True)
