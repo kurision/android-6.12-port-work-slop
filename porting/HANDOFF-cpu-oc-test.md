@@ -244,6 +244,55 @@ passed `make dt_binding_check` with dtschema installed. `test-msm8953-spm.py`
 currently fails to build its host mock on this toolchain (`READ_ONCE`,
 `EPROBE_DEFER` undeclared) and was not touched by this session.
 
+### Build test, run238 (2026-10-18, authorized, host only)
+
+Built on a staged copy of this tree, `/home/kurision/development/kernel/ack-staged-run238`
+(`git archive HEAD` plus the fragment), because the repo root carries in-source
+build residue and kbuild refuses an `O=` build there. The repo itself was not
+cleaned. Every file under test was compared with `cmp` before building.
+
+Toolchain per `BUIL_TISSOT.md`: rustc 1.99.0 from the stable toolchain, the
+cached bindgen 0.73.2, libclang 22.1.8, `RUSTFLAGS_AUTOFDO_CLANG` with the
+`-Zdebuginfo-for-profiling` spelling. Note the drift: the system clang is
+23.1.3, not the 22.1.8 the table records.
+
+Config: seeded from `kdir-run236/Image.gz` with `extract-ikconfig`, merged with
+`porting/build-test/apcc.config`, `olddefconfig`. `scripts/diffconfig` against
+the run236 config is exactly the seven intended symbols and nothing else:
+
+```
+QCOM_CLK_APCC_MSM8953 y       QCOM_MSM8953_APM y
+QCOM_MSM8953_SPM y            REGULATOR_QCOM_MSM8953_MEM_ACC y
+REGULATOR_QCOM_MSM8953_SPM y  REGULATOR_CPR3 y
+REGULATOR_CPR4_APSS y
+```
+
+`REGULATOR_CPR3` has to be requested explicitly: `REGULATOR_CPR4_APSS` depends
+on it rather than selecting it, so olddefconfig drops the CPR4 block without
+it. All seven are `=y` in the embedded config of the built image
+(`snapshot60/run238-embedded.config`).
+
+- `Image.gz` built, 20044788 bytes, log `snapshot60/run238-build.log`.
+- All six port drivers are in `vmlinux` (`apcc_msm8953`, `cpr3_regulator`,
+  `cpr4_apss`, `msm8953_apm`, `msm8953_spm`, `msm8953_mem_acc`).
+- `W=1` is now clean for `drivers/regulator/`, `drivers/clk/qcom/` and
+  `drivers/soc/qcom/`. It was not before: three unused-local errors in the
+  CPR3/CPR4 port, fixed in `399bedbc5`. Remaining `W=1` output is kernel-doc
+  noise inherited from the vendor comments, not errors.
+- The built DTB differs from the run236 one in exactly one property:
+  `touchscreen-size-y` 2041 -> 1920, from commit `ae580fc8a` in this tree, not
+  from this session. A boot image packaged from this tree would therefore not
+  carry the verified run236 DTB. Resolve that before any boot test; the panel
+  geometry is a hardware fact, do not guess it.
+
+Nothing was packaged, flashed or booted.
+
+Branch placement: these commits are on `combined`, which the repo was switched
+to during this session. `master` still points at the pre-gate-3 handoff commit,
+so `master` is four commits behind and needs a fast-forward or cherry-pick
+depending on which branch the port is meant to live on. Not done here, because
+moving a branch is the user's call.
+
 ## Constraints to keep
 
 - **No kernel build, no image, no flash, no boot** without the user explicitly
