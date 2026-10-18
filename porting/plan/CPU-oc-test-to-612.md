@@ -8,9 +8,10 @@ No OC, UV interface, kernel build or phone reboot is authorized at this stage.
 Another session owns navigation-button work and the running device. Do not
 edit its board DTS changes, or change the shared phone's boot state.
 
-**NOT READY for the CPU build/run test yet.** Two inactive power prerequisites
-are implemented below. CPU clock control, CPR4 and SPM/AVS are not implemented
-as a complete stack. No claim of CPU frequency scaling on hardware.
+**NOT READY for the CPU build/run test yet.** Inactive APM, memory-ACC and SAW4
+voltage/AVS providers are implemented below. CPU clock control, the APC rail
+regulator and CPR4 are not implemented as a complete stack. No claim of CPU
+frequency scaling on hardware.
 
 This supersedes `02-phase2-cpufreq.md`'s independent big/little policies,
 invented GCC CPUSS clocks and suggestion that voltage control is optional.
@@ -76,6 +77,52 @@ Those mistakes were already identified in `../findings/06-verification.md`.
   are devm-managed. No enable callback gates a physical rail. No DT/config
   activation has been added.
 
+### SAW4 voltage and AVS provider
+
+`drivers/soc/qcom/msm8953-spm.c`, `include/soc/qcom/msm8953-spm.h` and
+`CONFIG_QCOM_MSM8953_SPM`, disabled and unwired. The `qcom,saw2.yaml` binding
+adds a specific MSM8953 system-CCI compatible, with the donor CPU-domain list.
+The generic target SPM driver and its other SoCs are not changed.
+
+- Donor `drivers/soc/qcom/msm-spm.c:98-120,192-208,455-619` supplies the SAW4.1
+  offsets, reset/VCTL/PMIC_DATA3 sequence, 8-bit port-0 data, FSM-idle plus
+  level acknowledgement, and 500 us timeout. Bad requests, no arbiter,
+  dispatch errors, wrong levels and busy FSM states return errors.
+- `spm_devices.c:118-140` routes voltage changes to an online CPU in the
+  domain. New code keeps that behavior with a synchronous IPI and CPU-hotplug
+  read lock; a raw spinlock serializes all register transactions even on RT.
+  Stack request storage stays live until the callback completes.
+- `msm-spm.c:274-305` supplies AVS bit 0 and the independent min/max fields
+  of AVS_LIMIT. The donor `CONFIG_MSM_AVS_HW`-guarded bit-27/six-bit sequence
+  is not enabled in `out-oc/.config` and has no Kconfig definition in the donor.
+  Do not apply that older SAW1.1 sequence to SAW4 requests. New code preserves
+  the programmed SAW4 AVS limits during a direct voltage request.
+- CPU levels are encoded PMIC data, NOT microvolts. Their conversion and
+  settling delays still belong in the pending APC rail regulator. No SPMI
+  fallback or voltage/PMIC-type guess has been added to this MMIO service.
+- The donor AVS min/max IRQ helpers (`msm-spm.c:307-363`, AVS_CTL bits 1/2) are
+  reached only from CPR3 hardware-closed-loop paths
+  (`cpr3-regulator.c:1541,5006,5850,5864,6589`). CPR4 instead enables its
+  `vdd_limit_regulator`, which the `spm-regulator` AVS ops back with
+  `msm_spm_avs_set_limit` plus `msm_spm_avs_enable/disable`. The provider
+  therefore exposes no AVS IRQ surface and the CPR4 path needs none.
+- Probe write fidelity was re-derived from the donor, not assumed:
+  `spm_devices.c:729-737,875-881` writes only the `qcom,saw2-*` properties
+  present in DT (four on MSM8953) through `upd_reg_shadow`, while
+  `reg_init_values` is never populated (`memset`) and so is never flushed.
+  The provider matches: four writes, no zeroing of AVS_LIMIT/RST/PMIC_DATA.
+- Probe verifies SAW major/minor 4.1, PMIC-arbiter presence and all possible
+  CPUs in the domain. It applies exactly the four initial system-CCI settings
+  in donor `msm8953-pm.dtsi:16-34` and checks readback before publishing state.
+  It sends no voltage request and does not enable AVS or program sequences.
+- Consumers acquire a managed supplier handle through `qcom,saw` during
+  probe. Device links order supplier/consumer removal; platform-device refs
+  are released by consumer devres. No global per-CPU dangling supplier pointers
+  or fake successful `msm_spm_probe_done()` shim.
+- Host test `test-msm8953-spm.py` compiles the actual operations and dispatch
+  wrapper against MMIO/IPI mocks. It does NOT validate real IPI delivery,
+  hotplug/RT scheduling, MMIO timing, probe, DT schema or supplier lifetime.
+
 ## Remaining implementation / review gates
 
 1. **SPM/AVS first.** Donor `msm8953-pm.dtsi:16-34` uses system-CCI SAW at
@@ -83,8 +130,10 @@ Those mistakes were already identified in `../findings/06-verification.md`.
    `drivers/soc/qcom/spm_devices.c` provides probe_done, get/set_vdd and AVS
    limit/enable/disable. `drivers/regulator/spm-regulator.c:355-429,609-718`
    uses these for the APC rail and its hardware-AVS limit regulator.
-   Target `drivers/soc/qcom/spm.c` has no compatible/API implementing this
-   donor path. Do not stub probe_done or AVS calls to success.
+   The isolated SAW4 MMIO provider now supplies this service, but the APC rail
+   and AVS-limit regulator consumers remain to be ported. Trace PMIC subtype,
+   voltage range/encoding, settling and fallback semantics before connecting
+   them. Do not stub probe_done or AVS calls to success.
 2. **CPR4 closed loop.** Preserve fuse interpretation, speed-bin filtering,
    per-corner target quotients, voltage floor/ceiling, APM threshold crossing,
    memory-ACC order, hardware loop limits, locking and error rollback.
@@ -126,15 +175,25 @@ Those mistakes were already identified in `../findings/06-verification.md`.
   donor CPR hardware closed loop. It is a comparison, not a drop-in equivalent.
 - Target `Documentation/driver-api/device_link.rst:65-118` checked against
   acquisition/removal handling. Host tests do not prove supplier lifetime.
+- Current upstream and AOSP `android16-6.12/drivers/soc/qcom/spm.c` independently
+  confirm SAW4 AVS_CTL=0x904 / AVS_LIMIT=0x908 and CPU-routed voltage writes.
+  Their SAW1.1 regulator path uses bit 27, but is not an MSM8953 substitute.
+  [AOSP source](https://android.googlesource.com/kernel/common/+/refs/heads/android16-6.12/drivers/soc/qcom/spm.c).
+  Device-link ownership was also rechecked against current upstream docs.
 
 ## Checks and readiness
 
-Run `python3 porting/build-test/test-msm8953-apm.py` and
-`python3 porting/build-test/test-msm8953-mem-acc.py`. They compile only the
+Run `python3 porting/build-test/test-msm8953-apm.py`,
+`python3 porting/build-test/test-msm8953-mem-acc.py`, and
+`python3 porting/build-test/test-msm8953-spm.py`. They compile only the
 actual C switch/read functions against host register mocks. Cover switch
 directions, invalid inputs, APM timeout/status mask, memory-ACC ordering,
 unrelated bits and stuck/mismatched state. They do not compile the kernel
 drivers or test hardware, probe/cleanup, bus ordering or real timing.
+
+SAW4 model checks pass with host GCC and Clang. Strict checkpatch and the
+advisory API-pattern scan pass. YAML parsing checks syntax only; full
+`dt_binding_check`, kernel compilation and device tests have not run.
 
 Before declaring ready: finish the remaining source path, run focused static
 checks, review shipped config/DT dependency completeness and identify one exact
