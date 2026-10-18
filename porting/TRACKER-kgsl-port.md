@@ -6,7 +6,40 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, current branch `master`. Run210 source, host
 regressions and result metadata are checkpointed in `5f5f8ccce`.
-Last update: 2026-10-18 — **run232/run233: there was no reset. The "~43 s
+Last update: 2026-10-18 — **run234: the port works. adb, GPU and display all verified live.**
+
+### 2026-10-18 — run234: adb restored, vendor EGL on the ported KGSL
+
+Removing the diag USB console fixes adb, and adb is what proves the port.
+The diag ACM gadget claimed the board's only UDC, so adbd could never bind;
+the `sys.usb.configfs` handoff that used to release it does not fire, and the
+ACM sink is only a fallback for when the logdump is unavailable. Gating the
+gadget, the sink and the handoff behind `ANDROID_USB_CONSOLE` (off by default)
+leaves the UDC alone. The init was rebuilt with
+`aarch64-linux-gnu-gcc -Os -static -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT`
+-- the same toolchain that built the shipped `init-run228`, verified by an
+instruction-identical `guard_usb_handoff` and matching libc fingerprint. The
+musl/`zig cc` recipe in `REFERENCE-boot-testing.md` is stale for these runs.
+
+Against run231 this is a single variable (the init); the kernel source is
+identical, since the run232 GPU power pin was reverted.
+
+Verified live on the device, not inferred:
+
+- `uname -r` = `6.12.93-4k`, uptime 402 s, `/dev/kgsl-3d0` present.
+- adb up ~35 s after boot; `init.svc.adbd=running`, `sys.usb.configfs=2`.
+- SurfaceFlinger: `GLES: Qualcomm, Adreno (TM) 506, OpenGL ES 3.2
+  V@0502.0 (GIT@03dd3ba, ...)` -- the 2020 vendor blob on the ported driver,
+  with the full GLES 3.2 extension set.
+- `screencap` returns a real 1080x1920 frame: lockscreen, wallpaper, status
+  bar and the vendor "Select USB mode" dialog.
+
+This closes the "GPU 3D" row of `FAILING-COMPONENTS.md`: `/dev/kgsl-3d0` with
+the stock ioctl ABI, the vendor EGL, gralloc and sdm HWC.
+
+Unrelated to the port, seen in the same screenshot: "Bluetooth keeps stopping".
+
+### 2026-10-18 — run232/run233: there was no reset. The "~43 s
 reset" was our own USB console handoff.**
 
 ### 2026-10-18 — run232/run233: the reset was a capture artifact
