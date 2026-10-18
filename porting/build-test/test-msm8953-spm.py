@@ -103,10 +103,12 @@ int main(void)
     assert(msm8953_spm_set_avs_limits(&spm, 80, 228) == 0);
     assert(regs[SAW4_AVS_LIMIT / 4] == 0x55e4aa50);
     before = writes;
-    assert(msm8953_spm_set_avs_limits(&spm, 0, 100) == -EINVAL);
     assert(msm8953_spm_set_avs_limits(&spm, 101, 100) == -EINVAL);
     assert(msm8953_spm_set_avs_limits(&spm, 80, 256) == -EINVAL);
     assert(writes == before);
+    /* Min level 0 is the FTS2-family VSET floor and must be accepted. */
+    assert(msm8953_spm_set_avs_limits(&spm, 0, 100) == 0);
+    assert(regs[SAW4_AVS_LIMIT / 4] == 0x5564aa00);
     assert(msm8953_spm_set_avs(&spm, true) == 0);
     assert(regs[SAW4_AVS_CTL / 4] == 0x11 && msm8953_spm_avs_enabled(&spm));
 

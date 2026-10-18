@@ -97,9 +97,22 @@ The generic target SPM driver and its other SoCs are not changed.
   is not enabled in `out-oc/.config` and has no Kconfig definition in the donor.
   Do not apply that older SAW1.1 sequence to SAW4 requests. New code preserves
   the programmed SAW4 AVS limits during a direct voltage request.
+- The AVS minimum level 0 is valid, not an error: the `spm-regulator` AVS-limit
+  regulator maps the FTS2-family floor (350 mV) to VSET 0 and passes it straight
+  to `msm_spm_avs_set_limit` (`spm-regulator.c:609-673`). The provider therefore
+  accepts min 0 (it only rejects `min > max` or a max above 0xff) and refuses to
+  arm AVS while the ceiling is still unprogrammed.
 - CPU levels are encoded PMIC data, NOT microvolts. Their conversion and
   settling delays still belong in the pending APC rail regulator. No SPMI
   fallback or voltage/PMIC-type guess has been added to this MMIO service.
+- The APC rail is PM8953 S5. Donor boot logs (`out-lto/dmesg-boot.txt:258-259`,
+  also out-merge/out-lto variants) show
+  `spm_regulator_probe: name=pm8953_s5, range=LV, voltage=870000 uV,
+  mode=AUTO, step rate=1200 uV/us`. 870000 uV is representable only with a
+  5000 uV output step (FTS2 0 uV / FTS2p5 80000 uV VSET origin), not with the
+  HF/ULT_HF 12500 uV or FTS426/HFS430 4000/8000 uV steps, so the S5 SMPS is an
+  FTS2-family (type 0x1C) buck with the LV range. The pending rail port keeps
+  the donor PMIC-type detection rather than hardcoding the type.
 - The donor AVS min/max IRQ helpers (`msm-spm.c:307-363`, AVS_CTL bits 1/2) are
   reached only from CPR3 hardware-closed-loop paths
   (`cpr3-regulator.c:1541,5006,5850,5864,6589`). CPR4 instead enables its
