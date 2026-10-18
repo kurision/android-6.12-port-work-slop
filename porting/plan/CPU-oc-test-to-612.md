@@ -201,6 +201,41 @@ The generic target SPM driver and its other SoCs are not changed.
    - Plan: port the core and CPR4-APSS as a disabled, unwired block, keep the
      CPR4 path and drop the unused CPR3/CPRH/MMSS variants only where removal
      is provably inert, and compile-check object by object before any boot.
+   - Done 2026-10-18: `cpr3-regulator.c` (6576), `cpr3-util.c` (2487),
+     `cpr3-regulator.h` (1116), `cpr4-apss-regulator.c` (2043) plus
+     `linux/regulator/cpr3-uv.h` and `linux/regulator/msm-ldo-regulator.h`
+     now build cleanly against this tree with clang and the real config.
+     Kconfig `REGULATOR_CPR3` + `REGULATOR_CPR4_APSS`; the latter depends on
+     the SAW4/APC-rail, memory-ACC and APM providers. Still disabled, still
+     unwired, no boot.
+
+     Adaptations to 6.12 (all compile-verified):
+     - `#include <soc/qcom/spm.h>` becomes the SAW4 provider header, and the
+       hardware-closed-loop gate `msm_spm_probe_done()` becomes
+       `msm8953_spm_probe_done()`: a real readiness query against the single
+       probed SAW4 domain, not a success stub.
+     - The standard `struct regulator_ops` has no `list_corner_voltage`, so
+       that field is dropped from both ops tables; the mapping helper is kept
+       `__maybe_unused`. The corner-based regulator contract is otherwise
+       unchanged: `list_voltage(sel)` returns `sel + CPR3_CORNER_OFFSET`,
+       `set_voltage` interprets the core's min/max as corner(+offset), and
+       `get_voltage` returns the current corner(+offset). This matches the
+       donor consumer chain (see gate 3), which requests corner-encoded
+       values, not physical microvolts.
+     - The five `msm_spm_avs_*_irq` call sites are all `CPR_CTRL_TYPE_CPR3`
+       only, and the ceiling handler that clears the AVS IRQ is registered
+       only for `supports_hw_closed_loop && ctrl_type == CPR_CTRL_TYPE_CPR3`;
+       MSM8953 is CPR4, so those paths are provably inert and were removed
+       rather than stubbed. `regulator_register()`/`no_llseek`/
+       `panic_notifier.h` and a `void` `.remove` are the remaining drift.
+   - Consumer contract, recorded for gate 3 and the DTS gate: the donor does
+     not use cpufreq-dt/`opp-microvolt`. `qcom,cpu-clock-8953` carries
+     `vdd-cl-supply = <&apc_vreg>` and a `qcom,speedN-bin-vM-cl` rate-to-corner
+     map; its vendor clock `vdd_class` calls `regulator_set_voltage()` on the
+     CPR regulator with corner-encoded values, while `qcom,msm-cpufreq`
+     (donor `drivers/cpufreq/qcom-cpufreq.c`) only sets the CPU clocks. So the
+     ported CPR ops fit the donor consumer, and the clock provider must
+     reproduce that vdd_class coupling rather than a plain mainline OPP table.
 
 3. **CCF CPU provider.** Adapt the donor clock behavior to 6.12's clock
    framework; do not import its incompatible private struct-clk framework.
