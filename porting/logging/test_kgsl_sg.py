@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exercise actual KGSL mapping/cache C with DMA-coalesced physical SG entries."""
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -174,11 +175,11 @@ int main(void)
         'static int\nkgsl_iommu_map(',
         'static int kgsl_iommu_map_offset(',
     )) + function(sharedmem, 'int kgsl_cache_range_op(')
-    with tempfile.TemporaryDirectory(prefix='ack-kgsl-sg-test-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='ack-kgsl-sg-test-', dir='/tmp/opencode') as tmp:
         root = Path(tmp)
         unit, binary = root / 'sg.c', root / 'sg'
         unit.write_text(harness + functions + checks)
-        subprocess.run(['cc', '-std=gnu11', '-Wall', '-Wextra', '-Werror',
+        subprocess.run([os.environ.get('CC', 'cc'), '-std=gnu11', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=undefined', '-fno-sanitize-recover=all',
                         str(unit), '-o', str(binary)], check=True, timeout=20)
         subprocess.run([str(binary)], check=True, timeout=10)

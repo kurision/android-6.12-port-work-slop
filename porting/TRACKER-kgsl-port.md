@@ -6,7 +6,99 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, current branch `master`. Run210 source, host
 regressions and result metadata are checkpointed in `5f5f8ccce`.
-Last update: 2026-10-18 — **run227 refutes the run226 root-cause claim.**
+Last update: 2026-10-18 — **run232/run233: there was no reset. The "~43 s
+reset" was our own USB console handoff.**
+
+### 2026-10-18 — run232/run233: the reset was a capture artifact
+
+The logdump console snapshots settle what run231 left ambiguous. Neither run
+reset:
+
+| run | last durable snapshot | uptime | markers in recovered console |
+|---|---|---|---|
+| 231 | `seq=6707` | **1695.9 s** | none; systemui + init alive |
+| 232 | `seq=1171` | **331.4 s** | none; init running vendor services |
+
+run232's recovered console ends mid-`init` action processing at 331.4 s with
+`init: processing action (init.svc.vendor.per_mgr=running)`. That is a
+**running** system, not a corpse. run231's ends with systemui and KGSL still
+cycling power states at 1695.9 s.
+
+So what ended every capture at ~42-43.7 s? Our own diag ACM console. The
+diag init holds gadget `g1` bound to the only UDC, and Android's adb cannot
+bind while that is held; the stream dying there is the documented UDC-handoff
+cutoff, and I read it as the board dying because run229's identical cutoff
+happened to sit in front of a real PS_HOLD-confirmed reset.
+
+**This retires the entire reset narrative**, including the parts written
+below this line. Specifically: run227's "reset at 89.5 s" came from the same
+unsound method and is discredited too. No PS_HOLD, cold-boot or watchdog
+conclusion drawn from a ~43 s capture cutoff survives.
+
+**What actually stands** is the SError fix, which rests on its own evidence
+and is unaffected: run230 moved the faulting PC to a plain kernel load
+(proving asynchronous delivery), run231 removed the SError and the panic
+entirely, and run233 reached the Android boot animation on screen.
+
+run232's own experiment (GPU pinned to the lowest pwrlevel) was answering a
+question about a reset that was not happening; it is reverted, and run234
+returns to run231's behaviour. Unverified and now untested: whether the
+`0x64a0` ordering write specifically, or the absent power/quiesce sequencing,
+is the SError trigger.
+
+**Open, unrelated to the above: adb does not enumerate on the port kernel.**
+The handoff marker (`ACK diag: USB handoff configfs=1|2`) is absent from
+every capture, so the UDC is never released and adbd's bind fails. Commit
+`e9f6f932b` describes `init-run228` as having "the USB handoff neutered", but
+disassembly contradicts that: `guard_usb_handoff` is present *and called* from
+`launch_android` (call target `0x4015bc`). The failure is therefore upstream
+of the unbind — either the rc append fails, or the vendor stack never sets
+`sys.usb.configfs`. Unverified which.
+
+### 2026-10-18 — run231: SError eliminated, reset survives without it
+
+*(Superseded: the "board still reset" verdict below was a misread capture
+cutoff, per the section above. The SError attribution in this section stands.)*
+
+Three single-variable runs on the same tree, each with the pre-build config
+asserted byte-identical (`run231-build-host.sh`) and cmdline/ramdisk/init
+byte-identical to run229 — only the kernel payload differs.
+
+| run | change | SError | panic | board |
+|---|---|---|---|---|
+| 229 | baseline | 42.1876 s, `kgsl_iommu_start+0x280/0x5a8` | yes | reset |
+| 230 | drop `_apply_impl_defs()` | 42.8010 s, `kgsl_iommu_start+0x1d4/0x380` | yes | reset |
+| 231 | QSMMU `0x6800`/`0x64a0` writes once per boot | **none** | **none** | **reset** |
+
+The attribution rests on run230: after removing the halt/poll sequence the
+reported PC moved to an ordinary kernel load (`ldr x21,[x19,#0x10]`), so the
+SError is asynchronous and its reported instruction is not the culprit. The
+only MMIO left in that window is KGSL re-programming the donor's
+`GPU_SMMU_HUM_CFG` (`0x6800`) and `GPU_SMMU_DORA_ORDERING` (`0x64a0`) on every
+`kgsl_iommu_start()` under KGSL's own clock vote, with no power or quiesce
+sequencing. Making those writes once-per-boot removed the fault. Whether it
+is specifically the ordering write or the absent sequencing is **unverified**.
+
+run231 also produced the first successful GPU work this port has ever done:
+**192+ submissions, zero faults, zero UCHE traps, no SError, no panic** — and
+the board still dropped at ~43.7 s via PS_HOLD (cold boot), confirmed by the
+PMIC on the following stock boot.
+
+**What this retires.** The "reset at kernel uptime ~89 s" figure was derived
+by *assuming* a 49.8 s reset→stock-USB interval, never measuring it during a
+run. run230 panicked at 42.80 s and the device disconnected immediately under
+`panic=60`, which should have kept it up another minute; run231 shows the same
+immediate reset with no kernel fault at all. The ~89 s timeline is not
+supported by evidence and must not be used as a baseline.
+
+**What this opens.** The reset is now a failure with a live kernel. The
+TrustZone-watchdog theory assumed a kernel that had already stopped making
+progress; run231 shows the kernel submitting GPU work right up to the reset.
+No mechanism is established.
+
+Evidence: `run231-usb.log` (601 KB live console, first capture to survive the
+failure), `run231-ramoops.json`, `run230-*`. The run231 logdump slots contain
+the *following* stock boot (uptime ~1696 s) and carry no run231 diagnostics.
 
 ### 2026-10-18 — run227: `_apply_impl_defs()` is not the reset cause
 

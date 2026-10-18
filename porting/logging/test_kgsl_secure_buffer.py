@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exercise actual hyp_assign_table ownership transfers without a kernel build."""
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -47,6 +48,17 @@ static struct owned_range memory[3];
 static unsigned int attempts[3], calls;
 static int retry_at = -1, retries, fail_at = -1, failure;
 static int expected_perm;
+static int secure_buffer_mutex;
+static void mutex_lock(int *mutex)
+{
+    assert(mutex == &secure_buffer_mutex && !*mutex);
+    *mutex = 1;
+}
+static void mutex_unlock(int *mutex)
+{
+    assert(mutex == &secure_buffer_mutex && *mutex == 1);
+    *mutex = 0;
+}
 
 /* SCM checks current ownership, transfers it, then mutates the source mask.
  * EAGAIN leaves both ownership and the in/out mask untouched. */
@@ -54,6 +66,7 @@ static int qcom_scm_assign_mem(phys_addr_t address, size_t length, u64 *source,
                                const struct qcom_scm_vmperm *dest, int count)
 {
     unsigned int i;
+    assert(secure_buffer_mutex == 1);
     assert(++calls < 30); /* Bound an accidentally infinite retry loop. */
     for (i = 0; i < 3; i++)
         if (memory[i].start == address && memory[i].length == length)
@@ -83,6 +96,7 @@ static struct guarded_vmid src, dst;
 static int perms;
 static void reset(int from, int to)
 {
+    assert(!secure_buffer_mutex);
     for (unsigned int i = 0; i < 3; i++) {
         entries[i] = (struct scatterlist) {
             .phys = 0x10000 + i * 0x10000,
@@ -104,7 +118,10 @@ static void reset(int from, int to)
 }
 static int transfer(void)
 {
-    return hyp_assign_table(&table, &src.vmid, 1, &dst.vmid, &perms, 1);
+    int ret = hyp_assign_table(&table, &src.vmid, 1, &dst.vmid, &perms, 1);
+
+    assert(!secure_buffer_mutex);
+    return ret;
 }
 static void callers_unchanged(int from, int to)
 {
@@ -162,6 +179,7 @@ int main(void)
     /* Validation must reject without invoking SCM or changing ownership. */
 #define INVALID(expr) do { \
     assert((expr) == -EINVAL); \
+    assert(!secure_buffer_mutex); \
     assert(calls == 0); \
     all_owned(1ULL << 3); \
 } while (0)
@@ -204,11 +222,12 @@ int main(void)
     return 0;
 }
 '''
-    with tempfile.TemporaryDirectory(prefix='ack-secure-buffer-test-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='ack-secure-buffer-test-', dir='/tmp/opencode') as tmp:
         root = Path(tmp)
         unit = root / 'secure_buffer.c'
         unit.write_text(harness + source[start:end] + check)
-        subprocess.run(['cc', '-std=gnu11', '-Wall', '-Wextra', '-Werror',
+        subprocess.run([os.environ.get('CC', 'cc'), '-std=gnu11', '-Wall', '-Wextra', '-Werror',
+                        '-fsanitize=undefined', '-fno-sanitize-recover=all',
                         '-Wno-sign-compare', str(unit), '-o', str(root / 'secure_buffer')],
                        check=True, timeout=20)
         subprocess.run([str(root / 'secure_buffer')], check=True, timeout=10)

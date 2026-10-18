@@ -1,6 +1,101 @@
 # Handoff — tissot 6.12 port, update 2026-10-18
 
+## Correction: there is no reset. run232/run233's logdump proves it.
+
+Superseding everything below about resets. The recovered console snapshots:
+
+| run | last durable snapshot | uptime | state at cutoff |
+|---|---|---|---|
+| 231 | `seq=6707` | **1695.9 s** | systemui + init alive, KGSL cycling states |
+| 232 | `seq=1171` | **331.4 s** | init processing `vendor.per_mgr=running` |
+
+Zero panic, SError or reset markers in either. Both are **running systems**.
+The board does not reset; our ACM console simply stops at ~42-43.7 s because
+the diag init holds gadget `g1` on the only UDC and adb cannot bind over it —
+the documented UDC-handoff cutoff that I misread as a board reset because
+run229's identical cutoff had a real PS_HOLD reset behind it.
+
+Consequences: the PS_HOLD/cold-boot reasoning, the TrustZone-watchdog theory
+and run227's "89.5 s reset" are all discredited. Any conclusion drawn from a
+~43 s capture cutoff needs re-deriving from the logdump instead.
+
+**Still valid:** the SMMU SError fix (run230 moved the faulting PC to a plain
+load, proving async delivery; run231 removed SError and panic; run233 reached
+the Android boot animation).
+
+**The real open problem is adb.** It does not enumerate on the port kernel.
+The handoff marker is absent from every capture, so the UDC is never released.
+`e9f6f932b` calls `init-run228`'s handoff "neutered", but disassembly shows
+`guard_usb_handoff` is defined *and called* from `launch_android` (target
+`0x4015bc`) — so the append or the property trigger is what fails, not the
+call. Unverified which; both are one boot apart.
+
+## run231: the SMMU SError is fixed
+
+*(The SError attribution below stands. Its "the board still died via PS_HOLD"
+conclusion does not — see the correction above.)*
+
+Runs 229→231 were three single-variable boots. Each asserted the resolved
+config byte-identical before compiling (`run231-build-host.sh` does the `cmp`
+that earlier runs lacked), and carried byte-identical cmdline, ramdisk and
+init, so only the kernel payload varied. Build IDs: `6c8a24cf` (229),
+`9aa33f83` (230), `cc2a4241` (231).
+
+| run | change | SError | panic | board |
+|---|---|---|---|---|
+| 229 | baseline | 42.1876 s `kgsl_iommu_start+0x280/0x5a8` | yes | reset |
+| 230 | remove `_apply_impl_defs()` | 42.8010 s `kgsl_iommu_start+0x1d4/0x380` | yes | reset |
+| 231 | QSMMU writes once per boot | **none** | **none** | **reset** |
+
+**Root cause of the SError.** run230 is the decisive step: with the
+halt/poll sequence gone, the faulting PC moved to a plain kernel load, which
+shows the SError is asynchronous and that its reported instruction is not the
+culprit. The only MMIO remaining in that window was KGSL re-writing the
+donor's `GPU_SMMU_HUM_CFG` (`0x6800`) and `GPU_SMMU_DORA_ORDERING` (`0x64a0`)
+on *every* `kgsl_iommu_start()` — which only runs again on the second open,
+from SurfaceFlinger — with KGSL's own clock vote and no power or quiesce
+sequencing. Issuing them once per boot removed the fault entirely. The donor
+performed this work from the SMMU driver's power-sequenced reset path
+(`oc-test/drivers/iommu/arm-smmu.c:4791`, `qsmmuv2_device_reset()`), and
+mainline `qcom_iommu` writes neither register. Unverified: whether the
+`0x64a0` ordering write specifically, or the missing sequencing, is the
+trigger.
+
+**Why the old reset timeline is wrong.** "Reset at kernel uptime ~89 s" was
+never measured during a run — it came from subtracting an *assumed* 49.8 s
+reset→stock-USB interval from the host clock. run230 refuted it: the kernel
+panicked at 42.80 s and the device disconnected immediately, while `panic=60`
+should have held it up another minute. run231 refuted it again: no kernel
+fault at all, reset at ~43.7 s. Any analysis that depends on a ~47 s "silence"
+before a ~89 s reset should be treated as unproven.
+
+**The reset is now a different investigation.** run231 recorded 192+ GPU
+submissions with zero faults, zero SError and zero panic, and the board still
+died via PS_HOLD (PMIC: "Triggered from Hard Reset and 'cold' boot"). The
+kernel was alive and driving the GPU right up to the failure. The standing
+TrustZone-watchdog theory assumed a kernel that had already stopped making
+durable progress; that assumption no longer holds, and no mechanism is
+established for the reset.
+
+Evidence: `artifacts/snapshot60/run231-usb.log` (601 KB — the first live
+console to survive past the failure, made possible by the run228 init that
+suppresses the USB handoff), `run231-ramoops.json`, `run230-*`. Note the
+run231 logdump slots hold the *next* stock boot (~1696 s uptime), so they
+carry no run231 diagnostics; the USB capture is the run231 evidence.
+
+**Where to go next.** The reset window is finally clean enough to instrument,
+so the next probe can target the GPU power/clock path or the submission path
+directly. A cheap single-variable discriminator is to pin the GPU to its
+lowest power level for the whole boot: if PS_HOLD stops firing, the cause is
+in the power/clock path rather than the submission path. That needs one boot
+cycle and no driver change — `kgsl_pwrctrl.c` already exposes
+`default_pwrlevel`/`max_pwrlevel` sysfs for it.
+
 ## Mechanism research — what can assert PS_HOLD with no kernel trace
+
+*(Superseded in its timeline by run231: the watchdog reasoning below assumed
+the kernel went quiet first. The PS_HOLD confirmation itself still stands —
+the reset is not `emergency_restart()` and leaves no kernel trace.)*
 
 Queried upstream (Qualcomm RB5 / Dragonwing watchdog docs) against what the
 stock boot reports after the port dies.

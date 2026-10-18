@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exercise actual KGSL DMA-BUF import/release functions without a kernel build."""
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -286,11 +287,12 @@ def main():
     destroy = extract_function(source, 'kgsl_destroy_ion')
     setup = extract_function(source, 'kgsl_setup_dma_buf')
     ops = '\nstatic struct kgsl_memdesc_ops kgsl_dmabuf_ops = { .free = kgsl_destroy_ion };\n'
-    with tempfile.TemporaryDirectory(prefix='ack-kgsl-dmabuf-test-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='ack-kgsl-dmabuf-test-', dir='/tmp/opencode') as tmp:
         root = Path(tmp)
         unit = root / 'dmabuf.c'
         unit.write_text(HARNESS + destroy + ops + setup + CHECK)
-        subprocess.run(['cc', '-std=gnu11', '-Wall', '-Wextra', '-Werror',
+        subprocess.run([os.environ.get('CC', 'cc'), '-std=gnu11', '-Wall', '-Wextra', '-Werror',
+                        '-fsanitize=undefined', '-fno-sanitize-recover=all',
                         '-Wno-unused-parameter', '-Wno-unused-function', str(unit),
                         '-o', str(root / 'dmabuf')], check=True, timeout=20)
         subprocess.run([str(root / 'dmabuf')], check=True, timeout=10)

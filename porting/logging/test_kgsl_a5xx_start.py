@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Run actual A5xx startup C: failed ZAP must leave the CP microengine halted."""
+"""Run actual A5xx startup C: propagate ZAP and post-start failures."""
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -36,6 +37,7 @@ def main():
 #define SCM_SIP_FNID(service, command) ((service) * 256 + (command))
 #define SCM_SVC_BOOT 1
 #define dev_err(...) ((void)0)
+#define dev_info(...) ((void)0)
 enum {
     ADRENO_FW_PM4, ADRENO_FW_PFP, ADRENO_CPZ_RETENTION,
     A5XX_CP_PM4_INSTR_BASE_LO, A5XX_CP_PM4_INSTR_BASE_HI,
@@ -66,8 +68,8 @@ struct adreno_a5xx_core { const char *zap_name; };
 struct scm_desc { uint64_t args[2]; unsigned int arginfo; };
 static struct adreno_a5xx_core core;
 static void *load_result;
-static int resume_result;
-static unsigned int loads, resumes, engine_starts;
+static int resume_result, post_result;
+static unsigned int loads, resumes, engine_starts, post_calls;
 #define KGSL_DEVICE(adreno) (&(adreno)->dev)
 #define ADRENO_FW(adreno, id) (&(adreno)->fw[id])
 #define ADRENO_FEATURE(adreno, feature) ((void)(feature), (adreno)->retention)
@@ -105,7 +107,7 @@ static int adreno_set_unsecured_mode(struct adreno_device *adreno, struct adreno
 static int a5xx_gpmu_init(struct adreno_device *adreno)
 { (void)adreno; return 0; }
 static int a5xx_post_start(struct adreno_device *adreno)
-{ (void)adreno; return 0; }
+{ (void)adreno; post_calls++; return post_result; }
 '''
     checks = r'''
 static struct platform_device pdev;
@@ -117,8 +119,8 @@ static struct adreno_device reset(bool secured)
     };
     core.zap_name = "a506_zap";
     load_result = &pdev;
-    resume_result = 0;
-    loads = resumes = engine_starts = 0;
+    resume_result = post_result = 0;
+    loads = resumes = engine_starts = post_calls = 0;
     return adreno;
 }
 int main(void)
@@ -146,6 +148,14 @@ int main(void)
         assert(a5xx_rb_start(&adreno) == 0);
         assert(adreno.zap_loaded && engine_starts == 2);
         assert(loads == 1 && resumes == 0);
+
+        /* Post-start allocation/submission failures are startup failures too. */
+        for (unsigned int i = 0; i < sizeof(errors) / sizeof(errors[0]); i++) {
+            adreno = reset(secured);
+            post_result = errors[i];
+            assert(a5xx_rb_start(&adreno) == errors[i]);
+            assert(adreno.zap_loaded && engine_starts == 1 && post_calls == 1);
+        }
     }
     /* Preserve the existing no-firmware and non-retention paths. */
     struct adreno_device adreno = reset(false);
@@ -163,16 +173,16 @@ int main(void)
 '''
     unit_text = (harness + function(source, 'static int a5xx_microcode_load(')
                  + function(source, 'static int a5xx_rb_start(') + checks)
-    with tempfile.TemporaryDirectory(prefix='ack-a5xx-start-test-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='ack-a5xx-start-test-', dir='/tmp/opencode') as tmp:
         root = Path(tmp)
         unit = root / 'a5xx_start.c'
         binary = root / 'a5xx_start'
         unit.write_text(unit_text)
-        subprocess.run(['cc', '-std=gnu11', '-Wall', '-Wextra', '-Werror',
+        subprocess.run([os.environ.get('CC', 'cc'), '-std=gnu11', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=undefined', '-fno-sanitize-recover=all',
                         str(unit), '-o', str(binary)], check=True, timeout=20)
         subprocess.run([str(binary)], check=True, timeout=10)
-    print('A5xx startup: ZAP failures halt CP startup; authentication cache and CPZ retention passed')
+    print('A5xx startup: ZAP/post-start errors, authentication cache and CPZ retention passed')
 
 
 if __name__ == '__main__':
