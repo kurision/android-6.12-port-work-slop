@@ -32,6 +32,37 @@ AFE and DSP PCM paths (`msm-pcm-afe-v2.c`, `msm-dai-q6-v2.c`, `msm-dai-fe.c`,
 **Total: roughly 50,000 lines of vendor audio code**, before any 6.12 API work.
 The single largest item on the whole port by an order of magnitude.
 
+## Measured attempt
+
+The port was started in the tree and driven until it stopped being a guess.
+What that established, all measured:
+
+- The WCD variant is **WCD9335**, from the donor's own platform config
+  `techpack/audio/config/sdm450auto.conf`: `CONFIG_SND_SOC_WCD9335=m`,
+  `CONFIG_WCD9XXX_CODEC_CORE`, `CONFIG_SND_SOC_WCD_MBHC`,
+  `CONFIG_SND_SOC_WCD_MBHC_LEGACY`, `CONFIG_WCD_DSP_GLINK`. Not 937x or 938x.
+- Only **one** genuinely missing ASoC symbol in the whole closure:
+  `snd_soc_component_read32`. The private-helper step this document originally
+  proposed is unnecessary: `snd_soc_dapm_add_routes_mi2s` and its siblings are
+  used by CAF's *other* machine drivers, not by the tissot one. The earlier
+  "25 symbols missing" figure was measured across every CAF machine driver.
+- The tissot config also selects the **SDM660 CDC**
+  (`CONFIG_SND_SOC_SDM660_CDC`, `CONFIG_SND_SOC_ANALOG_CDC`,
+  `CONFIG_SND_SOC_DIGITAL_CDC_LEGACY`), and `msm8952.h` includes the SDM660 CDC
+  headers unconditionally. So the closure is not the WCD plus a machine: it is
+  the machine, the SDM660 analog and digital CDC, the WCD9335 and its core, the
+  MBHC helpers, `msm-pcm-routing-v2`, `msm-pcm-afe-v2` and `msm-dai-fe`.
+- The Kconfig wiring is straightforward and was validated. One recursion has to
+  be resolved: `WCD9335` cannot `select SOUNDWIRE` while `SOUNDWIRE` is implied
+  by `SOUNDWIRE_QCOM`.
+- The CAF private headers stage cleanly. `techpack/audio/include` splits into
+  `asoc/`, `dsp/`, `soc/`, `ipc/`, `linux/` and `uapi/sound/`, and a few more
+  live outside it, in the CAF `include/soc/qcom/`.
+
+The staged files were then removed rather than committed: they do not compile
+yet, and leaving tens of thousands of lines of non-building vendor code in the
+tree would make the next boot's behaviour depend on unfinished work.
+
 ## What this tree has today
 
 - `CONFIG_SND_SOC=y`, vanilla ASoC, 416 codecs, `include/sound/soc.h` matching
@@ -48,31 +79,29 @@ problem: there is no sound card to enumerate. The vendor audio HAL opens
 
 ## Sequence
 
-1. **Private ASoC helpers.** CAF's audio code calls Qualcomm extensions that do
-   not exist in upstream ASoC: `snd_soc_dapm_add_routes_{mi2s,tdm,aux_pcm}`,
-   `snd_soc_dapm_new_controls_{mi2s,tdm,aux_pcm}`, `snd_soc_component_read32`.
-   These come from `techpack/include` and must land first, as this port's own
-   ASoC additions — not as upstream patches.
-2. **WCD codec core.** `wcd9xxx-{core,core-init,irq,resmgr-v2,slimslave,utils,rst,soc-init}.c`
-   plus the mbhc and clsh helpers, then the chip directory for this SoC. This is
-   the biggest single slice and the one with the fewest external assumptions.
-3. **Machine driver.** `msm8952.c`, its dai-links and slimbus, and the AFE PCM
-   layer it registers.
-4. **DT wiring.** `msm-asi2`, `qcom,msm-audio-apr`, slimbus, mi2s/pdm/tdm for the
+1. **`snd_soc_component_read32`.** The single ASoC symbol this closure needs
+   that upstream's `include/sound` does not expose. Small, and everything else
+   waits on it.
+2. **WCD9335 and its core.** `wcd9335{,-regmap,-tables}.c`, the
+   `wcd9xxx-{core,core-init,irq,resmgr-v2,slimslave,utils,rst,soc-init,common-v2}.c`
+   set, and the mbhc/clsh helpers.
+3. **SDM660 CDC.** `msm-analog-cdc` and `msm-digital-cdc`, which
+   `msm8952.h` includes unconditionally and the platform config selects.
+4. **Machine driver.** `msm8952.c`, its dai-links and slimbus, plus
+   `msm-pcm-routing-v2`, `msm-pcm-afe-v2` and `msm-dai-fe`.
+5. **DT wiring.** `msm-asi2`, `qcom,msm-audio-apr`, slimbus, mi2s/pdm/tdm for the
    codec, and the AFE/QDSP6 nodes the PCM layer expects. Register order matters
    and the vendor HAL expects CAF's node names.
-5. **Policy.** SELinux labels for the new device nodes, as done earlier for
+6. **Policy.** SELinux labels for the new device nodes, as done earlier for
    battery and backlight.
 
 ## Risks, in order of how likely they are to bite
 
-- **The private ASoC helpers are not optional.** Without step 1 nothing in steps
-  2-4 compiles, and they are Qualcomm-specific, so they cannot be taken from
-  upstream as-is.
-- **Codec variant choice is a hardware fact.** Which WCD chip tissot carries
-  decides the `wcd9xxx` subdirectory. The donor DTS and the donor config chain
-  have to be resolved rather than guessed; a wrong variant shows up as a probe
-  failure, not a build failure.
+- **The ASoC helper is not optional.** Without `snd_soc_component_read32`
+  nothing in steps 2-4 compiles.
+- **The closure is bigger than the WCD.** The machine header drags in the SDM660
+  CDC whether or not a first reading suggests it is needed; that family is part
+  of this platform's own configuration.
 - **The DSP leg is separate.** Row 8 of the component audit is only fixed in
   source. Even a perfect card will not produce sound through the DSP-backed PCM
   path until the FastRPC CAF layer is running on hardware.
