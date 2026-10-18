@@ -1,5 +1,49 @@
 # Handoff — tissot 6.12 port, update 2026-10-18
 
+## Post-run234 component audit
+
+[Fresh live inventory](findings/2026-10-18-live-component-audit.md) records two
+samples from boot `8dff5d55-967f-4d5c-afc9-1d23e46b1ff6`, kernel #22.
+All eight CPUs run; no CPUFreq policies / active CPUIdle driver. Audio,
+FastRPC, camera, Bluetooth, Wi-Fi and power-HAL controls have fresh failure
+evidence. Accelerometer and light events update, unlike the old tracker claim.
+Root is absent on that port boot; do not interpret denied sysfs reads as driver
+failures. User subsequently returned to rooted stock (Magisk 30.7), boot ID
+`6ee5491b-18f0-4ee5-a59a-f53c72610cc6`, and authorized a latest-image RAM boot
+if needed, suggesting root for kernel inspection.
+
+Root candidate prepared, **NOT BOOTED by this session**:
+`artifacts/snapshot60/root-audit-20261018T145300Z/boot-run234b-root-preserved-kernel.img`,
+SHA256 `aa10677e4e0135f7125a92309f3eddc3f3a6d563685849aac84e6ef7deaac1a9`.
+Patched on this phone using its installed Magisk 30.7. The base has stale
+Magisk backup metadata pointing to `/system/bin/init`; removed only that
+metadata from a scratch copy before patching, so Magisk now backs up the
+actual run234b diagnostic init. `verification.json` and
+`verify-root-image.py` assert that the saved diagnostic init matches, the raw
+kernel/DTB and command line are unchanged, and unrelated cpio records are
+preserved. Official magiskboot recompressed the kernel incidentally; the
+final candidate restores the exact base kernel payload. KEEPVERITY and
+KEEPFORCEENCRYPT true; no vbmeta patch, no kernel build, no partition flash.
+Runtime compatibility/root **unverified**. Existing Magisk zram module is
+already disabled; no module state changed.
+
+Stock preboot logdump archived with matching device SHA256
+`ae4d1dd5dd2ce82f428aef41f5c80225373b732a41eea2f509b505ff3311b3ad`
+in that directory, along with early logcat rotations. Before the intended
+boot, the device changed externally to port kernel #22, boot ID
+`7f816860-1f81-497c-95ce-1bba25b78cf2`, boot_completed=1, uptime 154.62 s.
+The attempted preclear exited 127 (`su` absent) before dd ran; nothing was
+cleared. **No reboot/fastboot command sent.** Stop and coordinate with the
+user/other session before testing the root candidate or touching logdump.
+
+**CPU-only follow-up:** user confirmed the other session owns hardware
+navigation buttons and approved a stock-range oc-test-based CPU port, without
+OC/UV or a kernel build/reboot yet. Commit `60d877157` adds disabled APM and
+memory-ACC prerequisites with GCC/Clang host-model checks; it does not enable
+CPUFreq. [CPU scope and remaining gates](plan/CPU-oc-test-to-612.md).
+The complete CPU stack is **not ready for the build/run test yet**; shared
+PLL/CCI, CPR4 closed-loop and SPM/AVS integration remain to be implemented.
+
 ## Correction: there is no reset. run232/run233's logdump proves it.
 
 Superseding everything below about resets. The recovered console snapshots:
