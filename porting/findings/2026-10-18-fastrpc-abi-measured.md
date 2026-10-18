@@ -15,7 +15,6 @@ That conclusion is now measured, from the binary the device actually runs, and
 return `ENOTTY`. Their encoded value matches a command this driver implements,
 so they are accepted and executed against the wrong handler with a differently
 shaped payload. That is worse than a clean rejection.
-
 ## Method
 
 `/vendor/lib64/libadsprpc.so` was pulled from the running device
@@ -104,3 +103,32 @@ each command number the first time it arrives, which one boot would settle.
 
 Nothing here was built, booted or flashed; the library was read from the running
 device and analysed on the host.
+
+## Implemented on `fix/components`
+
+Three commits, none of them device-tested:
+
+| commit | what |
+|---|---|
+| `9462a5ba6` | handlers take their payload by value; the copies move to the dispatcher, so the compat layer can hand them kernel pointers |
+| `6946bd9cf` | `FASTRPC_IOCTL_CONTROL`, the implementation that was staged unapplied |
+| `3b8db6b5d` | the CAF layer itself: 19 commands decoded, CAF precedence over the three collisions, and the six commands that map onto something implemented here |
+
+`INVOKE` converts CAF's 16-byte argument array into this driver's 24-byte form
+(fd `-1`, no attributes, which is what a plain invoke means); `INIT` maps onto
+attach, create, create-static or sensors-attach per its flags, carrying CAF's
+name-in-`file` for a static PD; `MMAP`, `MUNMAP` and `GET_DSP_INFO` are
+field-for-field with the remote address copied back. The remaining thirteen are
+refused by number with a message naming the number, so a boot reports which ones
+userspace actually reaches.
+
+The build-time assertions double as the check on the layouts: each CAF struct
+is asserted to encode to the exact command value recovered from the shipped
+library, and they all hold. Re-derived independently on the host from the CAF
+definitions alone, they reproduce the same 19 values. When the first version was
+built, five assertions failed because one struct had been reused for commands
+with different payload sizes — the check caught that before any device saw it.
+
+**Not verified:** no image has been built or booted with this. Whether
+`apps_dev_init` now completes, and whether it needs any of the thirteen refused
+commands, is unknown until it runs.
