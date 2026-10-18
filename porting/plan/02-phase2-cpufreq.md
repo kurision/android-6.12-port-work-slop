@@ -1,5 +1,11 @@
 # Phase 2 — cpufreq
 
+**Historical plan; do not implement the assumptions below.** The independent
+big/little policies, GCC CPUSS proposal and optional-voltage-control advice were
+corrected in `../findings/06-verification.md`. Current donor-based scope,
+implementation status and build/test gates are in
+[CPU-oc-test-to-612.md](CPU-oc-test-to-612.md).
+
 **Goal:** the 8 real OPPs on `cpu0-3` (big) and `cpu4-7` (little), governor
 switching frequencies.
 
