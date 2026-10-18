@@ -1,6 +1,15 @@
 # Tracker: tissot (MSM8953 / Mi A1) hardware on ACK 6.12
 
-Last update: 2026-10-14. Baseline evidence is run123
+Last update: 2026-10-17. Run187 updates SMMU, display/GPU and ashmem below;
+other rows retain their historical evidence and were not functionally retested.
+Run187 completes Android boot at the first 103.73 s sample and remains up at
+479.70 s, but the user sees a dimly backlit panel and UCHE faults persist.
+See [current handoff](HANDOFF.md), [failing components](FAILING-COMPONENTS.md)
+and `artifacts/snapshot60/run187-summary.json` for evidence and limits.
+Build/package/boot/capture procedures: [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+Run187 filenames below are relative to `porting/artifacts/snapshot60/`.
+
+Historical baseline evidence is run123
 (`6.12.93-4k-ge1f984e30348`); run124 (`6.12.93-4k-g6bb466908fba-dirty`)
 booted the USB controller overlay, Rust ashmem and DSI PLL repair together.
 Run125 (`6.12.93-4k-g578942c8b94e`) added early MDP probe and the USB
@@ -34,7 +43,7 @@ adaptation analysis.
 | RPM + rpmpd | Built, regulators initialize | `S:193-255`; `drivers/pmdomain/qcom/rpmpd.c`; `K:6315,6597,6658`; `L:249+` | Prove domain votes and suspend/resume |
 | GCC / clocks | Partial | `drivers/clk/qcom/gcc-msm8953.c`; `drivers/clk/qcom/mdss-dsi-pll-8953.c` | PLL repair unbooted; no CPU clock/cpufreq/CPR driver (`TRACKER-kgsl-port.md:1976-1979`) |
 | Interconnect / NoC | Off | `drivers/interconnect/qcom/msm8953.c` exists; `INTERCONNECT_QCOM_MSM8953` unset (`K:7480-7486`); no DT providers | Add providers/paths; GPU master path missing |
-| SMMU / IOMMU | Partial | `S:1136-1255`; `drivers/iommu/arm/arm-smmu/qcom_iommu.c:188-220`; `L:485-493` | MDSS fault handler read unclocked CB_FSR (run119); GPU legacy IOMMU falls back to NOMMU on `gpu_ahb_clk` (`L:529-534`) |
+| SMMU / IOMMU | Partial | `drivers/iommu/arm/arm-smmu/qcom_iommu.c`; run187-logdump.log:442,454,469,3700 | GPU IAS=39/AArch64, translating=1; MDSS IAS=32/AArch32. UCHE persists; actual GPU-visible leaf PTE/attributes remain to be checked. Earlier NOMMU fallback is historical. |
 | SPMI / PMIC (PM8953 + PMI8950) | Working (SPMI, RTC, PON) | `DT/pm8953.dtsi`, `DT/pmi8950.dtsi`; `L:186-217` | PMI8950 VADC VDD channel missing; SPM not enabled (`QCOM_SPM=n`) |
 | TSENS | Off | `S:473-484,1985-2197`; generic `tsens-v2` matches; `QCOM_TSENS=n` (`K:3680`) | Validate v2 model, enable, prove readings/trips |
 | QFPROM | Built, no node | `NVMEM_QCOM_QFPROM=y` (`K:7460`); reference `R:1114-1131` | Add node/cells, verify speed-bin and fusing values |
@@ -45,9 +54,9 @@ adaptation analysis.
 
 | Component | Status | Where the work is | Next proof / blocker |
 |---|---|---|---|
-| MDSS MDP5 / DSI (legacy fbdev) | Partial | `drivers/video/fbdev/msm/`; `D`; `porting/PLAN-mdss-display-port.md`; run126: zero MDSS SMMU faults, single iommu group, vendor composer on fbdev backend (`SDE Version = 5`, `/dev/graphics/fb0` OK in `run126-early-logcat.log:897-919`) | Panel scanout/VSYNC not proven; run126 froze ~54 s after GPU start corrupted memory (see `TRACKER-kgsl-port.md` "Run126") |
-| Panel OTM1911 + WLED backlight | Partial | `D:367-430`; `drivers/video/backlight/qcom-wled.c`; LAB/IBB regulators | Re-prove panel init on the legacy path after PLL lock |
-| Adreno 506 + Zap | Partial | `drivers/gpu/msm/`; `TRACKER-kgsl-port.md` | Probes; CP init timeout (`-110`, run85); Zap auth unproven; no rendering |
+| MDSS MDP5 / DSI (legacy fbdev) | Partial | `drivers/video/fbdev/msm/`; `D`; run187-live/display-state.log, final-state.log, panel-observation.json | Android boot completes; SF stays alive; display state ON/Awake does not prove scanout. No visible UI/animation confirmed. |
+| Panel OTM1911 + WLED backlight | Partial | `D:367-430`; `drivers/video/backlight/qcom-wled.c`; run187-live/panel-observation.json | User saw about 10 s splash, then dim backlight. Correct brightness and pixel output remain unproven. |
+| Adreno 506 + Zap | Partial | `drivers/gpu/msm/`; run187-logdump.log:3673; `TRACKER-kgsl-port.md` | Zero CP-init failures observed, but 607 UCHE OOB / 316 fault-context records. Rendering unresolved; this run is not a separate Zap validation. |
 | HDMI / external display | N/A | No board endpoint; USB 2.0 Type-C per [Xiaomi FAQ](https://www.mi.com/global/support/faq/details/KA-07254/) | None |
 
 ## Audio
@@ -105,7 +114,7 @@ adaptation analysis.
 | eMMC (HS400, RPMB) | Working | `L:765-770` | Keep |
 | microSD | Unstable | runs100/101 stuck-busy `-110` (`porting/FAILING-COMPONENTS.md`) | Debug SD init separately |
 | QSEE / keymaster / TrustZone | Partial (transactions succeed) | `drivers/misc/qseecom.c`; `L:494-510,1938-2136` | Prove keystore keys, gatekeeper, FBE unlock |
-| Ashmem | Working | Rust ashmem in `scripts/tissot-ack.config`; `ashmem: Using Rust implementation.` (`L125:280`) | Run125: system_server pid 1032 alive 51-194 s, zygote started once (run123: 16 restarts); zero ashmem errors in `E125` |
+| Ashmem | Working in run187 | run187-logdump.log:280; run187-embedded.config; run187-live/poll.jsonl:27 and final-state.log | Rust implementation and /dev/ashmem present; system_server 1126 survives through 479.70 s. Run186 omitted Rust/ashmem and reset after repeated ashmem failures; pin tool paths and verify the shipped config. |
 | Notification LED (AW2013, white) | Built | `B:171-193`; `drivers/leds/leds-aw2013.c` | Prove LED and Lights HAL |
 | IR blaster (Peel SPI) | Unported | Donor `techpack/xiaomi-msm8953/ir/peelir.c`; Xiaomi FAQ confirms IR | Pick driver matching Consumer IR HAL |
 

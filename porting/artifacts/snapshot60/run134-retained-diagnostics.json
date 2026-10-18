@@ -1,0 +1,41 @@
+{
+  "files": [
+    {
+      "remote": "/data/local/tmp/ack-early-logcat.log",
+      "local": "porting/artifacts/snapshot60/run134-early-logcat.log",
+      "sha256": "06fb182adf68781c2087146fc4984bfc1ff1f25c4199f1040d8a5ed6107dd2e4",
+      "bytes": 192512
+    },
+    {
+      "remote": "/data/local/tmp/ack-early-logcat.log.1",
+      "local": "porting/artifacts/snapshot60/run134-early-logcat.log.1",
+      "sha256": "f61d7ff1b7e9f03c50dad93d1e98ba46f1124fe131f46a7901fd85d4078db7d8",
+      "bytes": 1048711
+    },
+    {
+      "remote": "/data/local/tmp/ack-early-logcat.log.2",
+      "local": "porting/artifacts/snapshot60/run134-early-logcat.log.2",
+      "sha256": "4399affb1b9c191374eab2c326f9fb7eb3e432b3f2ead3e32a129981bdc1791b",
+      "bytes": 1048693
+    },
+    {
+      "remote": "/data/local/tmp/ack-early-logcat.log.3",
+      "local": "porting/artifacts/snapshot60/run134-early-logcat.log.3",
+      "sha256": "5ecee5b0818526944864677f6b644d9fefe87905a05b065929e0899a337c7aa2",
+      "bytes": 1048735
+    },
+    {
+      "remote": "/data/local/tmp/ack-early-logcat.log.4",
+      "local": "porting/artifacts/snapshot60/run134-early-logcat.log.4",
+      "sha256": "4a97ee33ae3e0c51ec74374b4e8256f30e0c2da373cfe98c5b3b01a57ed5a66b",
+      "bytes": 1048654
+    },
+    {
+      "remote": "/data/local/tmp/ack-sync-probe.log",
+      "local": "porting/artifacts/snapshot60/run134-sync-probe.log",
+      "sha256": "29b114d16dbc28d401bcf357701b3c1ed2cad8812f2ce520d3b22269327bc54a",
+      "bytes": 441
+    }
+  ],
+  "preserved_on_phone": "/data/local/tmp/ack-run134-preserved-before-run135"
+}

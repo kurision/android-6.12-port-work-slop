@@ -1,0 +1,32 @@
+{
+  "run": "run177",
+  "image": "boot-run177.img",
+  "image_sha256": "d6464517bc085c75ff7bab0245c458437b44a32ec481fc3ad8eed190b862ce29",
+  "kernel_payload_sha256": "617bb9349af926da15af193b2aac340ba2892f052178341df52a70de81dd6cfb",
+  "changes": [
+    "msm8953-xiaomi-tissot.dts: kgsl_iommu clock-names -> iface_clk/mem_iface_clk (SMMU probe succeeds, from run174)",
+    "qcom_iommu.c: aperture left at .ias=32 after run175/run176 both failed to boot",
+    "adreno.c: KGSL_MMU_64BIT withheld so KGSL uses its 32-bit VA ranges",
+    "cmdline: panic=0 dropped (from run174), so faults reboot recoverably"
+  ],
+  "root_cause_fixed_this_run": {
+    "was": "KGSL_MMU_64BIT made setup_64bit_pagetable() hand KGSL 0x500000000..0x600000000 (20-24 GiB); arm_lpae_map_pages took WARN_ON(iaext||paddr>>oas) -> -ERANGE (x0=0xffffffde, x1=0x500000000), so SurfaceFlinger's GPUOBJ_ALLOC failed errno 19 -> EGL_BAD_ALLOC -> SIGABRT loop",
+    "fix": "keep KGSL_MMU_64BIT off; KGSL then uses KGSL_IOMMU_SVM_BASE32..SECURE_BASE, all below 4 GiB",
+    "proof": "0 occurrences of arm_lpae_map_pages/ERANGE in run177 (run174 had them repeatedly); gate logged 'KGSL_MMU_64BIT withheld'; IOVA moved from 0xfc00b000 to 0xf800b000"
+  },
+  "state": {
+    "mmu": "IOMMU/translated, cb=gfx3d_user sctlr=00001167 translating=1 ttbr0=0000000018d2b000",
+    "gpu_iova_ring": "0xf800b000 (was 0xfc00b000 in run174) - now inside the 32-bit aperture",
+    "surfaceflinger": "PID 708 stable from 56s to 97s (run174 crash-looped immediately); died ~100s",
+    "systemserver": "PID 1108 alive through the same window",
+    "gpu_faults": 12,
+    "uche_oob": 20,
+    "first_uche_oob": "0x139000 at t=41.86s (run174/165/166 trapped 0x3aa53000 / 0x32d0b000)",
+    "cp_stall": "rptr=fd wptr=fd equal again - CP drained the ring, no error latched",
+    "ib1_addresses": "0x289000, 0x3e2000 - KGSL's low 32-bit VA range",
+    "boot_completed": false
+  },
+  "remaining": "Rendering still fails: 12 GPU faults / 20 UCHE OOB remain, now at low IOVA. The next question is why the VSC/bin path still faults once KGSL is translated; the trap address moved with the VA range, so it tracks the allocation, not a fixed aperture.",
+  "device_state": "stock 4.19",
+  "flashed_or_cleared": false
+}

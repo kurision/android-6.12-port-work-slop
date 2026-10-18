@@ -63,49 +63,33 @@ labelling the right objects over widening access to the wrong ones. Not a
 and none touch `sysfs`. The reason this file had no effect is **unexplained**.
 ## A limit worth knowing before writing more genfscon
 
-A type named in a `genfscon` cannot be validated offline.
+The ramdisk CIL alone is insufficient to validate a `genfscon` type: init
+merges policy from `/system` and `/vendor`. Complete captured inputs can prove
+concrete type declarations and attribute mappings.
 
-The CIL in the ramdisk is only a **fragment**. `vendor_sepolicy.cil` is not in
-it -- init reads that from `/vendor` at runtime and hands both to `secilc`:
+`sysfs_leds` is a concrete type (`userdebug-run33.cil:2069`) with existing
+light HAL grants (`:37345`). `sysfs_leds_202604` is a versioned **attribute**
+mapped to that type (`plat_pub_versioned.cil:1231`), not a valid context type.
+Using the attribute as run151's label made `secilc` abort:
 
-    init: Using /system/etc/selinux/plat_sepolicy_genfs_202604.cil for genfs labels
+    secilc: Type not a type or type alias
+    secilc: Failed to compile cildb: -1
+    init: secilc exit_code=0xff00
 
-So a type that is perfectly valid in the running policy can be absent from the
-image, and vice versa. Checking the image for `(type ...)` declarations produces
-false positives on types the stock policy uses constantly (`sysfs_graphics` and
-`sysfs_battery_supply` both come out "undeclared" that way).
+Earlier backlight labels targeted the wrong raw SPMI WLED object, not a type
+without grants. Run168's `run168-test/sysfs-paths.log` now confirms the MDSS
+LED's canonical path:
 
-I wrote that check anyway, on the reasoning that it would have caught run151,
-and it flagged three stock types. It was wrong in both directions and has been
-removed rather than shipped as noise.
+    /sys/devices/platform/soc@0/1a00000.qcom,mdss_mdp/1a00000.qcom,mdss_mdp:qcom,mdss_fb_primary/leds/lcd-backlight
 
-The hard part is that a wrong type here fails in two very different ways:
+`harness-genfs-backlight-attrs.cil` labels that directory with concrete
+`sysfs_graphics`; the prefix also covers descendants. The captured
+`rom-sepolicy-system-a-b9cb6955d584.tar` vendor policy already grants this type
+to light HAL (`vendor_sepolicy.cil:7680-7690`), composer (`:7367-7370`),
+dpps (`mm-pp-daemon`, `:11573-11576`) and init (`:9821`), including:
 
-- **A declared type that nothing is allowed on** compiles cleanly and does
-  nothing. `sysfs_leds` is this. The symptom is a denial that is byte-identical
-  before and after the change, which reads like "the fix did not apply" and is
-  easy to misread as a path problem -- it is not, the path was correct and is
-  still correct.
-- **A name that is not a declared type** kills the boot. run151 used
-  `sysfs_leds_202604`, the name `mm-pp-daemon` is actually allowed on, and it
-  is named in `vendor_sepolicy.cil`:
+    (allow hal_light sysfs_graphics (file (ioctl read write getattr lock append map open watch watch_reads)))
+    (allow mm-pp-daemon sysfs_graphics (file (ioctl read write getattr lock append map open watch watch_reads)))
+    (allow init_202604 sysfs_graphics (file (setattr)))
 
-      (allow mm-pp-daemon sysfs_leds_202604
-             (file (ioctl read write getattr lock append map open ...)))
-
-  It still failed:
-
-      secilc: Type not a type or type alias
-      secilc: Failed to compile cildb: -1
-      init: secilc exit_code=0xff00
-
-  init dies and the device lands in recovery.
-
-So appearing in an `allow` is not the same as being declarable in a `genfscon`,
-and that distinction cannot be checked from the image. **Before adding a
-`genfscon` with a new type, confirm the type is declared in
-`plat_sepolicy_genfs_202604.cil` or `vendor_sepolicy.cil` itself, not merely
-referenced by an `allow`.** The battery labels work because
-`sysfs_battery_supply` is a member of the `sysfs_type` set unversioned, which is
-a different reason from `sysfs_leds_202604` being an allow target, and the
-similarity of the two spellings is what makes this easy to get wrong.
+This label change has **not been runtime tested**.

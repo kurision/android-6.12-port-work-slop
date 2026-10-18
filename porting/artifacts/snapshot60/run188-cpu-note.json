@@ -1,0 +1,18 @@
+{
+  "kernel": "6.12.93-4k",
+  "boot_id": "5b8f79d3-66d3-4f2b-9413-3d0d9fb37c97",
+  "cpu_online_mask": "0-7",
+  "five_second_jiffies": {"total": 4016, "expected": 4000, "steal": 0,
+    "per_core_min": 146, "per_core_max": 194},
+  "busy_pct": 62.2, "idle_pct": 34.1, "iowait_pct": 3.7,
+  "cpufreq_interface_on_port": "absent: /sys/devices/system/cpu/cpuN/cpufreq does not exist",
+  "port_config": {"CONFIG_CPU_FREQ": "y", "CONFIG_CPUFREQ_DT": "not set",
+                  "CONFIG_CPUFREQ_DT_PLATDEV": "not set"},
+  "port_dt": "cpu nodes carry no clocks property; no littledcvs node in msm8953.dtsi",
+  "stock_4_19": {"driver": "cpufreq: driver msm up and running",
+                 "governor": "schedutil",
+                 "reported_khz_all_cores": 2784000,
+                 "caveat": "2784000 kHz exceeds this A53's real maximum; vendor OPP-table artifact, not a measurement"},
+  "verdict": "cores are scheduled normally (all online, no steal, no lost ticks) but their clock is unmanaged and unreadable on the port; whether they sit at the intended OPP is UNVERIFIED",
+  "note": "a software walk or jiffie rate cannot substitute for a frequency reading"
+}

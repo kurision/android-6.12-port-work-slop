@@ -1,0 +1,6 @@
++ adb -s 2819f2320604 reboot bootloader
+waiting for 18d1:9008 serial tissot-diag
++ fastboot -s 2819f2320604 boot /home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/boot-run131.img
+Sending 'boot.img' (36932 KB)                      OKAY [  0.808s]
+Booting                                            OKAY [  1.198s]
+Finished. Total time: 2.029s

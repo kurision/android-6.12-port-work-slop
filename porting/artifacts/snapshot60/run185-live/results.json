@@ -1,0 +1,20 @@
+{
+  "run": "run185",
+  "image_sha256": "10414adba9ff5fd990f9d2669ef3f92c7c6661d264c34e9686f8ae515562de32",
+  "change": "qcom_iommu: .ias/.oas 32->40 + ARM_32_LPAE_S1 -> ARM_64_LPAE_S1 (3-level, CAF-equivalent); adreno.c: KGSL_MMU_64BIT RESTORED",
+  "result": "REGRESSION - not kept",
+  "evidence": {
+    "smmu": "sctlr=0x1167 translating=1, ringbuffer back at 0xfc00b000 (CAF's GLOBAL_MEM_BASE64)",
+    "FSR": "0x80000202 - bit31 MULTI + bit1 TF (translation fault) + FORMAT=01. This is the FIRST genuine SMMU translation fault ever seen; the 32-bit setup only ever had 0x200 (stale).",
+    "CP init failures": "28 'CP initialization failed to idle' - the 32-bit/2-level setup had 0",
+    "gpu faults": 44,
+    "uche_oob": 61,
+    "gpu_hang_detected": 77,
+    "surfaceflinger": "crash-looping, new PID every ~5s (1405->1634->1874->2110)",
+    "SF abort": "'no suitable EGLConfig found, giving up' + SIGABRT - different from run174's GPUOBJ_ALLOC errno 19, but still fatal",
+    "usb_log": "448,816 B - the longest capture of any run; reaches 'init: ... started service surfaceflinger'"
+  },
+  "conclusion": "The CAF-equivalent 3-level/40-bit address space did NOT fix the GPU. It made GPU startup worse (28 CP-init failures vs 0) and left SurfaceFlinger crash-looping on EGLConfig. Its one real value is diagnostic: with the correct table depth the SMMU finally reports actual translation faults (FSR bit1 TF, bit31 MULTI), which the 2-level setup never did. Reverting to the run183/run182 configuration, which is the best working state.",
+  "device_state": "stock 4.19",
+  "flashed_or_cleared": false
+}

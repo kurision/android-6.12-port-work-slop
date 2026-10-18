@@ -1,0 +1,368 @@
+{
+  "run": 169,
+  "previous_partition_backup": "run168-logdump.bin",
+  "partition_sha256": "43c0caff185c255541dabd47cb983082632669e02d3c383d841635eab5148c61",
+  "fresh_capture_last_changed_byte": 3006880,
+  "fresh_gpu_faults": 32,
+  "evidence": [
+    {
+      "line": 3722,
+      "record": "2,3595,42324533,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000414a9000"
+    },
+    {
+      "line": 3725,
+      "record": "2,3596,42324593,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=80423c68 hw_fault=00000000 ib2=00000000f9560140/0 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 3737,
+      "record": "3,3600,42383109,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=414a9000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 3740,
+      "record": "3,3601,42383134,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=414a9000 size=1000 flags=c0900 sg=1/1 first=0x00000000414a9000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000414a9000 identity=1"
+    },
+    {
+      "line": 3749,
+      "record": "3,3604,42383221,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9540694 target=2282f000 data=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 3917,
+      "record": "2,3666,42447767,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000414a9000"
+    },
+    {
+      "line": 3920,
+      "record": "2,3667,42447803,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=80423c68 hw_fault=00000000 ib2=00000000f95a0140/0 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 3935,
+      "record": "3,3672,42490163,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=414a9000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 3938,
+      "record": "3,3673,42490189,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=414a9000 size=1000 flags=c0900 sg=1/1 first=0x00000000414a9000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000414a9000 identity=1"
+    },
+    {
+      "line": 3947,
+      "record": "3,3676,42490279,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9558678 target=2282f000 data=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 4100,
+      "record": "2,3727,42492504,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000414a9000"
+    },
+    {
+      "line": 4106,
+      "record": "2,3729,42492563,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=80423c68 hw_fault=00000000 ib2=00000000f9620140/0 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 4134,
+      "record": "3,3749,42534707,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=414a9000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 4137,
+      "record": "3,3750,42534732,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=414a9000 size=1000 flags=c0900 sg=1/1 first=0x00000000414a9000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000414a9000 identity=1"
+    },
+    {
+      "line": 4146,
+      "record": "3,3753,42534827,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9600678 target=2282f000 data=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 4302,
+      "record": "2,3805,42536849,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000414a9000"
+    },
+    {
+      "line": 4305,
+      "record": "2,3806,42536878,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=80423c68 hw_fault=00000000 ib2=00000000f9400140/0 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 4323,
+      "record": "3,3816,42579046,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=414a9000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 4326,
+      "record": "3,3817,42579072,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=414a9000 size=1000 flags=c0900 sg=1/1 first=0x00000000414a9000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000414a9000 identity=1"
+    },
+    {
+      "line": 4335,
+      "record": "3,3820,42579158,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9540678 target=2282f000 data=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 10576,
+      "record": "2,11302,92576217,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9ec4100"
+    },
+    {
+      "line": 10579,
+      "record": "2,11303,92576262,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=84521c78 hw_fault=00000000 ib2=00000000f9ea1e04/90 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 10582,
+      "record": "2,11304,92576300,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000abd1e000"
+    },
+    {
+      "line": 10585,
+      "record": "2,11305,92576325,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=80423ce8 hw_fault=00000000 ib2=00000000f9ea1e04/0 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 10604,
+      "record": "3,11316,92618467,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=abd1e000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 10607,
+      "record": "3,11317,92618492,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=abd1e000 size=1000 flags=c0900 sg=1/1 first=0x00000000abd1e000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000abd1e000 identity=1"
+    },
+    {
+      "line": 10774,
+      "record": "2,11378,92889414,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000abd1e000"
+    },
+    {
+      "line": 10777,
+      "record": "2,11379,92889467,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=80423ce8 hw_fault=00000000 ib2=00000000a37e0408/0 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 10798,
+      "record": "3,11392,92939065,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=abd1e000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 10801,
+      "record": "3,11393,92939091,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=abd1e000 size=1000 flags=c0900 sg=1/1 first=0x00000000abd1e000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000abd1e000 identity=1"
+    },
+    {
+      "line": 10983,
+      "record": "2,11469,93123229,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9ec5140"
+    },
+    {
+      "line": 10986,
+      "record": "2,11470,93123277,-,caller=C0;kgsl kgsl-3d0: DIAG uche-oob: cp_status=84463cea hw_fault=00000000 ib2=00000000aeec039c/76 addr_mode=1 mode=20000000 gmem=00100000-00121000"
+    },
+    {
+      "line": 10989,
+      "record": "2,11471,93123314,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000abd1e000"
+    },
+    {
+      "line": 11011,
+      "record": "3,11485,93165873,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=abd1e000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 11014,
+      "record": "3,11486,93165899,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=abd1e000 size=1000 flags=c0900 sg=1/1 first=0x00000000abd1e000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000abd1e000 identity=1"
+    },
+    {
+      "line": 11173,
+      "record": "2,11539,93196451,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000abd1e000"
+    },
+    {
+      "line": 11189,
+      "record": "3,11547,93238636,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap packet=0 target=abd1e000 data=00000000 cpu=00000000/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 11192,
+      "record": "3,11548,93238662,-,caller=T127;kgsl kgsl-3d0: DIAG uche-trap-allocation gpu=abd1e000 size=1000 flags=c0900 sg=1/1 first=0x00000000abd1e000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000abd1e000 identity=1"
+    },
+    {
+      "line": 11201,
+      "record": "3,11551,93238748,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9c98754 target=a4bdf000 data=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 11457,
+      "record": "2,11701,94460261,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9a9c100"
+    },
+    {
+      "line": 11460,
+      "record": "2,11702,94460290,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b0f8e000"
+    },
+    {
+      "line": 12122,
+      "record": "2,12332,94643253,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b0f8e000"
+    },
+    {
+      "line": 12215,
+      "record": "2,12395,94790064,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000a4bf5140"
+    },
+    {
+      "line": 14938,
+      "record": "2,17384,101905916,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9931040"
+    },
+    {
+      "line": 14941,
+      "record": "2,17385,101905948,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b0ecc000"
+    },
+    {
+      "line": 15361,
+      "record": "2,17763,104051671,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9770000"
+    },
+    {
+      "line": 15364,
+      "record": "2,17764,104051703,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b9105000"
+    },
+    {
+      "line": 15440,
+      "record": "2,17790,104272914,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b9105000"
+    },
+    {
+      "line": 15535,
+      "record": "2,17837,104450090,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9935140"
+    },
+    {
+      "line": 15538,
+      "record": "2,17838,104450121,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b9105000"
+    },
+    {
+      "line": 16084,
+      "record": "2,18342,108008117,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f97730c0"
+    },
+    {
+      "line": 16087,
+      "record": "2,18343,108008152,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b0e78000"
+    },
+    {
+      "line": 16167,
+      "record": "2,18373,108191911,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b0e78000"
+    },
+    {
+      "line": 16239,
+      "record": "2,18397,108307804,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9931040"
+    },
+    {
+      "line": 16242,
+      "record": "2,18398,108307835,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000b0e78000"
+    },
+    {
+      "line": 16375,
+      "record": "2,18489,110122725,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f97730c0"
+    },
+    {
+      "line": 16378,
+      "record": "2,18490,110122756,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000069dd5000"
+    },
+    {
+      "line": 16459,
+      "record": "2,18521,110264885,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000069dd5000"
+    },
+    {
+      "line": 16532,
+      "record": "2,18546,110379285,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9935140"
+    },
+    {
+      "line": 16535,
+      "record": "2,18547,110379314,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000069dd5000"
+    },
+    {
+      "line": 16890,
+      "record": "2,18860,115261455,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9770000"
+    },
+    {
+      "line": 16893,
+      "record": "2,18861,115261486,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000050426000"
+    },
+    {
+      "line": 16973,
+      "record": "2,18891,115396225,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000050426000"
+    },
+    {
+      "line": 17048,
+      "record": "2,18918,115502290,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9935140"
+    },
+    {
+      "line": 17051,
+      "record": "2,18919,115502321,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000050426000"
+    },
+    {
+      "line": 17205,
+      "record": "2,19031,116787561,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9770000"
+    },
+    {
+      "line": 17208,
+      "record": "2,19032,116787592,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000678ad000"
+    },
+    {
+      "line": 17266,
+      "record": "2,19058,116900174,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000678ad000"
+    },
+    {
+      "line": 17343,
+      "record": "2,19087,117058802,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000678ad000"
+    },
+    {
+      "line": 17346,
+      "record": "2,19088,117058832,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000678ad000"
+    },
+    {
+      "line": 17882,
+      "record": "2,19448,124156849,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9770000"
+    },
+    {
+      "line": 17885,
+      "record": "2,19449,124156897,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000bd86f000"
+    },
+    {
+      "line": 17962,
+      "record": "2,19476,124317472,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000bd86f000"
+    },
+    {
+      "line": 18043,
+      "record": "2,19509,124419555,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9931040"
+    },
+    {
+      "line": 18046,
+      "record": "2,19510,124419587,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000bd86f000"
+    },
+    {
+      "line": 18336,
+      "record": "2,19758,129909151,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9770000"
+    },
+    {
+      "line": 18339,
+      "record": "2,19759,129909182,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000069334000"
+    },
+    {
+      "line": 18418,
+      "record": "2,19788,130028099,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000069334000"
+    },
+    {
+      "line": 18492,
+      "record": "2,19814,130136699,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=0000000069334000"
+    },
+    {
+      "line": 18659,
+      "record": "2,19939,131988012,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f97730c0"
+    },
+    {
+      "line": 18662,
+      "record": "2,19940,131988042,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=000000005a66a000"
+    },
+    {
+      "line": 18737,
+      "record": "2,19965,132123752,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=000000005a66a000"
+    },
+    {
+      "line": 18811,
+      "record": "2,19991,132232343,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9935140"
+    },
+    {
+      "line": 18814,
+      "record": "2,19992,132232373,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=000000005a66a000"
+    },
+    {
+      "line": 19059,
+      "record": "2,20195,137083921,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9770000"
+    },
+    {
+      "line": 19062,
+      "record": "2,20196,137083952,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000800ed000"
+    },
+    {
+      "line": 19137,
+      "record": "2,20221,137218445,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000800ed000"
+    },
+    {
+      "line": 19211,
+      "record": "2,20247,137351905,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000f9930000"
+    },
+    {
+      "line": 19214,
+      "record": "2,20248,137351940,-,caller=C0;kgsl kgsl-3d0: UCHE: Out of bounds access addr=00000000800ed000"
+    }
+  ],
+  "timeline": "adb-timeline.log",
+  "root_cause": "unverified",
+  "screen": "no visual sample collected"
+}

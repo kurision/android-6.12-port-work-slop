@@ -1,0 +1,8 @@
+{
+  "run": 191,
+  "observer": "user, at the device",
+  "observation": "still same, dimly lit and that's all",
+  "means": "panel faintly backlit, no boot animation, no logo, no UI, identical to run187 and run189",
+  "delta_under_test": "mdss_mdp_cold_boot=1 now routed through early_param instead of module_param, so the kernel was expected to ignore the bootloader's running display and execute the full DSI cold bring-up (PHY PLL, lane VREGs, clock source, panel reset GPIO, qcom,mdss-dsi-on-command)",
+  "verdict": "the cold-boot hypothesis is NOT confirmed on the panel; whether the cold path actually executed must be read from the DIAG lines before any further conclusion"
+}

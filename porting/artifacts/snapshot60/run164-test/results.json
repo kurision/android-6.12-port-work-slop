@@ -1,0 +1,96 @@
+{
+  "run": "run164",
+  "image_sha256": "802d2be5a26163c62bddaed5a9908d530ab7ad37465faefcc54f2afe11a61c0d",
+  "boot_id": "75b92c37-877f-4450-b78a-4f7819428e25",
+  "first_completed_sample": "126.2 rc=0\n6.12.93-4k\n75b92c37-877f-4450-b78a-4f7819428e25\n103.31 499.90\n1\nstopped\n706 1121\n\n",
+  "final_port_sample": "192.0 rc=0\n6.12.93-4k\n75b92c37-877f-4450-b78a-4f7819428e25\n169.17 919.94\n1\nstopped\n706 1121\n\n",
+  "fresh_fault_count": 42,
+  "target_sample_count": 9,
+  "samples": [
+    {
+      "line": 3748,
+      "record": "3,3591,42760500,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9540694 target=386ff000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 3843,
+      "record": "3,3630,42867091,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9558678 target=386ff000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 3928,
+      "record": "3,3663,42910926,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9600678 target=386ff000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 4026,
+      "record": "3,3709,42954500,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9540678 target=386ff000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 11012,
+      "record": "3,11596,93987942,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9c94754 target=a66c1000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 11948,
+      "record": "3,12960,95494269,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=7fd4c718 target=b9c76000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 12338,
+      "record": "3,13214,97314505,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=a2e88718 target=99894000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 15441,
+      "record": "3,18000,103768597,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9934718 target=9b7e6000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    },
+    {
+      "line": 16669,
+      "record": "3,19356,106890537,-,caller=T127;kgsl kgsl-3d0: DIAG mem-write packet=f9924718 target=9bb24000 expected=00000000 cpu=00000001/00000000 copied=8/8 (no cache maintenance)"
+    }
+  ],
+  "allocations": [
+    {
+      "line": 3751,
+      "record": "3,3592,42760526,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=386ff000 size=1000 flags=c0000 sg=1/1 first=0x00000000386ff000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000386ff000 identity=1"
+    },
+    {
+      "line": 3846,
+      "record": "3,3631,42867117,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=386ff000 size=1000 flags=c0000 sg=1/1 first=0x00000000386ff000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000386ff000 identity=1"
+    },
+    {
+      "line": 3931,
+      "record": "3,3664,42910951,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=386ff000 size=1000 flags=c0000 sg=1/1 first=0x00000000386ff000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000386ff000 identity=1"
+    },
+    {
+      "line": 4029,
+      "record": "3,3710,42954526,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=386ff000 size=1000 flags=c0000 sg=1/1 first=0x00000000386ff000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000386ff000 identity=1"
+    },
+    {
+      "line": 11015,
+      "record": "3,11597,93987967,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=a66c1000 size=1000 flags=c0000 sg=1/1 first=0x00000000a66c1000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000a66c1000 identity=1"
+    },
+    {
+      "line": 11951,
+      "record": "3,12961,95494295,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=b9c76000 size=1000 flags=c0000 sg=1/1 first=0x00000000b9c76000 covered=1000 contiguous=1 target-found=1 target-phys=0x00000000b9c76000 identity=1"
+    },
+    {
+      "line": 12341,
+      "record": "3,13215,97314567,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=99894000 size=1000 flags=c0000 sg=1/1 first=0x0000000099894000 covered=1000 contiguous=1 target-found=1 target-phys=0x0000000099894000 identity=1"
+    },
+    {
+      "line": 15444,
+      "record": "3,18001,103768614,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=9b7e6000 size=1000 flags=c0000 sg=1/1 first=0x000000009b7e6000 covered=1000 contiguous=1 target-found=1 target-phys=0x000000009b7e6000 identity=1"
+    },
+    {
+      "line": 16672,
+      "record": "3,19357,106890564,-,caller=T127;kgsl kgsl-3d0: DIAG target-allocation gpu=9bb24000 size=1000 flags=c0000 sg=1/1 first=0x000000009bb24000 covered=1000 contiguous=1 target-found=1 target-phys=0x000000009bb24000 identity=1"
+    }
+  ],
+  "fresh_capture_last_changed_byte": 3557138,
+  "stale_tail_warning": "Bytes after this offset match preserved run163 partition; excluded from counts. Boundary inferred from byte comparison.",
+  "usb_bytes": 444902,
+  "usb_records_matched_in_logdump": [
+    3404,
+    3404
+  ],
+  "logdump_sha256": "76666408b35a8bea063ccc0a81f7b7c63eee4492b199ce30cde6a09e17500b77",
+  "interpretation": "Observed sampled targets are physically contiguous and identity addressed. CPU sampled value is 1/0 while nearby MEM_WRITE payload is zero. No cache maintenance performed; GPU visibility, execution position and root cause remain unverified.",
+  "device_final_state": "stock 4.19 confirmed",
+  "window_lastanr": "WINDOW MANAGER LAST ANR (dumpsys window lastanr)\n  <no ANR has occurred since boot>\n"
+}

@@ -1,0 +1,36 @@
+{
+  "run": "run173",
+  "image": "boot-run173.img",
+  "image_sha256": "7750aa932ce0837efbc582a6371aefdad186d6a00949fd54787b744dbc69cf74",
+  "kernel_payload_sha256": "84ee336aee140e22fbcb33c80a7c69275f10e109abcac03a892e92274b4d2d93",
+  "change": "read-only CP queue-state probe in the UCHE OOB handler; no register is written",
+  "usb_capture_bytes": 434908,
+  "usb_capture_limit": "ends ~t=41s, before the 42.4s fault; data recovered from the persistent logdump instead",
+  "cp_stall_probe": {
+    "rptr": "0xb1",
+    "wptr": "0xb1",
+    "rptr_equals_wptr": true,
+    "cp_ahb_fault": "0x0903a284 (bit31 error=0; stale residue, not an active fault)",
+    "cp_protect_status": "0x0",
+    "rbbm_int_0_status": "0x0",
+    "rbbm_status3": "0x0",
+    "cp_context_switch_cntl": "0x0"
+  },
+  "finding_that_refines_the_model": "At the FIRST UCHE out-of-bounds interrupt (t=42.613 s) the ring read and write pointers are EQUAL (rptr=wptr=0xb1). The CP had already drained the ring; it is NOT stalled mid-fetch and NOT waiting on a memory barrier. This corrects the earlier 'CP stopped fetching mid-ring' reading, which came from a later snapshot sample (rptr 0xc0 vs wptr 0x107) taken at fault-check time, not at the interrupt.",
+  "confirmed_unchanged": {
+    "smmu": "sctlr=0 translating=0 far=0 fsynr=0 (bypassed at draw time)",
+    "cp_status_1": "0x80423c68",
+    "cp_hw_fault": "0x0",
+    "uche_aperture": "addr_mode=1 mode=0x20000000 gmem=0x00100000-0x00121000"
+  },
+  "root_cause_chain": [
+    "1. VSC binning pass issues a UCHE access to the 4 KiB VSC size buffer",
+    "2. UCHE rejects it (OOB) although gpu/dma/page_to_phys all agree and the SMMU is bypassed",
+    "3. VSC produces no visibility output (size buffer all zero, VSC_PIPE_DATA_ADDRESS reads 0, VSC_BUSY clear)",
+    "4. CP drains the ring with no error latched",
+    "5. Hang detector fires ~60 ms later; GPU wedged; SurfaceFlinger never renders"
+  ],
+  "open_question": "step 2 only: why the UCHE rejects an access whose buffer is proven physically valid. All buffer-identity and aperture-register hypotheses are eliminated.",
+  "device_state": "stock 4.19",
+  "flashed_or_cleared": false
+}

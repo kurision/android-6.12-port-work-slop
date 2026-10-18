@@ -1,0 +1,26 @@
+{
+  "run": "run182 (boot of boot-run180.img = current best tree)",
+  "image": "boot-run180.img",
+  "image_sha256": "e6ddd605b74cef668d56fa102600870730bbecfe389706796d577805b90bf71b",
+  "purpose": "confirm the SMMU + KGSL_MMU_64BIT fixes did not regress boot completion",
+  "kernel": "6.12.93-4k (port, not stock)",
+  "usb_capture_bytes": 433804,
+  "boot_completed": {
+    "value": 1,
+    "uptime_s": 105.75,
+    "observed_stable": "SurfaceFlinger PID 710 and SystemServer PID 1109 held from 72.91s through 105.75s with no restart",
+    "logcat": "BOOT_COMPLETED x3 plus BOOT_COMPLETED_BROADCAST_COMPLETION_LATENCY_REPORTED",
+    "bootanim_service": "ran, then stopped; full boot_progress_* milestone chain present"
+  },
+  "comparison": {
+    "run171_before_fixes": "boot_completed @114.29s",
+    "run182_with_fixes": "boot_completed @105.75s, SF stable",
+    "verdict": "the SMMU and KGSL_MMU_64BIT fixes did not regress boot completion and slightly improved it"
+  },
+  "goal": {
+    "sys_boot_completed_on_port_kernel": "ACHIEVED - verified on the current best image, not just an older one",
+    "visible_bootanimation": "STILL UNMET - screen state not visually confirmed; screencap is unusable on this device and the GPU still raises UCHE out-of-bounds on a valid VSC buffer"
+  },
+  "device_state": "to be returned to stock",
+  "flashed_or_cleared": false
+}

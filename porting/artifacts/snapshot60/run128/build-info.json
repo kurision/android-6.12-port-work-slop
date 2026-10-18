@@ -1,0 +1,39 @@
+{
+  "source_commit": "ee66fc52d1b6132453cef6d51db7e762db97fb01",
+  "source_patch": "source.patch",
+  "source_file": "drivers/gpu/msm/adreno_a5xx.c",
+  "source_file_sha256": "5d713bca58d144fda213764e54079a7ce2a7e7d4b5c738049f94b994d3cb148e",
+  "source_patch_sha256": "4a8ca3575054aefd260b164d6ad453a87621dca44eacae27085e6136797039b6",
+  "kernel_build_log": "run128-native-build.log",
+  "kernel_release": "6.12.93-4k-gee66fc52d1b6-dirty",
+  "toolchain": {
+    "clang": "22.1.8",
+    "rust": "1.82.0",
+    "bindgen": "0.72.1"
+  },
+  "kernel_config_identical_to_run127": true,
+  "actual_ramdisk_identical_to_run127": true,
+  "cmdline_identical_to_run127": true,
+  "image_sha256": "18416bc67d287521b6e52232efa18eec3e4014d75aa54312aff11f30dea0f673",
+  "boot_tested": true,
+  "boot_method": "fastboot RAM boot; no flashing or slot change",
+  "boot_observation": "User sees fastboot splash. Kernel/Android init captured through 40.825s on USB; no port adb in bounded 180s observation. No fastboot transport or phone USB interface after observation.",
+  "evidence_recovery": "Recovered after stock return; phone diagnostic copies retained; no additional boot or clear.",
+  "evidence": {
+    "raw": "run128-logdump.bin",
+    "raw_bytes": 67108864,
+    "raw_sha256": "0851b34ff1c87e966d8638b3eab85998abbfb6acb411cce82ada8e45979a74e2",
+    "usb_records_matching_raw": 3248,
+    "snapshot_report": "run128-ramoops.json",
+    "retained_diagnostic_manifest": "run128-retained-diagnostics.json",
+    "android_log_bytes": 4629022,
+    "probe_result": "Four user-context-unavailable records; no live-register or mapping values obtained.",
+    "kernel_execution_observed_seconds": 307.878,
+    "crash_sequence": "First ME_INIT 40.893s; zygote SIGSEGV 41.807s; CP idle failure 43.765s."
+  },
+  "stock_return": {
+    "kernel": "4.19.325-cip136-st20-perf-g0e5fe6302c27",
+    "slot": "_b",
+    "boot_completed": "1"
+  }
+}

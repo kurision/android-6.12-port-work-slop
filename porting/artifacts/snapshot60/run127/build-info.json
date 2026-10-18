@@ -1,0 +1,38 @@
+{
+  "source_commit": "ee66fc52d1b6132453cef6d51db7e762db97fb01",
+  "run126_source": "30087c43cf6e953af7a9e39418495bdb2b4f7d12",
+  "source_difference": "Only three porting documentation files differ; no kernel/init source patches",
+  "kernel_release": "6.12.93-4k-gee66fc52d1b6",
+  "kernel_build_log": "run126-rust182-bindgen0721-rebuild-20261014T163031Z-0567b6ec.log",
+  "toolchain": {
+    "clang": "22.1.8",
+    "rust": "1.82.0",
+    "bindgen": "0.72.1"
+  },
+  "init_build": "aarch64-linux-gnu-gcc -Os -static -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT -DBOOT_DEADLINE_SECONDS=0 scripts/initramfs-diag/init.c -o porting/artifacts/snapshot60/init-run127",
+  "init_libc": "glibc, differs from Mac musl build",
+  "init_existing_warning": "init.c:1545 setxattr reads28bytes from26byte string region; not changed",
+  "package_sha256": "d59a3f95a2b972ef7ade0414e84541b92d9eef6ca618dc140a7395cfdbaece86",
+  "verified_cpio_changes": [
+    "init",
+    "userdebug_plat_sepolicy.cil"
+  ],
+  "boot_tested": true,
+  "boot_method": "fastboot RAM boot, no flashing or slot change",
+  "boot_observation": "No 6.12 adb within bounded 180-second observation; durable samples end at 41.65s after GPU ME_INIT submissions at 40.839s and 41.368s. Cause unverified.",
+  "evidence": {
+    "raw": "run127-logdump.bin",
+    "raw_sha256": "3ef7109b380edd8fff1ff940bbb8e20a98aa35d3713a7806a7c0c4aa4adbfa7a",
+    "raw_bytes": 67108864,
+    "usb_records_matching_raw": 3256,
+    "early_logcat": "run127-early-logcat.log",
+    "early_logcat_bytes": 179634,
+    "retained_diagnostic_manifest": "run127-retained-diagnostics.json",
+    "snapshot_report": "run127-ramoops.json"
+  },
+  "stock_return_observed": {
+    "kernel": "4.19.325-cip136-st20-perf-g0e5fe6302c27",
+    "slot": "_b",
+    "boot_completed": "1"
+  }
+}

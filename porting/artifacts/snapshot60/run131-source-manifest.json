@@ -1,0 +1,27 @@
+{
+  "head": "a54b131a885cefb38710be2f70f94d9bf04b1036",
+  "source": "/tmp/ack-run131-source",
+  "files": {
+    "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts": "319a8ee3454f3bc83e035d08445bdb9e40e6a4c555c4575bbb6f49f5cf199ae0",
+    "drivers/iio/adc/qcom-spmi-vadc.c": "fc1bd6331f1a24c6d1031ab4e3bdbf539fcf2375bef9bd0088013c529f1ba363",
+    "drivers/power/supply/Kconfig": "8c4583e452bbed55783e5ceeb89022bedce20f017f1bf72102198c59ab57c599",
+    "drivers/power/supply/Makefile": "21ec8f6fa820f77170d26272899d519ab8f97742dcc5b45bda053b7100e8ba64",
+    "drivers/power/supply/power_supply_sysfs.c": "c23a283397eee114c27960202a3139d0fa82cb0bc8bd1ed0233903d627dab7c7",
+    "include/linux/power_supply.h": "5067ff38586015457ddb368107e75e6e861cfae8c501d5f79c1e49975ee3c31a",
+    "porting/FAILING-COMPONENTS.md": "e53b54d56a2b2a56ee00277a80ea213817ce169e33385190a3b68f35543dd5b4",
+    "porting/TRACKER-kgsl-port.md": "d0ddae693f20bcc4ce3947b7f12e186935194caad90c6183a72468dae5b919a0",
+    "scripts/tissot-ack.config": "e9c5fe3223ba909d9093fa8336aabebbce5781c6cfbc51aa6dd491c7e574a53c",
+    "drivers/power/supply/qpnp-smbcharger.c": "769f9de4777b6c249350f0899c622577bcaeb441f03bd2069a03be7ad16d7e1c",
+    "drivers/power/supply/qpnp-fg.c": "541d0d52477f9be91f8b2db821dcad1ee4776963f63228d04e6a3aaea13f95b6",
+    "drivers/power/supply/pmic-voter.c": "2d42c6d040a7699d9d3b1b67ddad3da086e26d409f56b64561e5837557240481",
+    "drivers/power/supply/qcom-batterydata-lib.c": "ccdfe407cdb186171d114f61ce0a9b3468f7bec106e4c17db4cec834cb226160",
+    "drivers/power/supply/qcom-of-batterydata.c": "8dc495f4c0b885b64202d232d1b9f79c3774ddd41570270af45465c79be72f5f",
+    "include/linux/pmic-voter.h": "e53af3e647e9dae3a2783149068dba3c95a1279c0d06c48218d4287189cf0071",
+    "include/linux/batterydata-lib.h": "a7815ccf82d9425f5d0e9e1825c63a8c1f22e4609ba68a5a2c503de14b0a6033",
+    "include/linux/of_batterydata.h": "a189356a3871bf4286cd05a82a07c75b0e9d1a435d79675e6bdfd27fb4568e88",
+    "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-battery.dtsi": "f4dda62044ee973b57fb63ff8d5568f1a35a5b792cc2cf2e62ff9efccb3a3490",
+    "arch/arm64/boot/dts/qcom/batterydata-qrd-coslight-3000mAh.dtsi": "19c3f320ca34b25163f1f0ca7c1c13cbf4449d9dd4deef31ad10a1cfbcfcae70",
+    "arch/arm64/boot/dts/qcom/batterydata-qrd-scud-3000mAh.dtsi": "6bc2ef36317bbc1c7e774b850f2f4dac94ab05889c8f590c01f02ecc18d16292",
+    "arch/arm64/boot/dts/qcom/batterydata-qrd-sunwoda-liwei-3000mAh.dtsi": "32b5ab050604b8595c13db2aa241554c6bbe38cabf8e6e6966aa728857c728a4"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "base": "boot-run164.img",
+  "ramdisk_cpio_identical": true,
+  "cmdline_identical": true,
+  "dtb_identical": true,
+  "logdump_pretest": "run164-logdump.bin",
+  "logdump_cleared": false
+}

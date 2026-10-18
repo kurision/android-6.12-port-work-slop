@@ -1,0 +1,24 @@
+{
+  "130": {
+    "boot_bytes": 37679104,
+    "kernel_addr": "0x80008000",
+    "ramdisk_addr": "0x81000000",
+    "tags_addr": "0x80000100",
+    "kernel_decompressed_bytes": 51071488,
+    "kernel_header_image_size": 52035584,
+    "text_offset": "0x0",
+    "kernel_header_end_if_loaded_at_header_addr": "0x831a8000",
+    "gap_to_ramdisk_if_loaded_at_header_addr": -35291136
+  },
+  "131": {
+    "boot_bytes": 37818368,
+    "kernel_addr": "0x80008000",
+    "ramdisk_addr": "0x81000000",
+    "tags_addr": "0x80000100",
+    "kernel_decompressed_bytes": 51403264,
+    "kernel_header_image_size": 52363264,
+    "text_offset": "0x0",
+    "kernel_header_end_if_loaded_at_header_addr": "0x831f8000",
+    "gap_to_ramdisk_if_loaded_at_header_addr": -35618816
+  }
+}

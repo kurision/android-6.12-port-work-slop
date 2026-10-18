@@ -1,0 +1,51 @@
+RUN168 SNAPSHOT DATA ANALYSIS (no source/policy/device changes)
+
+Validation
+- gpu-snapshot.bin: 945320 bytes; SHA256 28d1db54e2f0f7d0b5ee219cdb48987369e8f79bed7edb940fce7d67a3ebd4d6.
+- Header little-endian III: magic=504d0002, gpuid=000301fa (3D/506), chipid=05000600 (5.0.6.0).
+- 285 sections, every abcd magic/boundary/size checked; EOF END at 0xe6ca0, size 8, no trailing bytes. All known section internal count/length fields agree with payload sizes.
+- Sections: OS 1, REGS 4 (3886 distinct pairs), RBv2 1, IBv2 2, INDEXED_REGS 5, DEBUG 5, DEBUGBUS 50, GPU_OBJECTv2 7, MEMLISTv2 1 (54 entries), SHADER 208, END 1.
+- OS: surfaceflinger PID 759, context 2, ptbase 0, 6.12.93-4k; context 2 queued=0x5280 consumed=0x3180 retired=0x2100.
+
+Strong observation: the trap allocation is the VSC visibility-stream SIZE buffer
+- UCHE_TRAP_LOG_LO[0xeb1]=3d059000; HI[0xeb2]=0.
+- Memory list: [3d059000,3d05a000), 4096 bytes, memtype 9. This format has NO flags, physical-backing identity or allocation/import provenance. Do not transfer run166 cache flags to this object without runtime evidence.
+- Independently, VSC_SIZE_ADDRESS_LO[0xbc3]=3d059000, HI[0xbc4]=0.
+- IB1 at f93b8288 has type4 write to registers 0xbc2..0xbc4 with [0000050c,3d059000,0]. VSC bins are 384x64. Five 1x1 pipe mappings are configured, followed by 0x1000-byte data lengths; data addresses in commands are f9420000, f9421040, f9422080, f94230c0, f9424100.
+- f93b83c8 EVENT_WRITE VSC_BINNING_START (2c); f93b83d8 INDIRECT_BUFFER f9440000/0x126 dwords; f9440478 DRAW_INDX_OFFSET, count 90, index buffer 3dde3000, binning draw control 00200404; f93b83e8 VSC_BINNING_END (2d).
+- f93b8408..f93b8498: five COND_WRITE5 packets compare SIZE[pipe] at 3d059000+4*pipe against 0xe66, mask ffffffff, WRITE_GE, writing 0x40000 at 3d059040 when true. All these literal addresses lie inside the same 4KiB object.
+- f93b850c CP_SET_BIN_DATA5 payload [00010000,f9420000,0,3d059000,0]: VSC_SIZE=1, VSC_N=0, data=f9420000, size-address=3d059000. This packet explicitly selects the trap allocation for visibility consumption, not shader/vertex/timestamp storage.
+- f93b8580 dispatches f9460140/121 dwords; f9460234 SET_DRAW_STATE has 17 descriptors, 15 nonempty and groups 7/8 disabled; f9460304 DRAW_INDX_OFFSET [00200504,1,5a,0,3dde3000,0,5a]. Visibility-enable bit differs from binning draw (00200404). Other tiles select SIZE+4,+8,+c,+10.
+- Thus resource identification is recovered without guessing from memtype 9 or decoding missing state blocks. The opcode/semantic chain plus matching live VSC register is strong evidence of a VSC-size visibility access. The exact internal faulting UCHE request/client and rejection reason are NOT encoded/proved here.
+
+Registers
+- RBBM_STATUS=800001c1, CP_STATUS_1=80423c68, CP_HW_FAULT=0, CP_INTERRUPT_STATUS=0, RBBM_INT_0_STATUS=0 (snapshot is not evidence that interrupt never happened).
+- CP_IB1_BASE=f93b8000, CP_IB1_BUFSZ=e6; CP_IB2_BASE=f9460140, CP_IB2_BUFSZ=0. Remaining count zero does not prove draw retirement.
+- CP_RB_BASE=f9350000, CP_RB_RPTR=c0, CP_RB_WPTR=107. Snapshot RB subheader rptr=86, so these are separately sampled values, not an atomic CPU/GPU state.
+- CP_AHB_FAULT=0903a284, RBBM_AHB_ERROR_STATUS=004013d0, RBBM_AHB_ME_SPLIT_STATUS=101000b0. Included as raw evidence; no undocumented fault-bit decoding asserted.
+- UCHE_ADDR_MODE_CNTL=1, VSC_ADDR_MODE_CNTL=1, UCHE_MODE_CNTL=20000000; TRAP_BASE and WRITE_THRU_BASE=0001ffffffff0000; GMEM_RANGE=00100000..00121000; UCHE_CACHE_INVALIDATE=13, CACHE_WAYS=2.
+- VSC_PIPE_DATA_ADDRESS dump values are zero despite nonzero address-write packet payloads; do not replace the captured zeros with expected values or infer cause from this discrepancy alone.
+
+Recovery limits / packet validation
+- Captured GPU_OBJECT ranges: f9348000+8000 (GLOBAL), f9400000+20000, f9428000+4000, f93bc000+2000, f9460000+20000, f9440000+20000, f93b8000+4000 (all other objects type IB).
+- The entire f9480000+80000 draw-state allocation is listed but NOT dumped; neither is 3d059000+1000 or f9420000+8000. No shader/debug section format supplies those missing memory bytes. Indexed CP_DRAW_STATE registers only retain pointers and counts, not pointed-to packet contents.
+- All 15 active referenced state blocks are unavailable: group 0=f9480940/20dw, 1=f9480c30/8, 2=f9480dd0/23, 3=f9480e30/61, 4=f9480990/43, 5=f9480a60/21, 6=f9480a40/6, 9=f9480c90/22, 10=f9480bf0/16, 11=f9480c60/12, 12=f9480d60/28, 14=f9480d30/11, 15=f9480cf0/16, 16=f9480c50/4, 18=f9480f30/4. Last block ends at f9480f40.
+- Snapshot static IB1 section contains 382 dwords and ends with an incomplete CP_SET_BIN_DATA5. However full GPU_OBJECT data contains a complete 646-dword current stream; ring dump independently has submissions of BOTH lengths at the same base. Older f9428000/450dw likewise does not completely parse against captured current bytes, while newer 443dw does. Do not label this a corrupt/truncated snapshot file: section containers validate, and reused command-buffer contents/older ring entries are different evidence generations.
+- Nine fully recoverable submitted/nested streams have complete type4/type7 packet boundaries and valid parity for both header fields. Two older reused-buffer stream views stop at incomplete/unknown headers as detailed in packets JSON. Missing later ring IB f9438000/639dw is recorded too.
+- Likely capture limitation (source-derived, not runtime-proven): adreno_cp_parse_ib2 deduplicates against whole allocation ranges (adreno_cp_parser.c:799-806). Parsing f9460000/24dw first adds the entire f9460000 allocation, so f9460140 is then skipped, never walking SET_DRAW_STATE. Type7 non-draw-state handlers also do not track arbitrary memory resources. This explains how command buffers can be present while draw/resource objects are absent, but is not the rendering root cause.
+
+Evidence-ranked mechanism / next evidence
+1. Observed: UCHE rejects/logs the base of the correctly identified VSC size allocation during a visibility-enabled rendering sequence. Literal known accesses are in allocation bounds; snapshot does not demonstrate an application buffer overrun.
+2. Inference: address/backing/access-attribute mismatch or VSC producer/consumer state is more relevant than shader/vertex/timestamp speculation for this trapped address. Native-allocation DMA-handle-vs-physical identity is worth checking in NOMMU, but this snapshot does not establish a mismatch; boot memory map includes this low-address region.
+3. No causal source fix is justified by these bytes alone. Minimal next evidence: capture SIZE[0..4] and overflow word SIZE+0x40; verify this allocation's flags/provenance, returned GPU/DMA address and actual backing PFN/physical address against active GPU SMMU/bypass state. If full draw-state reconstruction remains required, capture f9480000 allocation (at minimum its referenced subranges); existing snapshot lacks it irrecoverably.
+4. Two zero-gpuaddr memlist entries (size 0x90000, memtype 18) exist, but no recovered resource chain uses them. The distinct dma-buf zero-gpuaddr bug is not evidence for this VSC allocation and was not pursued.
+
+Current upstream primary decoding references checked
+- https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/msm/registers/adreno/a5xx.xml (raw fetched: VSC size/address/pipe definitions and UCHE_TRAP_LOG).
+- https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/msm/registers/adreno/adreno_pm4.xml (raw fetched: CP_SET_BIN_DATA5, SET_DRAW_STATE, COND_WRITE5, DRAW_INDX_OFFSET and event definitions).
+- Local source format: drivers/gpu/msm/kgsl_snapshot.h; traversal conventions: drivers/gpu/msm/adreno_cp_parser.c.
+
+Artifacts beside this report
+- gpu-snapshot-analysis.json: header, full section index, metadata, all memory entries, draw-state coverage and indexed-register payloads.
+- gpu-snapshot-packets.json: recovered IB graph, packet addresses/raw payloads/register names, missing streams and reused-buffer parse limits.
+- gpu-snapshot-registers.tsv: all 3886 captured register pairs.

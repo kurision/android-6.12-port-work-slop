@@ -4,9 +4,83 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 (`libGLESv2_adreno.so`, 2020 QC blob), sdm HWC and gralloc work unchanged
 — the "GPU 3D" row of `porting/FAILING-COMPONENTS.md` (backlog #1).
 
-Worktree: `../ack-kgsl`, branch `kgsl-port` (from `driver-fix` a1e4992dc).
-The main tree stays untouched until this port has a boot verdict.
-Last update: 2026-10-13 — Stage 3 in progress; run89 returned before observed port ADB but preserved real early Android logcat; reset cause, panel PLL and GPU start remain unresolved.
+Worktree: `../ack-kgsl`, current branch `mdss-bisect`; the port began on
+`kgsl-port` (from `driver-fix` a1e4992dc). Tested driver changes are uncommitted.
+Last update: 2026-10-17 — run188 walks the faulting IOVA in software: the mapping
+is correct, the UCHE fault persists. Visible rendering remains unresolved.
+
+## Current verdict — run186/run187/run188
+
+Use [BUIL_TISSOT.md](../BUIL_TISSOT.md) for procedures and the
+[current handoff](HANDOFF.md) for exact hashes, register corrections and capture
+provenance. Earlier run sections describe their own artifacts and hypotheses.
+All evidence named here is in `artifacts/snapshot60/`.
+
+- **Run186 reset:** the shipped config omitted Rust/ashmem. Five system_server
+  attempts failed to create ashmem (`run186-live/logcat-all.log:551,824,2076,9439,16705`),
+  followed by an ACKRESET1 `zygote-fatal` record at 79.857 s. This does not
+  attribute the reset to SMMU. Preserve Rust availability through configuration
+  and verify the embedded config, not only the build output configuration.
+- **Run187 build:** run185 configuration seed, absolute Rust 1.99.0/bindgen
+  0.73.2 paths and the profiling-option override; real run186 base, with
+  ramdisk/init/cmdline/DTB unchanged. See `run187-build-environment-final.json`,
+  `run187-source.patch`, `run187-embedded.config`, `package-run187.json`.
+- **Boot:** port boot ID `46f81447-d2f8-4915-9062-a281bf2b4e79`, both completion
+  properties first sampled set at 103.73 s (`run187-live/poll.jsonl:27`), still
+  set at 479.70 s with SF 706/system_server 1126 unchanged (`final-state.log`).
+  User saw about 10 s of splash followed by a dimly backlit panel
+  (`run187-live/panel-observation.json`). No visible UI or animation confirmed.
+- **GPU:** IAS=39/AArch64 initialization at `run187-logdump.log:442,454`;
+  translating=1 at :3700. KGSL's 64-bit allocation feature stays disabled.
+  First UCHE OOB at :3673 (42.150316 s, target 0x139000); 607 UCHE and 316
+  fault-context records. Zero CP-init failures or invalid-page-free warnings
+  observed in this capture. The page-free validation and SMMU format changes
+  boot together, but their individual effects are not isolated by this run.
+- **Capture:** 439,386 B USB ends at 40.970600 s; later faults are from the
+  device-hash-verified 64 MiB logdump, with a 21,200,714 B text prefix through
+  489.766674 s. All 3335 USB records match it. The host requested the final
+  reboot for recovery; final state is rooted stock 4.19. Nothing flashed or cleared.
+
+- **Run188 (the PTE walk):** one source change versus run187, in
+  `adreno_fault_dump_target()` only — `iommu_iova_to_phys()` is now called on the
+  faulting IOVA and printed as `DIAG <name>-walk`. Image
+  `boot-run188.img`, kernel payload `05cf0e90…`, base `boot-run187.img`; ramdisk,
+  init, cmdline, DTB, cpio count and resolved config are byte-identical
+  (`package-run188.json`, `run188-embedded.config`). All **13** walk lines report
+  `walked=1 backing=1 match=1 mapped_flag=1` — the software walk resolves the
+  faulting IOVA to exactly the backing page (`run188-logdump.log:3690`), the entry's
+  `pt_ttbr0` equals `gpu_current_ttbr0` (:3687), and the SMMU shows
+  `sctlr=00001167 translating=1 fsr=00000400 far=0` (:3696), i.e. **no translation
+  fault**. Faults persist unchanged: same targets as run187 (`0x139000`,
+  `0x1b14000` uche-trap; `0x133000`, `0x1b0e000` mem-write), 436 `GPU hang
+  detected`, 2 fault-threshold exits (surfaceflinger 711, nexuslauncher 1607).
+  **Consequence:** "the buffer was not mapped" and "the walk resolves to the wrong
+  physical page" are ruled out. A software walk is still not a hardware walk, so
+  what the MMU actually fetched is **unproven** — leaf PTE attributes
+  (AF/device/denormal, SH overriding nGnRE/nGnRnE, nGXN/XN) and the *ordering* of
+  map/unmap versus the fetch are now the remaining software-visible suspects, along
+  with the UCHE raising its own OOB on a legal address (offset 0 of a `0x1000`
+  entry, so not even a tail overrun). Boot completed at 101.93 s
+  (`run188-live/poll.jsonl:30`), still set at 412.29 s with SF 711/system_server
+  1122. **No physical panel observation was collected for run188** — visible
+  output is unverified for this run. CPU: 8/8 online, no steal, 4016 jiffies in a
+  5 s window (`run188-cpu-note.json`), but the port has **no cpufreq interface at
+  all** (`CONFIG_CPUFREQ_DT` unset, no `littledcvs`), so core frequency is
+  unmanaged and unreadable; stock does scale it (1.40–2.78 GHz, schedutil,
+  `run188-stock-cpufreq.log`). Logdump was cleared (partition first verified
+  byte-identical to the preserved run187 copy) — 18,300,386 B text, 4 CRC-valid
+  slots, orderly host-requested reset at 427.13 s (`run188-recovery.log:36`).
+  Summary: `run188-summary.json`.
+
+The intermittent automated splash hang remains **unverified** as a script-caused
+failure. Run187 took roughly 24 s to enumerate fastboot before the image was sent;
+Sending/Booting both returned OKAY. The USB reader's unbounded wait and the
+unconditional ADB reboot are orchestration limitations, not a demonstrated cause.
+Run187's next step — inspect actual PTE/backing-page agreement — was **carried out
+by run188** and the software walk came back correct; see the run188 bullet above for
+what that retires and what it leaves. Matching TTBR0 or a software MAPPED flag alone
+is still insufficient. Summary: `run187-summary.json`. Do not infer rendering from
+boot completion.
 
 ## Status key (same as FAILING-COMPONENTS.md)
 FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
@@ -53,8 +127,8 @@ FIXING · BLOCKED · SCOPED · PARKED · WATCH · CLOSED
       90-file donor compiles clean under clang 22.1.8, vmlinux links with
       kgsl built in, audit shows the gpu node BUILT. No boot claimed.
 - [ ] 3. Boot #1 diag capture: kgsl probes, pwrlevels parse, `/dev/kgsl-3d0`,
-      display + evidence channels intact
-- [ ] 4. EGL/SF unlock (`EGL_BAD_ALLOC` gone)
+      display + evidence channels intact — run187 boots with evidence; visible display still unproven
+- [ ] 4. EGL/SF unlock (`EGL_BAD_ALLOC` gone) — run187 SF stays alive; successful rendering still unproven
 - [ ] 5. Parity (render, suspend/resume, gpu cooling) + close FAILING-COMPONENTS rows
 
 ## Stage 1 log

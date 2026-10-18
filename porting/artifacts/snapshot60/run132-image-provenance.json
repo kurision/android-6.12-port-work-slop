@@ -1,0 +1,6 @@
+{
+  "image": "porting/artifacts/snapshot60/boot-run131.img",
+  "sha256": "99b3029711d6da66aaadb38f59a21f075d773379a59627fca9dd849bc256cd75",
+  "repeat_of": 131,
+  "rebuilt": false
+}

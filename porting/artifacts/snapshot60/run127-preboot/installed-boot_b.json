@@ -1,0 +1,9 @@
+{
+  "active_slot": "_b",
+  "partition": "/dev/block/by-name/boot_b",
+  "size": 67108864,
+  "sha256_before": "64b6050e26c8e0e4a1033849f5cb75f3901cfa701235ce9e347f088ef5aef28c",
+  "sha256_local": "64b6050e26c8e0e4a1033849f5cb75f3901cfa701235ce9e347f088ef5aef28c",
+  "sha256_after": "64b6050e26c8e0e4a1033849f5cb75f3901cfa701235ce9e347f088ef5aef28c",
+  "purpose": "Original active installed image backup; harness suitability not established"
+}

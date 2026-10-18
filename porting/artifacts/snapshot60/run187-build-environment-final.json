@@ -1,0 +1,43 @@
+{
+  "make_args": [
+    "make",
+    "-C",
+    "/tmp/ack-run164-source",
+    "O=/home/kurision/development/kernel/ack-kgsl/out-run187",
+    "ARCH=arm64",
+    "LLVM=1",
+    "LLVM_IAS=1",
+    "CC=clang",
+    "RUSTC=/home/kurision/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "HOSTRUSTC=/home/kurision/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "BINDGEN=/home/kurision/.cache/run164-bindgen0732/bin/bindgen",
+    "RUSTFLAGS_AUTOFDO_CLANG=-Zdebuginfo-for-profiling -Cllvm-args=-enable-fs-discriminator=true -Cllvm-args=-improved-fs-discriminator=true"
+  ],
+  "environment": {
+    "ARCH": "arm64",
+    "LLVM": "1",
+    "LLVM_IAS": "1",
+    "RUST_LIB_SRC": "/home/kurision/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library",
+    "LIBCLANG_PATH": "/usr/lib",
+    "CCACHE_DISABLE": "1"
+  },
+  "seed": "run185 embedded IKCONFIG",
+  "seed_sha256": "392660a74ea54e85a6f3ae913661ba19927bd29563b4cc7ef87b5635f71d7e04",
+  "required_builtin": [
+    "RUST_IS_AVAILABLE",
+    "RUST",
+    "ASHMEM",
+    "SHMEM",
+    "STAGING",
+    "IKCONFIG",
+    "IKCONFIG_PROC",
+    "PSTORE_RAM",
+    "QCOM_IOMMU",
+    "ARM_SMMU",
+    "QCOM_SCM",
+    "ANDROID_BINDER_IPC",
+    "USB_CONFIGFS",
+    "USB_CONFIGFS_F_FS",
+    "COMPAT"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "purpose": "Preserve phone evidence before local run126-source retest (run127); no device files cleared",
+  "previous_logdump": {
+    "local": "porting/artifacts/snapshot60/run127-preboot/previous-logdump.bin",
+    "size": 67108864,
+    "sha256": "3f89dbc1c28d1092ba59622e1530e78f761b7d0d18e6f8d3bb3a6f3a11a9ff7a"
+  },
+  "retained_diagnostics": [
+    {
+      "remote": "/data/local/tmp/ack-early-logcat.log",
+      "local": "porting/artifacts/snapshot60/run127-preboot/ack-early-logcat.log",
+      "size": 994894,
+      "sha256_before": "81ff53596ed55d2a0e18cd03eabc9fe7b3978c2f4331625cc29d9fcd864f1c41",
+      "sha256_local": "81ff53596ed55d2a0e18cd03eabc9fe7b3978c2f4331625cc29d9fcd864f1c41",
+      "sha256_after": "81ff53596ed55d2a0e18cd03eabc9fe7b3978c2f4331625cc29d9fcd864f1c41"
+    },
+    {
+      "remote": "/data/local/tmp/ack-sync-probe.log",
+      "local": "porting/artifacts/snapshot60/run127-preboot/ack-sync-probe.log",
+      "size": 32,
+      "sha256_before": "1890dea38006cb71e0c0f11c40bb6aef57321766f60d2f1648bc1d86b17a0625",
+      "sha256_local": "1890dea38006cb71e0c0f11c40bb6aef57321766f60d2f1648bc1d86b17a0625",
+      "sha256_after": "1890dea38006cb71e0c0f11c40bb6aef57321766f60d2f1648bc1d86b17a0625"
+    }
+  ]
+}

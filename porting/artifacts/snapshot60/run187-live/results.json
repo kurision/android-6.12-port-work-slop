@@ -1,0 +1,15 @@
+{
+  "seen_port": true,
+  "port_boot_id": "46f81447-d2f8-4915-9062-a281bf2b4e79",
+  "boot_completed_observed": true,
+  "returned_stock": false,
+  "observation_seconds": 484.45,
+  "usb": {
+    "reason": "reader-error: device reports readiness to read but returned no data (device disconnected or multiple access on port?)",
+    "count": 439386,
+    "elapsed": 70.50985638100246
+  },
+  "usb_reader_finished": true,
+  "image_sha256": "7cc2d6e385590f97f12baeac4db74d50e185795b5ddadb65374d325188bf4188",
+  "logdump_cleared": false
+}

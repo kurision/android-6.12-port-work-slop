@@ -1,0 +1,11 @@
+{
+  "only_previously_archived_files_removed": [
+    "/data/local/tmp/ack-early-logcat.log",
+    "/data/local/tmp/ack-sync-probe.log"
+  ],
+  "sha256_verified_before_deletion": {
+    "/data/local/tmp/ack-early-logcat.log": "a66ad68e3beb37a9474b2e3d372441f254e869f01f2cf5c9dea24ae0bd0067b4",
+    "/data/local/tmp/ack-sync-probe.log": "71232c4f6e6c70b25ba57530e28b1a33a6fa9921299baf9bbe2eb3a383585596"
+  },
+  "previous_manifest": "manifest.json"
+}

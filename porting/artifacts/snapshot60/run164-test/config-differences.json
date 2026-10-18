@@ -1,0 +1,22 @@
+[
+  [
+    "CONFIG_CC_CAN_LINK",
+    null,
+    "CONFIG_CC_CAN_LINK=y"
+  ],
+  [
+    "CONFIG_CC_CAN_LINK_STATIC",
+    null,
+    "CONFIG_CC_CAN_LINK_STATIC=y"
+  ],
+  [
+    "CONFIG_CC_VERSION_TEXT",
+    "CONFIG_CC_VERSION_TEXT=\"clang version 22.1.8 (Fedora 22.1.8-4.fc44)\"",
+    "CONFIG_CC_VERSION_TEXT=\"clang version 22.1.8\""
+  ],
+  [
+    "CONFIG_PAHOLE_VERSION",
+    "CONFIG_PAHOLE_VERSION=132",
+    "CONFIG_PAHOLE_VERSION=131"
+  ]
+]

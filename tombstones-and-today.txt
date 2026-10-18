@@ -1,0 +1,16 @@
+-rw-rw-r--  1 tombstoned system  36660 2026-10-09 10:24 tombstone_24.pb
+-rw-rw-r--  1 tombstoned system 526462 2026-10-09 10:25 tombstone_25
+-rw-rw-r--  1 tombstoned system 283504 2026-10-09 10:25 tombstone_25.pb
+-rw-rw-r--  1 tombstoned system 525898 2026-10-09 10:25 tombstone_26
+-rw-rw-r--  1 tombstoned system 282924 2026-10-09 10:25 tombstone_26.pb
+-rw-rw-r--  1 tombstoned system 522184 2026-10-09 10:25 tombstone_27
+-rw-rw-r--  1 tombstoned system 280781 2026-10-09 10:25 tombstone_27.pb
+-rw-rw-r--  1 tombstoned system 526011 2026-10-09 10:25 tombstone_28
+-rw-rw-r--  1 tombstoned system 282968 2026-10-09 10:25 tombstone_28.pb
+-rw-rw-r--  1 tombstoned system  81997 2026-10-09 10:24 tombstone_29
+-rw-rw-r--  1 tombstoned system  36633 2026-10-09 10:24 tombstone_29.pb
+-rw-rw-r--  1 tombstoned system 523474 2026-10-09 10:25 tombstone_30
+-rw-rw-r--  1 tombstoned system 281643 2026-10-09 10:25 tombstone_30.pb
+-rw-rw-r--  1 tombstoned system 526141 2026-10-09 10:25 tombstone_31
+-rw-rw-r--  1 tombstoned system 283144 2026-10-09 10:25 tombstone_31.pb
+=== today files under /data (mtime today) ===

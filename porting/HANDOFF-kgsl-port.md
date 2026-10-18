@@ -1,5 +1,13 @@
 # Handoff: kgsl 4.19 → 6.12 port (tissot) — mid Stage 2
 
+**Historical archive — superseded.** This is the Stage 2 record from 2026-10-10,
+not the current worktree state or an instruction to rebuild. Read
+[HANDOFF.md](HANDOFF.md) for run187 and [TRACKER-kgsl-port.md](TRACKER-kgsl-port.md)
+for progress. Current build/package/boot/capture commands are in
+[BUIL_TISSOT.md](../BUIL_TISSOT.md); the unpinned build commands below are retained
+only as history. The current branch is `mdss-bisect`, with uncommitted tested
+driver changes and local evidence artifacts.
+
 For the next agent. Everything is committed on the `kgsl-port` worktree;
 nothing depends on untracked files.
 

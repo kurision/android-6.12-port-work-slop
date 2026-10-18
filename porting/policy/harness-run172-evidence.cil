@@ -1,0 +1,24 @@
+;; Run172 diagnostic image: clean GPU subtree + read-only evidence access.
+;;
+;; Two things at once, both proven needed by run171:
+;;
+;; 1. Backlight: MDSS lcd-backlight is the endpoint Android actually uses (the
+;;    raw SPMI WLED object is a different interface). Labelling it with the
+;;    stock type removed every brightness denial and lit the panel
+;;    (run169; framebuffer went solid BLACK -> solid WHITE).
+;;
+;; 2. Snapshot access: only the /snapshot node is relabelled. run167 shipped a
+;;    genfscon for the WHOLE 1c00000.gpu subtree, which produced 371 'search'
+;;    denials in run171 (hal_power_default x367, hal_fingerprint_default x3,
+;;    thermal-engine x1) because other domains lost their labels. That was a
+;;    self-inflicted regression; this fragment scopes the label correctly.
+;;
+;; No new policy types. Read-only for shell; no sysfs writes.
+(genfscon sysfs "/devices/platform/soc@0/1a00000.qcom,mdss_mdp/1a00000.qcom,mdss_mdp:qcom,mdss_fb_primary/leds/lcd-backlight" (u object_r sysfs_graphics ((s0) (s0))))
+(genfscon sysfs "/devices/platform/soc@0/1c00000.gpu/kgsl/kgsl-3d0/snapshot" (u object_r sysfs_gpu ((s0) (s0))))
+(allow shell sysfs_gpu (dir (getattr search open read)))
+(allow shell sysfs_gpu (file (getattr open read)))
+(allow shell sysfs_gpu (lnk_file (getattr read)))
+(allow shell sysfs_leds (dir (getattr search open read)))
+(allow shell sysfs_leds (lnk_file (getattr read)))
+(allow shell sysfs (lnk_file (getattr read)))

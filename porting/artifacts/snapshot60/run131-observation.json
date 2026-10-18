@@ -1,0 +1,8 @@
+{
+  "port_adb_seen": false,
+  "first_port_host_seconds": null,
+  "returned_stock": true,
+  "host_elapsed": 284.2422007690002,
+  "capture_pid": 186976,
+  "return_to_stock": "user-forced reboot to fastboot, then host fastboot reboot for evidence recovery"
+}

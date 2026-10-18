@@ -1,4 +1,909 @@
-# Handoff — tissot 6.12 port, update 2026-10-16 (macOS session)
+# Handoff — tissot 6.12 port, update 2026-10-17
+
+## Current handoff — run198, 2026-10-17 (read before the historical sections)
+
+Two defects found and fixed today; the visible-display goal is still open and
+the reason is now known precisely.
+
+**1. The display bring-up was broken and is fixed.** run194's logdump named it:
+`mdss_dsi_panel_power_on: failed to enable vregs for PANEL_PM` ->
+`mdss_dsi_on:Panel power on failed. rc=-110` -> `mdss_mdp_video_display: intf #2
+link ready error (-110)` -> `mdss_fb_open: can't turn on fb0! rc=-110`. The
+panel `vdd` rail is an RPM-served pm8953 LDO whose enable request is not
+acked, so the RPM write returns `-ETIMEDOUT`. CAF treats that as fatal and
+aborts `mdss_dsi_on()` before the PHY, clock source or DSI controller are
+touched. The bootloader has already supplied the rails, so the abort is wrong;
+run196 makes it non-fatal. run196 then reads
+`DIAG dsi_on: done ctrl=0 rc=0 state=0x4 pwr=1 clk_rate=802589760` with **0**
+`turn on fb0` and **0** `link ready error` in the whole log. The video bring-up
+path is byte-identical to CAF 4.19 and the byte clock is exactly
+`1148*1942*60*24/4 = 802,589,760`. run197 additionally fixed the tissot
+`acc_vreg` refcount that produced `unbalanced disables for l6`.
+
+**2. The GPU was entering a 64-bit hardware address mode stock never uses.**
+`adreno_support_64bit()` is gated on `BITS_PER_LONG == 64`; stock CAF 4.19 is
+32-bit so the A506 never enters it, this arm64 port did, while
+`KGSL_MMU_64BIT` was deliberately withheld so the MMU built 32-bit
+descriptors. All three uses are now gated on
+`MMU_FEATURE(&device->mmu, KGSL_MMU_64BIT)`; `addr_mode` reads back 0 and
+`KGSL_PROP_DEVICE_BITNESS` no longer advertises 48 over a 32-bit pool.
+**This was ruled out as the fault cause**: run198 still traps at exactly
+`0x139000` with `cp_status=80423c68`.
+
+**Why the screen is still black — measured, not inferred.** On a live port boot
+`screencap` was decoded by hand: 1080x1920, 42,625 sampled pixels, **one
+colour, `#000000`**, six captures byte-identical. `screenrecord` (a different
+path, through a VirtualDisplay) agrees: 6 byte-identical frames, 1x1 RGB
+`(0,0,4)`. So the panel is being driven with a black frame. Only 3-4 layers
+exist and the launcher is killed in a loop:
+`ActivityManager: Process com.google.android.apps.nexuslauncher (pid N) has
+died: fg BFGS`. The first fault is on `surfaceflinger[716]`, the first GL
+context ever to submit, 12 ms after `ME_INIT` — a startup fault, not a
+workload fault. This **corrects** the earlier claim that `screencap` returns
+a constant image regardless of display state; it is constant while the content
+is.
+
+**Tooling added.** `porting/logging/observe-boot.py` (bounded observer; its
+logcat runs as its own process because a streaming `adb logcat` blocks until
+the adb timeout) and `porting/logging/port-boot-retry.py` (retries a RAM boot
+and confirms `uname -r` before reporting success — `fastboot boot` returning
+OKAY does not mean the kernel ran). Never run two capture readers against the
+same serial port; doing so cost three boots today.
+
+**Known damage.** `/home/kurision/development/kernel/ack-android16-6.12` was
+deleted during this session. `ack-kgsl` is a git worktree of it, so **git is
+dead for this tree** and the four commits made earlier today
+(`aafc0aca7`, `87b2a5d70`, `e303e8859`, `bd6f4c91f`) are lost with the object
+store. Working files are intact. `drivers/video/fbdev/msm/mdss_dsi.c` was
+restored from `~/.cache/run126-rust.oFKCctgK/source-ee66fc52d/` after an
+editor error duplicated it.
+
+Evidence: `artifacts/snapshot60/run196-live/display-analysis.md`,
+`artifacts/snapshot60/run198-live/gpu-analysis.md`,
+`artifacts/snapshot60/FAILING-COMPONENTS.md` (top table).
+
+Next: the UCHE out-of-bounds trap itself. It is now known to be a startup
+fault on the first GL submission, at a structurally invariant SVM address,
+with the hardware in stock's address regime and the buffer proven to map and
+translate.
+
+## Previous handoff — run188, 2026-10-17
+
+Build/package/boot/capture instructions are in [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+Keep run evidence in this handoff, the trackers and `artifacts/snapshot60/`.
+Run filenames in this section are relative to `artifacts/snapshot60/`.
+Earlier "Latest", "read first" and "current best" headings below are historical.
+
+Run188 exists to close one specific question from run187: is the faulting IOVA
+actually translated to the right physical page? The answer is **yes in software,
+and the fault still happens**.
+
+- **One source change vs run187:** `adreno_fault_dump_target()` now calls
+  `iommu_iova_to_phys()` and prints `DIAG <name>-walk`. Nothing else in the kernel
+  changed; `package-run188.json` shows ramdisk, init, cmdline, cpio record count,
+  `debuggable`, firmware and policy all byte-identical to run187, and
+  `run188-embedded.config` matches `run187-resolved.config` exactly.
+- **Artifact:** `boot-run188.img`, sha256
+  `f690ade9d7b8e7923d72c8b5e31b7bc7f0632847069297ba76e2aa07ac0e6fd8`, kernel
+  payload `05cf0e90f8613a570eab5693541aac599fe29caac34520ed253cd5e36efa35af`,
+  base the real `boot-run187.img` (`7cc2d6e38559…`). Build log
+  `run188-build.log`, package report `package-run188.json`, seed/resolved configs
+  `run188-seed.config` / `run188-resolved.config`, preflight
+  `run188-preflight.log`.
+- **Boot:** fastboot `Sending`/`Booting` both OKAY (`run188-usb-capture.out:4-5`),
+  diag gadget enumerated, port boot ID `5b8f79d3-66d3-4f2b-9413-3d0d9fb37c97`.
+  First port ADB sample at device uptime 46.66 s (`run188-live/poll.jsonl:18`);
+  `sys.boot_completed=1` and `dev.bootcomplete=1` first sampled at uptime
+  **101.93 s** (`run188-live/poll.jsonl:30`), bootanim `stopped`, still set at
+  **412.29 s** with SurfaceFlinger **711** and system_server **1122** unchanged
+  (`run188-live/final-state.log`). `/dev/ashmem` present throughout.
+- **The walk result — the point of the run:** all **13** `*-walk` lines are
+  `walked=1 backing=1 match=1 mapped_flag=1`. Example,
+  `run188-logdump.log:3690`:
+  `uche-trap-walk target=139000 offset=0 walked=1 resolved=0x00000000330ad000
+  backing=1 expected=0x00000000330ad000 match=1 mapped_flag=1`. The entry's
+  `pt_ttbr0` equals `gpu_current_ttbr0` (:3687) and the SMMU reports
+  `sctlr=00001167 translating=1 ttbr0=0x1aa43000 fsr=00000400 far=0` (:3696) —
+  FORMAT=2 with no active fault bits, so the UCHE trap is internal to the GPU, not
+  a translation fault. **This retires the "not mapped / wrong physical page"
+  hypotheses.** It does **not** prove hardware-visible translation: a software
+  walk still cannot inspect the leaf PTE the MMU actually fetched, nor its
+  attributes, nor the ordering of map/unmap against the fetch.
+- **Faults persist, unchanged:** same targets as run187 — uche-trap `0x139000`
+  (4×) and `0x1b14000` (4×), mem-write `0x133000` (4×) and `0x1b0e000` (1×), all
+  at `offset=0` of a `0x1000`-byte entry, i.e. not a tail overrun. 436
+  `GPU hang detected`, 543 UCHE records, 2 `gpu fault threshold exceeded`
+  (surfaceflinger 711 at `run188-logdump.log:4503`, nexuslauncher 1607 at :11417).
+  First hang at `run188-logdump.log:3678`, t=41.986325 s. Zero oops/BUG/call
+  trace/blocked task/soft lockup. Hang counts are **not** a controlled comparison
+  with run187 (498 over 480 s there, 436 over 412 s here).
+- **CPU:** healthy scheduling — 8/8 online, **steal 0**, 4016 jiffies in a 5 s
+  window against ~4000 expected, 62.2 % busy, 3.7 % iowait (`run188-cpu-note.json`).
+  But **frequency is unmanaged and unreadable**: no
+  `/sys/devices/system/cpu/cpuN/cpufreq`, `CONFIG_CPUFREQ_DT` not set, cpu nodes
+  carry no `clocks`, no `littledcvs` node. Stock scales these cores
+  (1,401,600–2,784,000 kHz, schedutil, `run188-stock-cpufreq.log`), though stock's
+  2,784,000 kHz ceiling is itself a vendor OPP-table artifact above this A53's real
+  maximum, so neither number is a trustworthy measurement. Whether the port runs
+  the little cluster at its intended OPP is **unverified**.
+- **Capture and recovery:** USB 443,083 B, ending at host_elapsed 63.7 s during
+  the adbd UDC handoff — the known tooling cutoff, not a boot defect. Logdump was
+  cleared this run, but only after the partition was verified byte-identical to the
+  preserved `run187-logdump.bin` (`run188-preboot/manifest.json`), readback proven
+  all-zero. Recovered 18,300,386 B of text, sha256
+  `63a3243576a1440a46b9e18f050ee25954321d7d8b927615ef73027ff5c7dfa7`, four
+  CRC-verified slots carrying this boot's marks (`boot_id=0x5f11be76`). The reset
+  record is orderly and host-requested — `action=1 pid=1 comm=init command=shell`
+  at 427.131141 s (`run188-recovery.log:36`). Final device: rooted stock
+  **4.19.325-cip136**, boot ID `0297c073-acfe-41bd-a953-6f7329401708`. Nothing
+  flashed.
+- **Not verified for this run:** no physical panel observation was collected, so
+  **visible output is unverified for run188** — do not read run187's dimly backlit
+  panel forward. `run188-live/logcat-stream.log` is 32.7 MB and only its tail dump
+  was read.
+
+Next work: what the MMU actually fetched — leaf PTE attributes (AF, device/denormal,
+SH vs nGnRE/nGnRnE, nGXN/XN) and map/unmap ordering versus the fetch — or why the
+UCHE declares out-of-bounds on a legal, correctly mapped address at offset 0.
+Summary/provenance: `run188-summary.json`, `run188-live/`,
+`run188-preboot/`, `run188-recovery.log`, `run188-ramoops.json`,
+`run188-cpu-note.json`, `run188-stock-cpufreq.log`.
+
+### The first UCHE fault and its mapping block, verbatim
+
+`run188-logdump.log:3669-3696`. This is the whole diagnostic cluster for the first
+fault of the run; nothing between these lines is omitted except unrelated
+`init`/`libprocessgroup` service chatter.
+
+```
+3669  UCHE: Out of bounds access addr=0000000000139000
+3672  DIAG uche-oob: cp_status=80423c68 hw_fault=00000000 ib2=0000000000260140/0
+      addr_mode=1 mode=20000000 gmem=00100000-00121000
+3675  DIAG cp-stall: rptr=fd wptr=fd ahb=0903a284 protect=00000000 int0=00000000
+      status3=00000000 switch_cntl=00000000
+3678  MISC: GPU hang detected
+3681  surfaceflinger[711]: gpu fault ctx 2 ctx_type GL ts 12672 status 800001C1
+      rb 0100/0209 ib1 0000000000289000/00e6 ib2 0000000000260140/0000
+3684  surfaceflinger[711]: gpu fault rb 1 rb sw r/w 0100/0209
+3687  DIAG uche-trap-pt target=139000 pt=000000002cd8f45d
+      pt_ttbr0=000000001aa43000 gpu_current_ttbr0=000000001aa43000 match=1
+      default_pt=000000002cd8f45d
+3690  DIAG uche-trap-walk target=139000 offset=0 walked=1
+      resolved=0x00000000330ad000 backing=1 expected=0x00000000330ad000
+      match=1 mapped_flag=1
+3693  DIAG uche-trap-cpu-sample-skipped target=139000 entry_gpu=139000 size=1000
+      flags=c0900 priv=808 secure=0 sgt=0000000000000000 aligned=1 offset=0
+      in_range=1 memtype=9
+3696  DIAG fault-smmu: sctlr=00001167 translating=1 ttbr0=000000001aa43000
+      fsr=00000400 far=0000000000000000 fsynr=00000000
+```
+
+Reading notes, so the next run does not re-derive them:
+
+- The leading `2,3516,41986602,-,caller=T129;` style prefix in the log is
+  **record-sequence metadata, not a line number**. Cite line numbers only.
+- `uche-trap-walk` here is the "software translation agrees" outcome: `walked=1`,
+  `resolved` non-zero and equal to `expected`, `match=1`. Across the entire run all
+  13 walk lines are identical in those four fields — there is **no**
+  `resolved=0`, no `match=0`, no `walked=0` and no `backing=0` case to chase.
+- `cp-stall` shows `rptr == wptr` (`fd/fd`), i.e. the ring is empty when dumped,
+  and `ahb=0903a284` is a register residue from the driver's own read. Run154
+  already established these AHB registers are not decisive; do not re-read them
+  as the fault.
+- `gmem=00100000-00121000` is a 0x21000-byte GMEM aperture window with
+  `addr_mode=1`.
+- `fault-smmu`: `translating=1`, `far=0`, `fsynr=0`, `fsr=0x400`. Bit 9 of FSR is
+  FORMAT, so this is FORMAT=2 with no active fault bits. The MMU did not fault;
+  the trap is internal to the UCHE.
+- The trapping entry is `size=0x1000`, `in_range=1`, `offset=0`, `memtype=9`,
+  `MAPPED` (`priv=808`) — the trap is on the **first** word of a legally mapped
+  object, not a tail overrun. `0x1b41040` (`:10655`) is a distinct OOB address
+  with no matching walk line in this capture.
+
+### Build cost note (from run188)
+
+`out-run$N` per run makes every build a clean build; run188 cost roughly 40
+minutes for one changed `.c` file. Reuse a single persistent `O=` directory for
+incremental runs. kbuild bakes the absolute `O=` path into `.cmd` files, so
+*copying* an old out dir to a new name still triggers a near-full rebuild — the
+directory has to be the same path across runs.
+
+## Previous handoff — run187, 2026-10-17
+
+Run filenames in this section are relative to `artifacts/snapshot60/`.
+
+- **Android boot completion is reproduced:** run187 first sampled
+  `sys.boot_completed=1` and `dev.bootcomplete=1` at **103.73 s**;
+  still set at **479.70 s**, with SurfaceFlinger **706** and system_server
+  **1126** unchanged. Port boot ID `46f81447-d2f8-4915-9062-a281bf2b4e79`.
+  Evidence: `run187-live/poll.jsonl:27`, `final-state.log:1-10`.
+- **Visible output remains open:** user observed "for first 10 sec fastboot
+  splash then dimly backlit screen till now". No visible boot animation or UI
+  confirmed. Record: `run187-live/panel-observation.json`; do not substitute
+  screencap or HWUI timing warnings for a physical-panel observation.
+- **The GPU still faults:** first UCHE OOB at **42.150316 s**, target
+  `0x139000` (`run187-logdump.log:3673`); **607** UCHE records and **316**
+  GPU fault-context records over the captured boot. **0** CP-init failures,
+  GPU page-fault records or invalid-page-free warnings observed in this
+  capture. Counts cover this run only and are not a controlled rate comparison.
+- **No spontaneous reset during the observation.** The host stopped collectors
+  and requested `adb reboot` for persistent recovery. Decoded reset record at
+  logdump offset `0x3f30000`: `comm=init command=shell`, 492.603 s.
+  Final device: rooted stock **4.19**, boot ID
+  `93165dd4-225f-479e-aae2-9dcd1ad66165`. Nothing flashed or cleared.
+
+### Exact artifact and build provenance
+
+- Image `boot-run187.img`, SHA-256
+  `7cc2d6e385590f97f12baeac4db74d50e185795b5ddadb65374d325188bf4188`;
+  kernel payload
+  `81181d73fb3160eb5545a7a48edfd77968f46a5b906d9a79ef678bece862795d`.
+- Real `boot-run186.img` base; ramdisk hash, init hash, command line and DTB
+  verified unchanged. Source `/tmp/ack-run164-source`, output `out-run187`;
+  reviewed GPU/IOMMU/DT files matched this worktree. Current branch:
+  `mdss-bisect`; the two tested driver changes remain uncommitted.
+- Embedded configuration seeded from run185, not run186: Rust/ashmem enabled.
+  Pinned Rust **1.99.0**, bindgen **0.73.2**, libclang/clang **22.1.8**.
+  The known `RUSTFLAGS_AUTOFDO_CLANG` spelling override was required.
+  See `run187-build-environment-final.json`, `run187-source.patch`,
+  `run187-embedded.config`, `package-run187.json` and build logs.
+
+### Run186 reset: reproduced ashmem failure, not an attributed SMMU reset
+
+Run186 omitted `CONFIG_RUST_IS_AVAILABLE`, `CONFIG_RUST` and `CONFIG_ASHMEM`
+from its embedded config; run183/run185 retained them. system_server repeatedly
+threw `Failed to create ashmem: No such file or directory`
+(`run186-live/logcat-all.log:551,824,2076,9439,16705`). Decoding
+`run186-logdump.bin` at `0x3f30000` gives `command=zygote-fatal` at
+79.857 s and the retained init line "critical process 'zygote' exited 4 times
+before boot completed". This matches [AOSP's critical-service policy](https://android.googlesource.com/platform/system/core/+/android16-release/init/).
+Run187 restores the driver (`run187-logdump.log:280`) and
+`/dev/ashmem` is present throughout the port ADB samples.
+
+The PATH issue is established: `/usr/bin/rustc` is **1.98.1 / LLVM 22.1.8**;
+the rustup compiler is **1.99.0 / LLVM 23.1.1**. bindgen is absent from PATH,
+but the cached 0.73.2 binary exists. Do not repeat an unpinned build.
+
+### Corrections to the earlier diagnosis
+
+- **Table depth:** with 4 KiB pages, IAS=32 and IAS=39 both use **three**
+  levels; IAS=40 uses **four**. The "2-level versus 3-level" descriptions below
+  and in commit `bc619e32e` are incorrect. CAF caps
+  `qcom,use-3-lvl-tables` at **39** bits, not 40
+  ([CAF source](https://android.googlesource.com/kernel/msm/+/refs/heads/android-msm-crosshatch-4.9-pie-qpr2/drivers/iommu/arm-smmu.c)).
+- **Current GPU translation:** run187 uses ARM_64_LPAE_S1, IAS=39/OAS=40,
+  a successful SCM page-table-format request and the corresponding TCR/TLB code.
+  Readback: `tcr=00802019 tcr2=00038012`
+  (`run187-logdump.log:442,454`). MDSS remains IAS=32/AArch32 (:469).
+  KGSL_MMU_64BIT is deliberately still withheld to isolate this experiment;
+  adreno.c's accompanying "aperture is 32-bit" diagnostic is now stale.
+- **SCTLR:** the requested mask is **0x10e7**, not 0x1325. CFIE is bit 6,
+  CFRE bit 5, CFCFG bit 7; `0x1167` retains CFIE/CFRE and reflects KGSL
+  selecting HUPCF instead of CFCFG. The previous lost-bit/firmware-ownership
+  deduction is withdrawn. SCTLR=0 after secure restore does not establish
+  ownership of other bank configuration, including its translation format.
+- **FSR:** bit 9 belongs to FORMAT, not IGN. `0x200` is FORMAT=1;
+  run187's `0x400` is FORMAT=2, with no active fault bits in these samples
+  (`run187-logdump.log:3700`). Run185's `0x80000202` includes TF/MULTI.
+- **Mapping proof is incomplete:** MAPPED plus matching TTBR0 does not inspect
+  the actual leaf PTE or prove hardware-visible translation/attributes.
+  The public `iommu_iova_to_phys()` API already reaches this driver's walk;
+  the earlier abandoned-probe comment claiming an extra IOMMU export was
+  necessary is incorrect. A software walk still is not a hardware walk.
+- **Run184 page wait:** `folio_wait_bit_common` alone does not identify the
+  waited bit, page owner or a GPU-backed buffer. The claimed causal chain
+  "one GPU fault locks that buffer and permanently wedges system_server" is
+  **unverified**. Boot-time available-memory output does not rule out later
+  memory pressure; service liveness does not prove audio playback.
+
+Register definitions cross-checked against the [upstream ARM SMMU header](https://raw.githubusercontent.com/torvalds/linux/master/drivers/iommu/arm/arm-smmu/arm-smmu.h).
+
+### Capture quality and next work
+
+The 64 MiB run187 logdump SHA was verified against the device:
+`481163b16c211f473643418be2b885b2bb647dc6459d8c7ce4d78a598d93550f`.
+Its readable prefix is **21,200,714 B**, one fresh #18 banner, strictly
+increasing record sequences through **489.766674 s**. All **3335** USB records
+match persistent capture. USB: **439,386 B**, ends at 40.970600 s during
+handoff; later faults come from persistent evidence. Retained run186 partition
+was hash-verified before boot; logdump was left uncleared.
+
+The explicit run187 boot saw a roughly **24 s** ADB-to-fastboot transition,
+then both Sending/Booting OKAY and a fresh kernel banner. This does not prove
+the original script caused earlier intermittent splash hangs. Its unconditional
+ADB reboot cannot start from fastboot, and an unbounded reader can hide progress;
+capture outcome and image loading must be recorded separately.
+
+Next work is the persisting UCHE fault: inspect actual PTE/backing-page and
+attribute agreement using existing APIs before another hypothesis-driven change.
+Do not label the 39-bit experiment a rendering fix or blindly replay run185.
+Summary/provenance: `run187-summary.json`, `run187-live/`,
+`run187-host-commands.log`, `run187-recovery.log`, `run187-ramoops.json`.
+
+## Historical handoff entries
+
+The entries below retain the evidence and hypotheses available at the time.
+The current handoff above supersedes their status and identifies retracted claims.
+
+## Latest: run171 — boot_completed PROVEN on target; SMMU bypass proven at draw time
+
+- **Goal half 1 met:** `sys.boot_completed=1` and `dev.bootcomplete=1` on the
+  port kernel, first observed at uptime **114.29 s**
+  (`run171-live/boot-state.log`, `final-state.log`; `BOOT_COMPLETED` x4 in
+  `run171-live/logcat-final.log`). Kernel banner
+  `6.12.93-4k #5 SMP PREEMPT Sat Oct 17 00:26:19`, boot_id `32a47d19-…`.
+- **Goal half 2 still UNMET:** no rendered boot animation. The framebuffer is
+  **solid WHITE** (`run171-live/screencap.png`, `screencap-final.png`), which is
+  a change from the solid black of run163-166. `init.svc.bootanim` was
+  `running` then `stopped`, and `BootAnimation` appears x7 in logcat, but no
+  animation frame was ever composited.
+- **SMMU bypass proven at fault time.** New `DIAG fault-smmu` probe, 4 samples
+  at t=42.49-42.69 s: `sctlr=0x00000000 translating=0 ttbr0=0 far=0 fsynr=0`,
+  `fsr=0x200` (bit 9 = `ARM_SMMU_CB_FSR_IGN`, latched/ignored, not an active
+  fault). **The "secure-managed SMMU translates at draw time" hypothesis is
+  eliminated.** The probe reads gfx3d_user via a SoC-node scan (the board DT
+  deletes the gpu `iommus` phandle) from the dispatcher workqueue, never
+  hardirq — it booted clean, confirming the run118/119 safety reasoning.
+- **Address-translation mismatch also eliminated.** First UCHE trap
+  `0x3aa53000`; independent checks agree: `gpu=0x3aa53000`, SG 1/1
+  contiguous, `dma=0x3aa53000`, `actual(PFN)=0x3aa53000`, `gpu-match=1`.
+  50 GPU faults, `cp_status_1=0x80423c68`, `hw_fault=0`.
+- Boot method matters: the **automated** `usb-boot-capture.py` attempt stalled
+  at splash with a **0-byte** capture; the user's **manual** `fastboot boot` of
+  the *same image* booted fully. This matches the tracker precedent at
+  `TRACKER-kgsl-port.md:2962-2971` ("the splash hang and the boot are the same
+  event seen at different times"). `porting/logging/fastboot-boot-capture.py`
+  was added for fastboot-only retries but was not the path that worked.
+- Evidence: `run171-live/` (logcat 3.0 MB, two screencaps, GPU snapshot
+  945,280 B, boot state), `run171-logdump.log`, `run171-live/results.json`.
+  Device returned to stock 4.19. Nothing flashed or cleared.
+- **Remaining GPU hypotheses, in order:** (1) VSC producer never writes size
+  words — upstream CP/VSC config mismatch, buffer reads 0; (2)
+  cacheability/shareability mismatch on the WRITECOMBINE coherent mapping;
+  (3) A5xx microcode/VSC setup divergence from stock. The `0xf9ec4100` trap in
+  the launcher path is a second, distinct trap address worth separating.
+
+## Latest: run172 — self-inflicted policy regression removed; NOT a regression
+
+- `boot-run172.img` sha256 `b6d941ed6f2bd6978a79423804e770495ddcada74eb69727d802872b80608934`,
+  **kernel payload identical to run171** (`5b6c9013d389`); only the ramdisk
+  policy differs. Based on real `boot-run166.img` (which never carried the
+  wide GPU label) plus `porting/policy/harness-run172-evidence.cil`.
+- Verified inside the image: exactly **1** GPU genfscon, scoped to
+  `/devices/platform/soc@0/1c00000.gpu/kgsl/kgsl-3d0/snapshot`, plus 1 MDSS
+  LED label. run167's whole-subtree `1c00000.gpu -> sysfs_gpu` relabel — the
+  cause of run171's 371 `hal_power_default` search denials — **is gone**.
+- Automated boot worked this time: 442,995 B USB capture. **0 GPU faults
+  observed, but that is a capture-cutoff artifact, not an improvement**: the
+  log ends at `t=40.96 s`, just before run171's first UCHE fault at `t=42.4 s`.
+- Port kernel did **not** set `boot_completed` within the ~179 s observation
+  window before USB dropped. SystemServer PID changed 1109 -> 1821 mid-boot,
+  i.e. the known watchdog-restart pattern (run150 section below) that
+  completes at ~590 s. So run172 is **not** proven worse than run171 — the
+  window was too short.
+- **Attribution guard:** once the RAM image is lost the phone returns to stock
+  4.19, which reaches `sys.boot_completed=1` in ~46 s. A poll showing `bc=1`
+  near 46 s is the STOCK kernel (boot_id `f5d05438-…`), **not** the port
+  kernel. Always confirm `uname -r` before crediting a completion. The real
+  port-kernel completion observed is run171 `32a47d19-…` @ 114.29 s.
+- Device is on stock 4.19. Nothing flashed or cleared.
+
+## Correction: screencap is NOT a rendering signal on this device
+
+- `adb exec-out screencap -p` returns a **solid, byte-identical image
+  (sha256 `1fa22509…`, 12,504 B) regardless of display state**. On stock 4.19
+  it was captured twice: once with `Display State=OFF, mWakefulness=Dozing`,
+  and once after `KEYCODE_WAKEUP` + `dismiss-keyguard` with `Display State=ON`.
+  Same hash both times.
+- **The "framebuffer went BLACK -> WHITE" claim in the run171 section above is
+  therefore withdrawn.** It was an artifact of display power state, not
+  evidence that the backlight policy fix changed rendering. The policy fix
+  itself is still proven — every `brightness`/`max_brightness`/
+  `lcd-backlight` denial disappeared from run171's logcat — but its *visual*
+  effect is unverified.
+- **Do not use screencap to judge rendering here.** Verifying a visible boot
+  animation requires looking at the physical panel (user observation or a
+  photo), as in the user's `PXL_20261016_171508720.TS.mp4`, which showed
+  EXTREME BOOT splash at 30 s, blank blue at 80 s, dark at 130 s.
+- Stock control is otherwise healthy: stock 4.19 GPU reports
+  `gpubusy = 395754/1005275` (39% busy) at 320 MHz with
+  `sys.boot_completed=1`, i.e. the same userspace drives the stock GPU fine.
+  Whatever breaks rendering is in the port kernel path, not the vendor blobs.
+
+## Exhaustive elimination — do not re-test these
+
+Each item was checked directly against source or a snapshot register dump.
+All are **eliminated**, except where a row says otherwise:
+
+| Hypothesis | Check | Result |
+|---|---|---|
+| ~~Secure SMMU translates at draw time~~ | `DIAG fault-smmu` x4, t=42.5-42.7 s | **REVERSED — see the MAJOR section below. The port has no SMMU; stock does. A difference, not a cleared hypothesis.** |
+| Trap buffer address mismatch | `gpu`/`dma`/`page_to_phys` | all `0x3aa53000`, `gpu-match=1` |
+| Trap buffer non-contiguous | `sg=1/1`, `contiguous=1`, `covered=1000` | contiguous |
+| Missing A506 register init | `a5xx_init` vs CAF donor | **byte-identical** |
+| Wrong A506 thresholds | vs upstream `a5xx_gpu.c:762-773` | `CP_MEQ_THRESHOLDS=0x20`, `CP_MERCIU_SIZE=0x400`, `CP_ROQ_1=0x20100D0A`, `CP_ROQ_2=0x40000030` all match |
+| Wrong `PC_DBG_ECO_CNTL` | `adreno_is_a504_to_a506` branch | `(0x100<<11 \| 0x100<<22)`, matches upstream A506 |
+| Wrong UCHE trap base | vs upstream `a5xx_gpu.c:1774` | both `0x0001ffffffff0000` |
+| `CP_PROTECT` intercepting | snapshot `0x880-0x88f` | every entry has bit31 clear = disabled |
+| VSC geometry programmed by kernel | source grep | `VSC_BIN_SIZE` comes from the **userspace** blob |
+| `errno 71` = driver bug | `kgsl.c:1891-1894` | `-EPROTO` is an explicit "context needs recovery" success marker |
+| MMU logic lost in port | `kgsl_mmu.c` vs donor | differs **only** by diagnostic `dev_info` lines |
+| Userspace blobs at fault | stock 4.19 control | stock GPU 39% busy @320 MHz, `sys.boot_completed=1` — same blobs work on stock |
+| DMA mask regression | `kgsl.c:5234` | `U64_MAX` == `DMA_BIT_MASK(64)`, cosmetic |
+
+**What survives:** a driver-written register is later changed, or the hang is a
+hardware-state effect no register diff can show. The signature is now decoded:
+`RBBM_STATUS=0x800001c1` = `GPU_BUSY_IGN_AHB` + `CP_BUSY` +
+`GPMU_MASTER_BUSY` + `HI_BUSY`, with **`CP_ME_BUSY` clear** — the CP stopped
+fetching mid-ring (`rptr 0xc0` behind `wptr 0x107`) with the micro-engine idle
+and no CP error (`CP_INTERRUPT_STATUS=0`, `CP_HW_FAULT=0`). That is a CP stall
+awaiting a condition that never arrives, not a faulting unit.
+
+
+## Graphics stack facts (and one dead end)
+
+- The active GLES driver **is** the Qualcomm Adreno blob. `dumpsys
+  SurfaceFlinger` on stock 4.19 reports
+  `GLES: Qualcomm, Adreno (TM) 506, OpenGL ES 3.2 V@0502.0 (GIT@03dd3ba, ... Date:10/28/20)`.
+- **Dead end, do not chase:** `/system/lib64` contains `libGLESv2_angle.so` and
+  friends, which looks like GL is routed through ANGLE-over-Vulkan. It is not.
+  There is no `libGLESv2_adreno.so` in `/vendor/lib64` (only `libEGL_adreno.so`,
+  `libadreno_utils.so`, `libq3dtools_adreno.so`, `hw/vulkan.adreno.so`); the
+  active GLES library lives elsewhere in the ROM. `ro.hardware.vulkan=adreno`
+  exists but `ro.hwui.use_vulkan` is empty, and the reported GLES renderer is
+  the native Adreno one.
+
+## Run173 — the CP is NOT stalled; it drains the ring (model corrected)
+
+- Read-only probe in the UCHE OOB handler; no register is written. Image
+  `7750aa932ce0837efbc582a6371aefdad186d6a00949fd54787b744dbc69cf74`,
+  kernel payload `84ee336aee140e22fbcb33c80a7c69275f10e109abcac03a892e92274b4d2d93`.
+- USB capture again ended at ~t=41 s, before the 42.4 s fault, so the data came
+  from the persistent logdump.
+- **At the first UCHE OOB (t=42.613 s): `rptr=0xb1 wptr=0xb1` — they are equal.**
+  Also `cp_ahb_fault=0x0903a284` (bit31 error=0, stale residue), `protect=0`,
+  `int0=0`, `status3=0`, `switch_cntl=0`.
+- **This corrects the earlier "CP stopped fetching mid-ring" reading.** That came
+  from a snapshot sampled later at fault-check time (`rptr 0xc0` vs `wptr 0x107`),
+  not from the interrupt itself. At the interrupt the CP has already drained the
+  ring, so it is **not** stalled mid-fetch and **not** waiting on a memory
+  barrier. Do not re-derive a CP-wait theory from this.
+- SMMU bypass, `CP_STATUS_1=0x80423c68`, `CP_HW_FAULT=0` and the UCHE aperture
+  registers all re-confirmed unchanged.
+- Root-cause chain, now with step 4 corrected: VSC binning issues a UCHE access
+  to the 4 KiB VSC size buffer -> UCHE rejects it -> VSC emits no visibility
+  output -> **CP drains the ring with no error latched** -> hang detector fires
+  ~60 ms later -> GPU wedged, SurfaceFlinger never renders.
+- **Open question is step 2 alone:** why the UCHE rejects an access whose buffer
+  is proven physically valid. Buffer identity (gpu/dma/page_to_phys), contiguity,
+  cache mode, SMMU state and every aperture/threshold register are eliminated.
+
+## MAJOR: stock CAF runs the GPU *with* a working SMMU — NOMMU is the bug
+
+Stock 4.19 `dmesg` (`run173` control, `kgsl-3d`/`smmu-kgsl` lines):
+
+    [ 1.418887] platform 1c40000.qcom,kgsl-iommu:gfx3d_user: Linked as a consumer
+                to 1c40000.arm,smmu-kgsl
+    [ 1.418926] iommu: Adding device 1c40000.qcom,kgsl-iommu:gfx3d_user to group 2
+    [ 1.419972] arm-smmu 1c40000.arm,smmu-kgsl: AARCH64 is supported for
+                1c40000.qcom,kgsl-iommu:gfx3d_user
+
+So on stock the **`gfx3d_user` context bank is attached to a real SMMU with
+AARCH64 page-table support**, and the GPU runs translated. (The
+`Couldn't get clock: gpu_ahb_clk` lines are a red herring: CAF retries and both
+`gfx3d_user` and `gfx3d_secure` end up attached, in groups 2 and 3.)
+
+Our port runs `DIAG fault-smmu: sctlr=0x00000000 translating=0`. **This reverses
+the conclusion recorded above.** NOMMU is not a proven-good state to have
+eliminated — it is the one large behavioural difference from stock, and it is
+the prime remaining suspect for the UCHE rejecting a physically valid buffer:
+with an SMMU the GPU gets hardware-validated addresses plus page-table memory
+attributes; with the bank off it decodes raw addresses and rejects these.
+
+- The "secure-managed SMMU translates at draw time" row in the elimination table
+  above is **wrong as stated**. The correct statement is: the port has no SMMU,
+  stock does. That is a difference, not a cleared hypothesis.
+- History (`250485599`, `fef07bec1`): giving the GPU an IOMMU was fatal in 5/5
+  boots with no recoverable log, so it was reverted in favour of NOMMU, which
+  reaches userspace. The revert's own comment admits it is **untested** whether
+  the secure-managed SMMU passes GPU traffic with the bank's M bit clear.
+  **Re-enabling the SMMU correctly — and surviving it — is the next task.** The
+  5/5 fatal failure needs its own diagnosis first; do not simply re-apply
+  `250485599`.
+- `gpu_region@0` in stock is only the 8 KiB `removed-dma-pool` firmware region
+  (`bengal.dtsi:355`), not a render-buffer pool. Not a missing allocation pool.
+
+## Run174: SMMU ENABLED — the GPU now starts clean (biggest fix so far)
+
+- `msm8953-xiaomi-tissot.dts`: the `kgsl_iommu` node's `clock-names` changed
+  from `"gpu_ahb_clk", "gcc_bimc_gfx_clk"` (which deliberately never resolve, to
+  force NOMMU) to `"iface_clk", "mem_iface_clk"`, which are this GPU device's
+  real names. The `/delete-property/ iommus` on `&gpu` is **kept**.
+- `panic=0` was **dropped from the cmdline** (`--drop-cmdline panic=0`) so a
+  fault reboots into a recoverable state instead of hanging at the splash.
+  This is what made the run174/175 evidence possible at all; the historic
+  "fatal with no log" verdicts were measured under `panic=0`.
+- Image `65f1b723e0d395d664feb60d153c68663dfa661057857d6dcb82d8259539b5eb`,
+  kernel payload `6551ade25cb6df37d400e94f481599bca7a59b4602257452832900ed1e9706c8`.
+- **Result — KGSL is now translated, matching stock:**
+
+      DIAG kgsl_mmu: subtype='iommu' type=0 (IOMMU/translated)
+      DIAG gpu_smmu: cb=gfx3d_user sctlr=00001167 translating=1
+                     ttbr0=00000000182c1000 fsr=00000200 mmu_type=0
+
+  and **every bring-up probe reads `rbbm=00000001` (idle, no hang bit)**:
+
+      DIAG bringup[start-entry]:    rbbm=00000001 rb_base=00000000
+      DIAG bringup[rb-programmed]:  rbbm=00000001 rb_base=FC00B000
+      DIAG bringup[microcode-loaded]: rbbm=00000001
+      DIAG bringup[me-unhalted]:     rbbm=C00003C1
+
+  Under NOMMU every one of these latched `800001C1`. The clean first start the
+  tracker chased since run155 is finally achieved. **It also did NOT die** —
+  it reached `mdss_fb_open` and userspace init.
+- **Remaining blocker, now precisely located:** SurfaceFlinger's first
+  allocation fails and it crash-loops (`no suitable EGLConfig found, giving
+  up` -> SIGABRT, 39 crashes). Kernel cause is exact:
+
+      WARNING at drivers/iommu/io-pgtable-arm-common.c:324 arm_lpae_map_pages
+      Call trace: arm_lpae_map_pages <- iommu_map_nosync <- iommu_map_sg
+                 <- kgsl_iommu_map <- kgsl_mmu_map
+                 <- kgsl_mem_entry_attach_process <- kgsl_ioctl_gpuobj_alloc
+
+  Line 324 is `WARN_ON(iaext || paddr >> cfg->oas)` returning `-ERANGE`
+  (`x0=0xffffffde`). `qcom_iommu_init_domain()` hardcodes `.ias = 32`, so
+  `aperture_end` is `0xffffffff`, and KGSL — which places GPU IOVA near the top
+  of the 32-bit range (`rb gpu=0xfc00b000`) — runs out. Userspace sees
+  `IOCTL_KGSL_GPUOBJ_ALLOC failed: errno 19` -> `EGL_BAD_ALLOC`.
+  **Raising the IOVA aperture is the fix.** It is also consistent with the GPU
+  itself being programmed for 64-bit addressing (`a5xx_enable_64bit()` sets
+  ADDR_MODE_CNTL=1 on CP/VPC/GRAS/UCHE/VSC).
+
+## Run175: ARM_64_LPAE_S1 attempt — REVERTED, undiagnosed
+
+- Changing `.ias` to 40 and `alloc_io_pgtable_ops(ARM_32_LPAE_S1 -> ARM_64_LPAE_S1)`
+  did **not boot**. No evidence was recoverable: `run175-usb.log` was 0 bytes and
+  `run175-logdump.log` still carries run174's `#6` banner and records, so the
+  partition was never rewritten.
+- `ARM_64_LPAE_S1` *is* registered (`drivers/iommu/io-pgtable.c:20`, same
+  `CONFIG_IOMMU_IO_PGTABLE_LPAE` guard as the working `ARM_32_LPAE_S1`), so the
+  failure is **not** a missing-ops table and remains unexplained.
+- **The change has been reverted** (`drivers/iommu/arm/arm-smmu/qcom_iommu.c`
+  now differs from its committed state by comment only). run174 is the last
+  known-good image. Do not re-apply run175 blind; the next attempt needs its
+  failure captured, which means a boot that gets far enough for the ramoops
+  snapshotter or the USB diag gadget to run.
+
+## Run177: the -ERANGE root cause is FIXED (ERANGE count 0)
+
+- Image `d6464517bc085c75ff7bab0245c458437b44a32ec481fc3ad8eed190b862ce29`,
+  kernel payload `617bb9349af926da15af193b2aac340ba2892f052178341df52a70de81dd6cfb`.
+- **Root cause found.** `KGSL_MMU_64BIT` (set because the A506 has
+  `ADRENO_64BIT`) makes `setup_64bit_pagetable()` hand every non-secure page
+  table `KGSL_IOMMU_VA_BASE64..VA_END64` = **`0x500000000..0x600000000`**
+  (20-24 GiB, `kgsl_iommu.h:32-33`). The GPU SMMU aperture is 32-bit
+  (`qcom_iommu.c` `.ias=32`), so every such map failed `-ERANGE`. The run174
+  register dump confirms it: `x0=0xffffffde` (-ERANGE) with
+  `x1=0x500000000` — literally the 64-bit VA base.
+- **Fix:** withhold `KGSL_MMU_64BIT` in `adreno.c`, so KGSL falls back to
+  `setup_32bit_pagetable()` whose ranges are all below 4 GiB. The aperture is
+  left at 32-bit: raising it was tried twice and **both attempts failed to boot
+  with no recoverable evidence** (run175 switched the page-table FORMAT to
+  `ARM_64_LPAE_S1`; run176 kept `ARM_32_LPAE_S1` and only raised `.ias`).
+  Do not re-raise the aperture without a way to capture the failure.
+- **Proof it worked:** `arm_lpae_map_pages`/`ERANGE` occurrences went from
+  repeated (run174) to **0**; the gate logged
+  `run177: KGSL_MMU_64BIT withheld`; and GPU IOVA moved from `0xfc00b000`
+  (above nothing useful) to **`0xf800b000`**, inside the aperture.
+- **SurfaceFlinger no longer crash-loops.** It held PID **708** from 56 s to
+  97 s and SystemServer **1108** for the same window (run174: SF died within
+  seconds of the first EGL failure). SF then died around 100 s.
+- Remaining: 12 GPU faults / 20 UCHE OOB (down from 50 faults), first trap
+  `0x139000` at t=41.86 s — the address moved with the VA range (run174 trapped
+  `0x3aa53000`), so it tracks the allocation, not a fixed aperture.
+  `cp-stall` again shows `rptr==wptr`: the CP drains its ring with no error
+  latched. `boot_completed` still not reached.
+- Device on stock 4.19. Nothing flashed or cleared.
+
+## Run178: the trap target is a *legitimately mapped* GPUOBJ (run177 read wrong)
+
+- Image `f7cadad3a2c7c2c52629ed10c4bbe6daf1bec5189e1e271313b4beb9e3388a73`.
+  The run177 message `DIAG uche-trap ... secure, absent scatterlist, or invalid
+  range` was ambiguous, so run178 split it into per-condition fields.
+- It now reads, on every trap:
+
+      DIAG uche-trap-unmapped target=139000 entry_gpu=139000 size=1000
+        flags=c0900 priv=808 secure=0 sgt=(nil) aligned=1 offset=0
+        in_range=1 memtype=9 cpu_map=0
+
+- **Correction:** `sgt=(nil)` is **not** a defect. `priv=0x808` is
+  `KGSL_MEMDESC_MAPPED | KGSL_MEMDESC_CAN_RECLAIM` — a mapped GPUOBJ. In
+  IOMMU mode such a buffer keeps its pages in `memdesc->pages` and builds an
+  sgt only transiently while mapping into the page table. So the trapping
+  buffer is properly allocated, 4 KiB, memtype GL, correctly addressed, and
+  mapped. run177's "unmapped" wording was wrong and is corrected in the source
+  comment.
+- Net: after the run174/run177 SMMU and -ERANGE fixes, the picture is a
+  **valid, mapped, identity-consistent VSC size buffer that the UCHE still
+  rejects** — the same class of fault as before, now with translation enabled.
+  The remaining discriminator is whether the buffer's pages are actually in
+  the GPU page table (`kgsl_memdesc_get_va_len`) at fault time, and whether
+  process reclaim (`CAN_RECLAIM` is set) is dropping it.
+
+## Run179: the trapped buffer is valid on EVERY axis — the fault is GPU-side
+
+- Image `721258262ebef0ef17b8853c751f61d04fb9786b9c27e801602a27371263d5ef`.
+  Added a direct backing check (this KGSL has no reverse gpuaddr->va helper,
+  so `memdesc->pages` / `pagetable` are the ground truth):
+
+      DIAG uche-trap-backing target=139000 gpu=139000 size=1000
+        pagetable=0x826a7583 pages=0xa5263b59 page_count=1
+        mapped_flag=1 first_page=0x37c1a000 offset=0
+
+- Verified individually: IOVA `0x139000` is the allocation **base** (offset 0,
+  not an overrun) and sits inside KGSL's `SVM_BASE32`
+  (`uche_gmem_base + gmem_size` = `0x100000 + 0x22000` = `0x122000`);
+  size is one page; a page table **is** attached; `pages` **is** present with
+  `page_count=1`; `KGSL_MEMDESC_MAPPED` is set; the backing physical page is
+  `0x37c1a000`; and the context bank is translating
+  (`sctlr=0x00001167`, M bit set, valid `ttbr0`).
+- **Conclusion.** The UCHE raises out-of-bounds on an access that is valid on
+  every software-visible axis. Buffer identity, contiguity, backing page,
+  page-table mapping, translation state, cache mode, and all A5xx
+  threshold/aperture registers have each now been checked directly and all
+  pass. Nothing this evidence can reach explains the rejection; what remains
+  is GPU-side — the secure-managed context bank's translation regime, or the
+  GMEM aperture interacting with KGSL's VA layout.
+- Do not re-run the contiguity, identity, cache-mode, register-init or SMMU
+  probes: each is settled above and in the run165-179 logs.
+
+## Run180: page-table mismatch also eliminated — the fault is fully unexplained by software
+
+- Image `e6ddd605b74cef668d56fa102600870730bbecfe389706796d577805b90bf71b`.
+  Tested whether the buffer is mapped into the page table the GPU is
+  *currently running*, not just some page table:
+
+      DIAG uche-trap-pt target=139000 pt=0x97788aac pt_ttbr0=0x18680000
+        gpu_current_ttbr0=0x18680000 match=1 default_pt=0x97788aac
+      DIAG gpu_smmu: cb=gfx3d_user sctlr=0x1167 translating=1 ttbr0=0x18680000
+
+  The buffer's page table **is** the default one, **is** the one the context
+  bank is running (identical `ttbr0` on both sides), and translation is on.
+- **Eliminated this session, each with direct evidence:**
+  SMMU bypassed vs stock (fixed, run174) ·
+  `KGSL_MMU_64BIT` 20 GiB VA in a 32-bit aperture (fixed, run177) ·
+  buffer address identity and contiguity (run165-166) ·
+  SMMU translating at draw time (run171-174) ·
+  trap buffer unmapped / no pages (run179) ·
+  mapping in a stale page table (run180).
+- The UCHE raises out-of-bounds on an access that is correctly addressed,
+   page-backed, mapped into the running page table, and translated. Every
+   software-visible property now passes. Anything further is GPU-side: the
+   secure-managed context bank's translation regime, the GMEM aperture against
+   KGSL's VA layout, or an A5xx hardware behaviour not described in the
+   register documentation available here. Further progress likely needs
+   secure-firmware/TZ configuration knowledge or a hardware reference rather
+   than another log probe.
+
+## Anomaly worth checking: the SCTLR we program is not the SCTLR we get
+
+- `qcom_iommu_init_domain()` writes
+  `ARM_SMMU_SCTLR_CFIE|CFRE|AFE|TRE|M|S1_ASIDPNE|CFCFG` = **0x1325**
+  (bits 0,2,5,8,9,12) and reads back **0x1167** (bits 0,1,2,5,6,8,12) in the
+  very next statement.
+- **Bit 9, `CFRE` (client-fault response enable), is set by us and clear in
+  hardware.** Bits 1 and 6 come back set and were not written.
+- No claim is made about the cause. It is consistent with the secure firmware
+  (invoked earlier in the same function by `qcom_scm_restore_sec_cfg()`)
+  owning part of the context bank, or with hardware-defined/reserved bits.
+- It is worth one look, because with `CFRE` clear a *client* translation fault
+  is not turned into a response upstream — which is the shape of symptom that
+  a UCHE out-of-bounds on a valid mapping would take. **Unverified.**
+
+## Run182: boot completion re-proven on the CURRENT best image
+
+- Booted `boot-run180.img` (the current tree, i.e. **with** the SMMU and
+  `KGSL_MMU_64BIT` fixes, not the older run171 image the goal was first
+  measured on).
+- **`sys.boot_completed=1` at uptime 105.75 s**, `dev.bootcomplete=1`, logcat
+  carries `BOOT_COMPLETED` x3 plus the broadcast latency report and the full
+  `boot_progress_*` chain; `init.svc.bootanim` ran then stopped.
+- **SurfaceFlinger PID 710 and SystemServer PID 1109 held from 72.91 s through
+  105.75 s with no restart.**
+- So the two fixes did **not** regress boot completion; it improved slightly
+  (105.75 s here vs 114.29 s on run171, which predates them).
+- Evidence: `run182-live/` (logcat 2.96 MB, poll log), `run182-usb.log`
+  (433,804 B). Device returned to stock 4.19; nothing flashed or cleared.
+- **Visible boot animation remains UNMET.** The bootanimation *service* runs
+  and exits cleanly, but no animation frame has ever been confirmed on the
+  panel: `screencap` is unusable on this device, and the GPU still raises
+  UCHE out-of-bounds on a valid, mapped, translated VSC buffer (run180).
+
+## Run183: the SCTLR anomaly is BENIGN — secure firmware does not own the bank
+
+- Image `19cd2d60b014b58f33861e746063c408011bc3e0649da254b22a9fdb9b2a4ef7`.
+  Read the context bank **immediately after** `qcom_scm_restore_sec_cfg()`,
+  before touching it:
+
+      DIAG cb-owner: asid=0 sctlr_after_secure_cfg=00000000 secure_ctx=0
+      DIAG init_domain: master=...:gfx3d_user cb=0 sctlr=000010e7
+
+  (for contrast the apps IOMMU at `1e20000` reads `asid=21 sctlr=30000080`, so
+  the secure world does program *some* banks — just not the GPU's.)
+- **The secure firmware leaves the GPU bank at SCTLR=0.** It therefore does not
+  own, and is not silently overwriting, the GPU context bank. That hypothesis
+  is eliminated.
+- The SCTLR difference is then ordinary hardware behaviour on our own write:
+  we write `0x1325` (bits 0,2,5,8,9,12) and read `0x10e7`
+  (bits 0,1,2,5,6,7,12). Precisely **`CFIE` (bit 8) and `CFRE` (bit 9) do not
+  stick**; `CFCFG` (bit 12) does. Translation (`M`), `AFE` and `TRE` all take,
+  which is what matters. For contrast the MDSS bank (`asid=21`) reads back
+  `0x000000e7` — same core bits, no `CFCFG`.
+- So the earlier `CFRE` worry is resolved: **not the cause, and not a lead.**
+  Nothing needs changing here.
+
+## Frames ARE composed — just at ~0.3 fps (important for the visual check)
+
+- run182's logcat contains HWUI late-frame warnings:
+  `Davey! duration=2473ms / 3136ms / 3297ms / 3766ms`.
+  So SurfaceFlinger **is** producing frames; each takes **2.5-3.8 s**.
+- That reframes the outstanding visual question. It is not "nothing is ever
+  rendered" — it is "rendering is glacial". A boot animation would therefore
+  likely appear as a **static or barely-changing image**, not a smooth
+  animation, and could easily be missed or written off as a blank screen.
+- **Action for whoever is at the device:** watch the panel from ~20 s to
+  ~120 s after the RAM boot and describe what is actually displayed. If a
+  boot-animation logo is visible even for a few seconds, the remaining work
+  is frame pacing / the VSC stall, not a total absence of rendering. If the
+  panel is blank the whole time, composition is failing outright.
+  This is the one measurement that cannot be taken from software here:
+  `screencap` provably returns a constant image regardless of display state
+  (identical SHA-256 with `Display State=ON` and `OFF`).
+- Evidence: `run182-live/logcat.log` (HWUI Davey! lines).
+
+## Status summary for whoever picks this up
+
+| Deliverable | State |
+|---|---|
+| `sys.boot_completed=1` on the port kernel | **met** — run182 @ 105.75 s on the current best image, SF + SystemServer stable throughout |
+| Visible boot animation | **NOT met** — user confirmed the panel is black |
+
+- **Best image: `boot-run183.img`** (and `boot-run180.img`, same tree state).
+  Kernel `6.12.93-4k`, GPU SMMU translating, GPU starts clean
+  (`rbbm=0x00000001` at every bring-up probe), SurfaceFlinger stable.
+- **run184 is the definitive causal capture** (29.4 MB of kernel log from a
+  single 5.5 h boot, `boot_id ca9dda3f-…`). One GPU fault at **t=42.6 s**
+  wedges `system_server` in **`folio_wait_bit_common`** (a page lock on a
+  GPU-backed buffer); Android records it as
+ `Blocked in handler on ActivityManager (ActivityManager) for 56s`
+  / `Watchdog-Type: pre_watchdog`. The UI never recovers, so the panel stays
+  black for the remaining ~5 h even though the GPU faults stop at t=897 s.
+  **0 watchdog kills** — Android could not even restart its way out.
+- **The panel is not the problem.** Display `ON`, `mWakefulness=Awake` for the
+  whole boot, backlight applied (0.10, raisable to 0.76 via
+  `settings put system screen_brightness 255`), and still black. Memory is
+  fine (3.53 GB of 3.93 GB, 0 OOM events). Audio is fine (`mediaserver`,
+  `audioserver`). Hardware buttons cannot help: input is downstream of the
+  system_server stall, so `KEYCODE_WAKEUP` changes nothing.
+- **Remaining direction:** the UCHE/VSC fault and whatever makes system_server
+  take a page lock on the GPU buffer. Everything software-visible about that
+  buffer is verified correct — address, contiguity, backing page, page-table
+  mapping, running-page-table identity, translation state, cache mode, A5xx
+  register init. run185's one hard datum is that with a 3-level table the SMMU
+  finally reports `FSR=0x80000202` (bit1 TF, a **real translation fault**),
+  which the 2-level setup never did. That is the thread worth pulling on.
+
+## Run184 + code audit: the real divergence from stock is page-table depth
+
+- The 5.5 h run184 boot (29.4 MB log, 341,931 lines, `boot_id
+  ca9dda3f-…`) gives the causal chain for the black screen:
+  GPU faults run **t=42.6 s … 897.3 s** and then stop; the screen stays black for
+  the remaining ~5 h. The `/data/anr` trace for that boot (`Subject: Blocked in
+  handler on ActivityManager (ActivityManager) for 56s`,
+  `Watchdog-Type: pre_watchdog`) shows the main thread in
+  **`sysTid=1103 folio_wait_bit_common`** with `context hwbinder` and an
+  outgoing binder transaction stuck 1946 ms. So one GPU fault wedges
+  system_server on a page lock and the UI never recovers. 0 watchdog kills:
+  Android could not even restart its way out.
+- **Ruled out:** memory exhaustion (`Memory: 3530424K/3932160K available`, 0 OOM
+  events — it is a page *lock*, not memory pressure); the display pipeline
+  (panel registers, `Display State=ON`, `mWakefulness=Awake`, backlight applied);
+  audio (`mediaserver` + `audioserver` running); hardware buttons (input is
+  downstream of the system_server stall).
+- **Ruled out:** process reclaim. `KGSL_MEMDESC_CAN_RECLAIM` is set on the
+  trapping buffer (`priv=0x808` = `MAPPED|CAN_RECLAIM`), but A506's feature mask
+  is `ADRENO_PREEMPTION | ADRENO_64BIT | ADRENO_CONTENT_PROTECTION |
+  ADRENO_CPZ_RETENTION` with **no `ADRENO_USE_SHMEM`**, so
+  `KGSL_FLAG_PROCESS_RECLAIM` is never set and `kgsl_reclaim_init()` returns
+  immediately. The flag is inert. (The reclaim selection loop also never checks
+  `MAPPED`, which is a latent bug if reclaim is ever enabled, but it is not
+  running here.)
+- **The real divergence, found by audit.** A506 has `ADRENO_64BIT` set, so
+  withholding `KGSL_MMU_64BIT` (run177) is a *workaround for the broken 32-bit
+  aperture*, not the correct state. CAF's `msm-arm-smmu-8953.dtsi` sets
+  **`qcom,use-3-lvl-tables`**; **this tree has no handling for that property
+  anywhere**. With 4 KiB pages, `.ias=32` builds a **2-level** table
+  (`va_bits=20`, `levels=2`) where CAF and stock use **3-level**. The GPU
+  therefore runs against a differently shaped translation regime than on stock.
+- **Direction for the fix:** give the GPU domain the CAF-equivalent 40-bit,
+  3-level regime and re-enable `KGSL_MMU_64BIT`, rather than leaving KGSL on
+  32-bit ranges. This is what run175/run176 attempted and both **failed to boot
+  with no recoverable evidence** (0-byte USB capture, logdump still holding the
+  previous boot). That is now worth redoing with a way to capture the failure:
+  the failures happen before the diag gadget starts, so they need an earlier
+  channel (ramoops console snapshot, or `earlycon`) before another attempt.
+
+## Latest: run167 — physical recovery required; visual-boot goal still open
+
+- User goal: visible boot animation plus target boot-completion logs. Completion
+  is repeatedly observed; rendered boot animation is **not** verified.
+- Run167 fastboot RAM boot returned OKAY, then no Mi A1 in ADB, fastboot or
+  `lsusb` through the bounded observation. USB capture **0 bytes**. Reader stopped.
+  **Cause unverified**; do not blame the policy from this silent attempt.
+  User asked to hold Power ~15 s to return to stock; physical reset is pending.
+  Nothing flashed or cleared. Before another boot, recover this attempt's logdump
+  using unused label **167**, image `boot-run167.img`, and compare against
+  SHA-verified `run166-logdump.bin`. Do not overwrite or clear retained evidence.
+- Run167 image SHA-256
+  `7494ddcb320806929dc9d1ed784dda254bbd2cca9fada63f17e59e840fc97810`.
+  Kernel/init/cmdline unchanged from run166; only appended
+  `harness-gpu-evidence-read.cil` to permit read-only GPU snapshot/LED path
+  inspection. Its runtime policy compilation/access remains unverified.
+  Exact shipped fragment saved in `run167-test/shipped-policy.cil`. Current
+  source fragment narrows the genfscon from the whole GPU subtree to only
+  `kgsl/kgsl-3d0/snapshot`; this narrower version is **unpackaged and untested**.
+  Source review found no concrete policy syntax/type/neverallow error, but the
+  whole-subtree relabel is a possible confound, not a proven failure cause.
+- Run165: UCHE OOB precedes hang, first trap `0x34b02000`, distinct from
+  conditional target `0x31e63000`. CP_STATUS_1 `80423c68`, HW_FAULT zero.
+  UCHE mode/address-mode match initialization. Captured framebuffer is black
+  (`run165-test/screencap.stdout`); boot completion observed at 106.72 s.
+- Run166: first trap `0x32d0b000` belongs to a live native 4 KiB GL allocation,
+  `flags=c0900`, SG 1/1; CPU words zero. **Cache mode is WRITECOMBINE**, not
+  WRITEBACK: mask `0x0c000000`. GPU==SG physical is not independent DMA-handle
+  validation. Last IB2's 121 DWORDs captured at `run166-logdump.log:3848-3941`;
+  it uses CP_SET_DRAW_STATE (17 groups), then a 90-index draw. Trap address is
+  not a direct IB2 operand. Referenced state span `[f9480940,f9480f40)` needs
+  decoding; full snapshot export is the intended next evidence channel.
+- Rootless LED readlink/ls failed, so canonical MDSS LED pathname is unverified.
+  Source/policy review found old backlight explanations wrong: MDSS does register
+  `lcd-backlight`; `sysfs_leds_202604` is an attribute mapping to `sysfs_leds`,
+  and genfscon prefixes cover descendants. Actual current denials concern the
+  MDSS LED endpoint, not the raw WLED attributes labelled in prior experiments.
+  Do not introduce versioned attributes as context types or blind allow rules.
+- Results: `run165-test/results.json`, `run166-test/results.json`,
+  `run167-test/results.json`. Fresh capture ends at byte **3167484** (run165)
+  / **3015399** (run166); trailing bytes match the preceding partition backup.
+
+## Latest: run164 — fault-target diagnostic (Linux session)
+
+- Device returned to stock **4.19** after RAM-only testing; nothing flashed or
+  cleared. No capture reader remains running. Screen appearance was not observed.
+- Run163 reproduced the unchanged run161 image: boot completion first sampled
+  at **100.37 s**, 43 fresh GPU fault records. Its recovery label **162** is the
+  pretest partition backup, not a boot of a new image.
+- Latest tested image: `porting/artifacts/snapshot60/boot-run164.img`, SHA-256
+  `802d2be5a26163c62bddaed5a9908d530ab7ad37465faefcc54f2afe11a61c0d`.
+  Based on real run161; ramdisk CPIO, command line and DTB verified unchanged.
+  Source diagnostic: `adreno_dispatch.c`, bounded candidate MEM_WRITE scan and
+  CPU/scatterlist sample without cache maintenance. Rust 1.99/bindgen 0.73.2;
+  host build/config differences and profiling-flag override in `run164-test/`.
+- Run164 boot ID `75b92c37-877f-4450-b78a-4f7819428e25`: completion sampled at
+  **103.31 s**, still complete at 169.17 s; SF/SystemServer PIDs **706/1121**.
+  `dumpsys window lastanr` reports no ANR since boot.
+- **42 fresh GPU faults; nine target samples.** First four SF samples show
+  target `0x386ff000`, size 4 KiB, `sg=1/1`, contiguous and GPU==physical.
+  CPU words `1/0`, nearby MEM_WRITE payload `0`
+  (`run164-logdump.log:3748-3751`, repeated at 3843, 3928, 4026).
+  Non-contiguity is not observed in these samples. GPU visibility, whether the
+  candidate write executed, and the root cause remain **unverified**.
+- Results/provenance/patch: `run163-test/`, `run164-test/`; SHA-verified 64 MiB
+  partitions `run162-logdump.bin`, `run163-logdump.bin`, `run164-logdump.bin`.
+  Run164 capture bytes after offset **3557138** match the pretest partition;
+  exclude that stale tail. All 3404 USB printk records match persistent capture.
+- Next: investigate conditional execution and GPU visibility of the sampled
+  `1/0` words, not another contiguity-only probe. Do not treat CPU reads as
+  evidence of GPU-visible contents or a precise CP execution location.
 
 ## Latest: run161 (2026-10-16 evening) — read this first
 

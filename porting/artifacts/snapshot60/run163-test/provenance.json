@@ -1,0 +1,8 @@
+{
+  "image": "boot-run161.img",
+  "image_sha256": "ad5ce74f0534d4c70b69d0e770b8d47b6792bec8c70c9e31e816074a7f40f4a7",
+  "preexisting_logdump": "run162-logdump.bin",
+  "preexisting_sha256": "eae5f4e06e0d02de10382cb84396dead53f95627160104106511d0f839c3deb0",
+  "logdump_cleared": false,
+  "purpose": "Unmodified run161 reproduction; fresh label 163"
+}

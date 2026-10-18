@@ -1,0 +1,35 @@
+{
+  "base": "boot-run161.img",
+  "ramdisk_cpio_identical": true,
+  "cmdline_identical": true,
+  "dtb_identical": true,
+  "new_image_sha256": "802d2be5a26163c62bddaed5a9908d530ab7ad37465faefcc54f2afe11a61c0d",
+  "banner": "Linux version 6.12.93-4k (kurision@omarchy) (clang version 22.1.8, LLD 22.1.8) # SMP PREEMPT ",
+  "source_commit": "1a900849eab7516b0d755efabbc770b7c4267620",
+  "diagnostic_source_sha256": "305d8303766faa6b3e487c5d70a6e3018a8d4565e855cc310dcde510e2cbd24b",
+  "config_differences": [
+    [
+      "CONFIG_CC_CAN_LINK",
+      null,
+      "CONFIG_CC_CAN_LINK=y"
+    ],
+    [
+      "CONFIG_CC_CAN_LINK_STATIC",
+      null,
+      "CONFIG_CC_CAN_LINK_STATIC=y"
+    ],
+    [
+      "CONFIG_CC_VERSION_TEXT",
+      "CONFIG_CC_VERSION_TEXT=\"clang version 22.1.8 (Fedora 22.1.8-4.fc44)\"",
+      "CONFIG_CC_VERSION_TEXT=\"clang version 22.1.8\""
+    ],
+    [
+      "CONFIG_PAHOLE_VERSION",
+      "CONFIG_PAHOLE_VERSION=132",
+      "CONFIG_PAHOLE_VERSION=131"
+    ]
+  ],
+  "rust_profile_flag_override": "RUSTFLAGS_AUTOFDO_CLANG=-Zdebuginfo-for-profiling -Cllvm-args=-enable-fs-discriminator=true -Cllvm-args=-improved-fs-discriminator=true",
+  "logdump_pretest_copy": "run163-logdump.bin",
+  "logdump_cleared": false
+}

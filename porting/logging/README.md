@@ -1,5 +1,32 @@
 # Logging during the port
 
+## Current Android / ACK capture workflow
+
+Read [BUIL_TISSOT.md](../../BUIL_TISSOT.md) for build, package, RAM boot and capture
+instructions, and [REFERENCE-boot-testing.md](../REFERENCE-boot-testing.md) before
+any boot cycle. Run verdicts belong in [HANDOFF.md](../HANDOFF.md) and the
+trackers; raw evidence belongs in `porting/artifacts/snapshot<number>/`.
+
+- `usb-boot-capture.py` starts from ADB and requests the bootloader transition.
+  It cannot start from an already-fastboot phone; bound its reader lifetime.
+- `fastboot-boot-capture.py` starts from fastboot, waits for enumeration and
+  supports `--boot-timeout`. An external timeout also bounds the whole helper.
+- `pull-run-evidence.sh` retrieves persistent evidence after the installed ROM
+  returns; see "Android temporary-boot evidence" below. Preserve the previous
+  raw logdump and verify its device hash before clearing anything.
+- Keep ADB/logcat observation separate from USB capture. Match kernel banner,
+  boot ID and uptime; USB can disconnect at the Android handoff before later
+  faults occur. Record commands, return codes, timestamps and physical panel
+  observation. An empty capture or fastboot OKAY is not proof of kernel execution.
+
+The SSH, journald, systemd and reference-kernel settings in the following
+sections describe the historical postmarketOS baseline, through "What to do
+with a pstore record". They are not the current Android device state or commands
+to change a diagnostic base. Use the Android reference above for this port,
+including the pstore-blk initcall-ordering trap that can hide an early panic.
+
+## Historical Linux reference
+
 A port that hangs is the normal case, not the exception. This is where logs come
 from on this device, in the order you should reach for them.
 

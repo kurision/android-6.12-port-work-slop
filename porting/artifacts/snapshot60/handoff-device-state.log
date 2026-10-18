@@ -1,3 +1,0 @@
-Final ADB check exit=1
-adb: device '2819f2320604' not found
-Last controlled device action: fastboot reboot to the normal ROM after run80, followed by successful stock-root evidence retrieval. Current kernel could not be verified during handoff. No run81 boot was attempted.
