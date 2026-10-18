@@ -29,6 +29,8 @@ full=$(sed -n 's/^savedcmd_[^:]*:= //p' "$cmdref")
 flags=${full% -c -o *}
 flags=${flags//$srctree/$repo}
 flags=$(printf '%s' "$flags" | sed 's#-Wp,-MMD,[^ ]* ##')
+# Optional extra -D/-W flags for symbols not yet present in out/.config.
+flags="$flags ${KBUILD_CHECK_EXTRA:-}"
 
 mkdir -p /tmp/opencode
 status=0
