@@ -411,6 +411,70 @@ This is how every later gate should be verified.
 Device after run240: stock 4.19, boot_id `223fcf9e-e04a-4fbc-8c58-e00c7629a90e`.
 Nothing was ever flashed.
 
+## run241 to run244 — the rail chain, and four separate faults
+
+Four boots, each with the logdump read afterwards. The console log only became
+readable once the port kernel's own capture could be pulled from stock, and
+that is what turned guesses into answers.
+
+| run | what it carried | what it showed |
+|---|---|---|
+| run241 | S5 moved to PMIC USID 0 | `probe ... failed with error -22`, no message from the driver |
+| run242 | error messages added, DIAG spin measurement dropped | same bare -22; the per-CPU 1M-loop measurement gone |
+| run243 | SPMI regmap created over the PMIC parent | still -22, now with `SPMI regmap creation failed` |
+| run244 | regmap window widened past the PMIC base | ashmem present again, boot animation up but stuck |
+
+Three faults, one per boot, all in the ported SPM regulator and all invisible
+without a console log:
+
+1. **The rail was on a PMIC that is not there.** The donor SoC file puts
+   `pm8953_s5` under `qcom,pm8953@1`; the donor *board* file overrides that to
+   `qcom,pm8953@0` for this phone, and the live SPMI bus agrees, enumerating
+   only `pmic@0` and `pmic@2`. Fixed in `a0a6e785b`.
+2. **The regmap window stopped at the PMIC base.** Every access is
+   `spmi_base_addr` plus an offset reaching 0x6c, and regmap compares the
+   absolute address against `max_register`, so the type register read at
+   0x2004 was rejected. Fixed in `786e63b62`.
+3. **The regmap was never created at all.** `__regmap_init()` switches on
+   `config->reg_bits` and rejects the default arm with -EINVAL, and the
+   config only set `max_register`. The SPMI base bus reads one address byte
+   per register, so `reg_bits` is 8; mt6315 sets 16 because it uses the
+   extended bus. Fixed in `a0616dc9e`.
+
+Two port-level faults found on the way, both mine:
+
+4. **The config resync dropped ashmem.** run242 and run243 had
+   `# CONFIG_RUST is not set` and no `CONFIG_ASHMEM`, so SurfaceFlinger could
+   not mmap its queue and the ROM never came up. Caused by re-resolving the
+   config with an environment missing `RUST_LIB_SRC` and `LIBCLANG_PATH`,
+   which `BUIL_TISSOT.md:82` warns about by name. `BUIL_TISSOT.md` is the
+   documented wrapper and its required-symbol guard would have caught this;
+   it was bypassed for the sake of preserving the run236 config, which was the
+   wrong trade. Build through `scripts/build-ack-tissot.sh` from now on, with
+   one fragment: `cat scripts/tissot-ack.config porting/build-test/apcc.config`
+   because the wrapper merges exactly one and `apcc.config` is a delta.
+5. **The GPU driver flooded the log.** `adreno_zap_stage()` printed one line
+   per stage transition with `dev_info()` and no rate limit: 71162 of one
+   boot's 118915 kernel log lines. The history settles it: commit `cd498fd1e`
+   added it alongside prints that are deliberately rate limited
+   (`kgsl_diag_submit()` keeps the first 50 then every 64th) or one-shot, so
+   this one print was the exception, not the pattern. Removed in `2a9bac1c1`
+   and verified absent from run244's vmlinux.
+
+**Reading logdump without confusing boots**: the partition holds captures from
+more than one boot. Sort by the `Linux version` banner and count only what
+follows it, or you will attribute a previous run's log to the current one. That
+mistake briefly made it look as if run244 still spammed zapstg.
+
+Also from run244: the boot animation comes up and then stalls, `boot_completed`
+never set, load average around 12. Its config differs from the run236 baseline
+by `DEBUG_INFO_BTF` off and `RUST_INLINE_HELPERS` on, because the wrapper
+rebuilds from `gki_defconfig`. A control build with the tissot fragment only,
+no `apcc.config`, is the experiment that separates that from our symbols.
+
+Device after run244: stock 4.19, boot_id `bdb10da7-28a1-4081-8e44-1a1f2e6af574`.
+Nothing was ever flashed.
+
 ## run239 — first boot of the wired CPU nodes, and what it broke
 
 Gate 5a landed: `arch/arm64/boot/dts/qcom/msm8953-cpu.dtsi` (APCC clock
