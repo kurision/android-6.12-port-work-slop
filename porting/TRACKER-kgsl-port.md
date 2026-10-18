@@ -6,8 +6,89 @@ Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 
 Worktree: `../ack-kgsl`, current branch `master`. Run210 source, host
 regressions and result metadata are checkpointed in `5f5f8ccce`.
-Last update: 2026-10-18 — run221 KGSL-off control avoids the early reset
-through observed uptime436.84 s; user-requested reboot ends the test.
+Last update: 2026-10-18 — **run227 refutes the run226 root-cause claim.**
+
+### 2026-10-18 — run227: `_apply_impl_defs()` is not the reset cause
+
+run227 commented out the single call to `_apply_impl_defs()` in
+`kgsl_iommu_start()` and nothing else changed. The board reset anyway, at the
+same kernel uptime.
+
+| | run225 | run226 | run227 |
+|---|---|---|---|
+| `_apply_impl_defs()` | on | on | **off** |
+| SError/panic | no | yes 43.0196 s | **no** |
+| reset marks in logdump | 0 | 2 | **0** |
+| last durable sample | 41.770 s | 43.043 s | 41.940 s |
+| reset at kernel uptime | 89.1 s | 89.1 s | **89.5 s** |
+
+run227 landed *higher* than run226 (no panic, `mmu-start ok`, stages 0-28) and
+still reset. So the run226 SError is a second, independent bug in the same
+subsystem — real, port-specific, but not the reset.
+
+What is now solid: the reset is at kernel uptime **~89 s**, every run; the
+kernel stops making durable progress at **~42 s**, every run; that is a **~47 s
+silence**. No panic, no lockup-detector panic, no oops, no TZ. APPS WDT is
+disarmed throughout (`en=00000000`). run221 with KGSL off survived 436 s, so the
+reset is conditional on KGSL.
+
+The bootchain is now **measured**, not estimated: `adb reboot` on stock gives
+49.8 s from reset to stock USB enumeration, of which 20.805 s is the stock
+kernel's own path to USB. The earlier ~20.9 s figure came from an
+adb-reboot-to-fastboot interval and was badly wrong; it had produced a
+`t = last_progress + panic=60` fit that was coincidental.
+
+Next: target the ~47 s gap. Candidates are a KGSL-induced wedge of a shared
+resource at ~42 s reaped by an external agent, a GPU power/clock state that
+hangs the bus on later access (run227's GPU reached NAP and stayed), or a
+firmware watchdog at ~89 s that only arms while KGSL holds a resource.
+
+Details: [handoff](HANDOFF.md#correction--run227-refutes-the-run226-root-cause).
+
+### 2026-10-18 — run226: asynchronous SError in `_apply_impl_defs()` (real, not the reset)
+
+```
+[   43.019558][ C5] SError Interrupt on CPU5, code 0x00000000bf000002 -- SError
+[   43.019816][ C5] Kernel panic - not syncing: Asynchronous SError Interrupt
+[   43.020010][ C5]  kgsl_iommu_start+0x2a0/0x5d8
+[   43.020052][ C5]  adreno_start+0x584/0xb6c
+[   43.020067][ C5]  kgsl_open+0x14c/0x6a4
+[   43.020121][ C5]  path_openat+0xac4/0xd0c
+```
+
+`kgsl_iommu_start+0x2a0` resolves to `_apply_impl_defs()` at
+`drivers/gpu/msm/kgsl_iommu.c:1636` — the micro-MMU halt handshake polling
+`0x6000` for `IDLE`. Port-added code (`c9a84d881`), absent from CAF's
+`kgsl_iommu_start()`. Upstream CAF `arm-smmu-qcom.c` `qsmmuv2_device_reset()`
+does the same halt→impl-defs→resume, but from the SMMU driver's reset path
+with a `vdd-supply` power vote; the port does it per-open with clocks only.
+
+Trigger: `surfaceflinger` opening the device. Second `kgsl_iommu_start()`
+(GPU INIT) faults; first (GPU SLUMBER) succeeds. run225 never reached it —
+its extra per-tick WDT reads in run226 bought the ~1.25 s needed to get there.
+
+Enabling instrumentation: `ramoops_panic_snapshot()` called from
+`kernel/panic.c:379` before `panic_other_cpus_shutdown()`, so one flushed
+logdump sample is committed before `smp_send_stop()` freezes the snapshotter.
+This is what made the fault observable at all; without it a panic leaves no
+durable trace, because `ramoops_reset_note()`'s `!irqs_disabled()` guard trips
+on the panic path's IRQs-off region.
+
+run227 (above) disabled this code and the board still reset, so it is **not**
+the reset cause. Still worth fixing on its own merits.
+
+Next for this bug: decide between an SMMU power-domain vote before the
+handshake and dropping `_apply_impl_defs()` entirely. Mainline `qcom_iommu`
+does neither, and every impl-def register already reads back the CAF value on
+the first call, which hints the hardware defaults are close enough that the
+port's copy may be unnecessary.
+
+Details: [handoff](HANDOFF.md#run226-the-_apply_impl_defs-serror-real-bug-but-not-the-reset).
+
+### 2026-10-18 — run221 KGSL-off control
+
+KGSL-off control avoids the early reset through observed uptime436.84 s;
+user-requested reboot ends the test.
 
 **Source adaptation, not device-tested:** pinned Qualcomm reference
 `../kgsl` at `2b2d762c0b843c560d2ae2203f6b3cfe1474fb3f`.

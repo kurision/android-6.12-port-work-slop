@@ -1,5 +1,325 @@
 # Handoff — tissot 6.12 port, update 2026-10-18
 
+## Mechanism research — what can assert PS_HOLD with no kernel trace
+
+Queried upstream (Qualcomm RB5 / Dragonwing watchdog docs) against what the
+stock boot reports after the port dies.
+
+| WD | timeout | owner | on expiry | result |
+|---|---|---|---|---|
+| Non-secure bark | 11 s | HLOS | IRQ to HLOS | HLOS panics |
+| Non-secure bite | 12 s | HLOS | FIQ to TZ | **TZ asserts PS_HOLD** |
+| Secure bark | 6 s | TZ | FIQ to TZ | TZ just pets it |
+| **Secure bite** | **22 s** | TZ | **asserting PS_HOLD** | **PMIC resets the system** |
+
+The decisive line from the docs:
+
+> "Since secure watchdog bite asserts PS_HOLD directly **without notifying
+> HLOS or TZ**, an error message is not displayed for dmesg or TZ diag."
+
+That is precisely our signature: a hard reset, `Power-off reason: Triggered
+from PS_HOLD`, and **zero** kernel-side trace. The Qualcomm debug guide says the
+same about diagnosing this: if dmesg has no panic signature, suspect a secure
+watchdog bite.
+
+Supporting evidence on this port:
+
+- The kernel never drove the reset. `ACKRESET1` (reboot notifier) and
+  `RESETNOTE` slot 31 are both zero in every run, so `emergency_restart()`,
+  `kernel_poweroff()` and `msm-poweroff` (`ramoops_reset_mark(PSHOLD)`) never
+  ran. PS_HOLD was pulled by something outside the kernel.
+- Non-secure WD is not the trigger: `apps_wdt en=00000000` at 41.67 s,
+  42.72 s, 42.98 s (run226) and equivalently in run227. It is disarmed, and the
+  docs note it "is automatically stopped when all cores on application
+  processor CPU go into sleep".
+- TZ did not hand the APPS an SMC during the failure: the QSEE ring ends at
+  38.87 s (run226) / 37.78 s (run227), but that is just keymaster going idle,
+  not evidence about TZ liveness.
+
+**So the reset is a TrustZone watchdog bite asserting PS_HOLD, not a kernel
+panic and not `emergency_restart()`.** That is a real narrowing.
+
+Two things do not yet fit, and both are open:
+
+1. **The 47 s gap does not match the documented 22 s secure bite.** Either
+   msm8953 uses different values, or there is an escalation phase first
+   (RPM hang detection → TZ → TZ stops servicing the bark FIQ → 22 s bite).
+   The RPM hang-detector timeouts are not documented publicly for this SoC.
+2. **A 'warm' vs 'cold' difference across runs.** The stock boot after run225
+   decoded `Hard Reset and 'cold' boot`; after run227 it decoded `Hard Reset
+   and 'warm' boot`. Same PS_HOLD power-off cause in both. This is n=1 each and
+   the run226 stock dmesg was not captured, so treat it as a lead, not a
+   finding.
+
+### The confound that blocks the next question
+
+Everything above still rests on an unverified premise: **that the kernel stops
+at ~42 s**. That is inferred from the logdump snapshots stopping. But the
+snapshotter writes through the same eMMC block path, so "snapshots stopped" is
+consistent with two very different worlds:
+
+- the kernel genuinely wedged at ~42 s, or
+- the kernel is fine and the *logdump write path* died at ~42 s.
+
+The instrumentation cannot tell them apart, because the snapshotter's own error
+prints go into printk, and printk is only read out *by the snapshotter*.
+run227 did establish one thing: there was **no panic** (zero reset marks), so
+the kernel did not take the run226 fault path again.
+
+## run228 design — one cheap instrument that settles it
+
+A minimal, independent heartbeat written straight to a reserved logdump region,
+deliberately sharing nothing with the snapshot machinery:
+
+- a kthread writing a 512-byte FUA record (seq + `ktime_get_ns()` + CPU) every
+  100 ms to a dedicated offset;
+- no 1 MiB payload, no console copy, no `kmsg_dump`;
+- never self-disables on error — it counts failures into the record and keeps
+  going;
+- bounded region, plain `__packed` struct with magic + CRC, same commit
+  discipline as the existing witness.
+
+Outcomes and what each proves:
+
+| heartbeat last write | conclusion |
+|---|---|
+| ~88-89 s | kernel **alive** until the reset. The ~42 s "silence" is a readout artifact, the reset is purely the watchdog, and the entire hang hypothesis is dead. |
+| ~42 s | kernel or block layer genuinely stops there; the watchdog is just the reaper. |
+| never written | eMMC/logdump unavailable in this run; fall back to a live-console run. |
+
+This is worth a boot cycle because it is the cheapest possible discriminator
+between the two remaining worlds, and it costs ~40 lines with no behavioural
+change on the success path.
+
+Rejected alternatives:
+
+- **Keeping the ACM console alive** by suppressing the USB handoff. That is
+  `init-run127`, the artifact AGENTS.md forbids reconstructing; it would need a
+  binary patch to a copy, and `guard_usb_handoff` has no cmdline/property gate.
+  Worth doing only if the heartbeat is inconclusive.
+- **A PMIC SDAM heartbeat.** SPMI writes are non-blocking MMIO and SDAM survives
+  a warm reset, so it would answer the same question across the reset — but
+  there is no SDAM path in this tree and building one is far more invasive than
+  the logdump heartbeat.
+- Re-enabling `_apply_impl_defs()`. Confirmed a real bug, but run227 shows it
+  is not the reset, so it is not the next variable.
+
+## CORRECTION — run227 refutes the run226 "root cause"
+
+**run226's panic is real and is a genuine port bug, but it is NOT the cause of
+the board resetting. run227 disabled the code that panics and the board reset
+anyway, at the same kernel uptime.**
+
+run227 = run226 with exactly one behavioural change: the `_apply_impl_defs()`
+call in `kgsl_iommu_start()` commented out (`kgsl_iommu.c:1713`). Nothing else
+differs; same base image, ramdisk, cmdline, config.
+
+| | run225 | run226 | run227 |
+|---|---|---|---|
+| `_apply_impl_defs()` | enabled | enabled | **disabled** |
+| SError / panic | no | **yes, 43.0196 s** | **no** |
+| reset mark records | 0 | 2 (`PANIC`, `PANIC_SNAPSHOT`) | **0** |
+| last durable sample | 41.770 s | 43.043 s | 41.940 s |
+| last printk | 41.686 s | 43.020 s | 41.888 s |
+| board reset | yes | yes | **yes** |
+| reset at kernel uptime | 89.1 s | 89.1 s | **89.5 s** |
+
+run227 landed **higher** than run226 — no panic, `mmu-start ok`, GPU start
+completed, stage records through 28 — and the board reset at the same uptime.
+So the SError is a second, independent bug in the same subsystem, not the
+reset mechanism.
+
+### Measured, not estimated: reset→stock-USB is 49.8 s
+
+The earlier "~20.9 s bootchain" figure was an upper bound taken from an
+adb-reboot-to-fastboot interval, and it was wrong in a way that mattered. A
+direct measurement on stock (no flashing): `adb reboot` at 13:44:03.8, USB
+disconnect 13:44:07.5, stock gadget back at 13:44:57.4 → **49.8 s** from reset
+to stock USB enumeration, i.e. ~29 s reset→stock-kernel-t0 plus the stock
+kernel's own 20.805 s to `USB_STATE=CONFIGURED`.
+
+With that, `reset_host - 49.8 - kernel_t0` gives the reset kernel-uptime in all
+three runs: **89.1 / 89.1 / 89.5 s**. The consistency across runs, including
+one with a panic and one without, is what makes the number credible.
+
+### What is actually true now
+
+- The board resets at kernel uptime **~89 s**, every time, regardless of panic.
+- The kernel stops making durable progress at **~42 s**, every time.
+- That leaves **~47 s of silence**, then the reset.
+- No panic, no lockup-detector panic, no oops, no TZ involvement in run227.
+- APPS WDT is disarmed (`apps_wdt en=00000000` at 41.67 s, 42.72 s, 42.98 s in
+  run226; run227 likewise). So the APSS WDT did not bite.
+- run221 (KGSL blacklisted) survived 436 s, so the ~89 s reset is conditional on
+  KGSL being present and doing something ~42 s in.
+
+`hung_task_panic=1` is on the cmdline but the default hung-task timeout is
+120 s, which does not fit a 47 s gap. The reset mechanism at ~89 s is still
+**unidentified**. It is not `emergency_restart()`, not the APSS WDT, not TZ,
+and not a panic.
+
+### The real question is now: what does KGSL do at ~42 s, and what fires at ~89 s?
+
+run227 shows the GPU start completing (`mmu-start ok`, stages 0-28 including
+the idle ACTIVE→NAP cycle at stage 27/28) and then the system going quiet at
+41.9 s with `surfaceflinger` still mid-boot. Nothing prints after
+`boringssl_self_test_apex64` starts.
+
+Next experiment should target the ~47 s gap, not the SError. Candidates worth
+separating:
+
+1. Something in KGSL that wedges a shared resource at ~42 s, with an external
+   agent (RPM/TZ/PMIC) reaping the board ~47 s later.
+2. A GPU power/clock state entered around ~42 s that makes a later access
+   hang the bus rather than fault cleanly. Note run227's GPU reached NAP and
+   stayed there; the bus-level hang hypothesis from earlier in this port is
+   still live and now has no panic to confuse it with.
+3. A genuinely fixed ~89 s watchdog in firmware, conditional on KGSL keeping
+   some resource alive (consistent with run221 surviving).
+
+The instrumentation from run226 stays: `ramoops_panic_snapshot()` is still
+what makes a panic visible, and run227 proves it is not a false positive —
+it reported zero reset marks when no panic occurred.
+
+## run226: the `_apply_impl_defs()` SError (real bug, but not the reset)
+
+run226 captured a genuine kernel panic in the port's own SMMU code.
+
+**The board was never hard-reset by the GPU. The kernel panics, and `panic=60`
+delays the reset by 60 s — which is why every earlier run mis-timed the death.**
+
+run226 captured it. The fault, verbatim from
+`artifacts/snapshot60/run226-printk-tail-slot0-seq23-ns43057992847-periodic-printk.log:1093`:
+
+```
+[   43.019558][    C5] SError Interrupt on CPU5, code 0x00000000bf000002 -- SError
+[   43.019572][    C5] CPU: 5 UID: 1000 PID: 762 Comm: surfaceflinger Tainted: G M W
+[   43.019618][    C5] pc : readl+0x3c/0x80
+[   43.019816][    C5] Kernel panic - not syncing: Asynchronous SError Interrupt
+[   43.019946][    C5]  arm64_serror_panic+0x70/0x98
+[   43.019989][    C5]  readl+0x3c/0x80
+[   43.020010][    C5]  kgsl_iommu_start+0x2a0/0x5d8
+[   43.020032][    C5]  kgsl_mmu_start+0x44/0x5c
+[   43.020052][    C5]  adreno_start+0x584/0xb6c
+[   43.020067][    C5]  kgsl_open+0x14c/0x6a4
+[   43.020121][    C5]  path_openat+0xac4/0xd0c
+```
+
+`llvm-addr2line` on `kgsl_iommu_start+0x2a0` resolves to
+`_apply_impl_defs()` at `drivers/gpu/msm/kgsl_iommu.c:1636` — the
+`readl_poll_timeout_atomic(ctrl, ...)` that waits for the GPU micro-MMU to
+report `IDLE` after `MICRO_MMU_CTRL.HALT_REQ` is written to `0x6000`.
+
+`_apply_impl_defs()` is **port-added** (`c9a84d881`), and does not exist in
+the CAF reference: CAF's `kgsl_iommu_start()` (`../kgsl/kgsl_iommu.c:1880`)
+only writes `0x6800`/`0x64a0` and configures SCTLR/PRR/ptwalk.
+
+ESR `0xbf000002`: EC `0x2f` = SError from a lower EL, **asynchronous**; ISS
+`0x02` = AET 0 (uncontainable), AEDS `0b00001` = CPU interface error. The
+read that *takes* the exception is not the transaction that caused it.
+
+### Reproducing it
+
+`surfaceflinger` (pid 762) opening `/dev/kgsl-3d0` is the trigger. There are
+two `kgsl_iommu_start()` calls in the run and only the second faults:
+
+| time | task | entry state | result |
+|---|---|---|---|
+| 42.529694 | T675 | `0x80` SLUMBER | full `_apply_impl_defs()`, `actlr before: 00000003 want 70000000`, `mmu-start ok` |
+| 43.019067 | T762 surfaceflinger | `0x01` INIT | all 10 `impl-def` reads succeed, then SError in the halt poll |
+
+The impl-def reads themselves are fine on both calls — the fault is specific to
+the **halt handshake**, i.e. the write of `HALT_REQ` plus the poll that follows.
+
+### Why the port's premise is right but its placement is wrong
+
+Verified against upstream CAF `arm-smmu-qcom.c`: `qsmmuv2_device_reset()`
+does exactly halt → write `attach-impl-defs` → resume, with the same
+`MICRO_MMU_CTRL_LOCAL_HALT_REQ` (BIT 2) / `MICRO_MMU_CTRL_IDLE` (BIT 3) and the
+same bounded `readl_poll_timeout_atomic(..., 0, 30000)`. So the register
+sequence is a faithful port.
+
+Two differences from CAF matter:
+
+1. **Wrong caller.** CAF runs it from `qsmmuv2_device_reset()`, i.e. the
+   arm-smmu driver's own reset path, under its own power management. The port
+   runs it inside `kgsl_iommu_start()` — i.e. on *every* GPU open.
+2. **No power domain vote.** CAF's arm-smmu takes a `vdd-supply` for the SMMU
+   GDSC before touching these registers. `kgsl_iommu_enable_clk()`
+   (`kgsl_iommu.c:951`) enables only *clocks*; there is no regulator vote for
+   the SMMU power domain. On the second open the GPU is in INIT and the
+   micro-MMU handshake MMIO draws an error response.
+
+Upstream precedent for this being dangerous in the wrong place — the
+`qcom_iommu` micro-MMU halt series notes:
+
+> "Applying it around the global reset as well resets the SoC before the
+> console comes up, reproducibly, on an APQ8074 DragonBoard."
+
+### Corrected reset timing
+
+An earlier revision of this section concluded the reset was ~55-70 s after the
+last progress and attributed it to `panic=60`. **run227 refutes that**: the
+reset occurs at the same ~89 s uptime with no panic at all. The `panic=60`
+arithmetic happened to fit only because it was fitted to a number that was
+itself derived from a bad bootchain estimate.
+
+The other correction stands on its own: run225's "no kernel-initiated
+restart" reading was an artifact of `panic()` calling `smp_send_stop()` before
+`emergency_restart()`, which freezes the snapshotter and trips
+`ramoops_reset_note()`'s `!irqs_disabled()` guard. Both durable channels
+empty is what a panic looks like — but a plain hang looks the same, and
+run227 is the latter.
+
+### Why run225 could not see this
+
+`_apply_impl_defs()` only faults on the **second** `kgsl_iommu_start()`. In
+run225 `surfaceflinger` never got that far: the run ended at 41.77 s, before
+its open. run226's extra per-tick APPS WDT reads cost enough wall time that
+the run reached 43.02 s and hit the second open. The fault was always there;
+run225 just stopped short of it.
+
+This is a **separate defect** from the ~89 s reset: run227 disabled this code
+and the board still reset.
+
+### Still open on this bug
+
+- Whether `_apply_impl_defs()` can be made safe in place, or should be dropped.
+  run227 answers the *reset* question only; it did not re-enable the code, so
+  the SError is confirmed-but-unfixed.
+- `Tainted: M` (MACHINE_CHECK) was already set before this fault.
+
+### run226 instrumentation (this is what captured it)
+
+`ramoops_panic_snapshot()` (`fs/pstore/ram.c`), called from
+`kernel/panic.c:379` between the stack dump and
+`panic_other_cpus_shutdown()`: nudges the logdump snapshotter and busy-waits
+bounded (~4 s cap) for `s->slot` to advance. It waits on `s->slot`, not
+`s->seq`, because `ramoops_snap_take()` bumps `seq` *before* it writes — `slot`
+only advances after both commits have flushed.
+
+Also fixed in run226:
+
+- APPS WDT re-read now runs on **every** fast-cadence tick. run225 gated it on
+  `!(seq % 8)`, but seq only reached 21 and the fast cadence only engaged at
+  the first KGSL stage record, so the reads that fired landed at seq 8/16 —
+  before the interesting window. run226 shows `apps_wdt en=00000000` at
+  42.716 s and 42.983 s: **the APPS WDT is not armed.**
+- The snapshotter now tolerates up to 10 consecutive commit errors instead of
+  disabling itself on the first one. Losing the evidence channel to the very
+  fault being diagnosed is a bad trade during bring-up.
+
+### Not yet established
+
+- Whether `_apply_impl_defs()` can be made safe in place, or should be dropped
+  (mainline `qcom_iommu` writes neither the impl-defs nor the ACTLR share bits,
+  and the first `_apply_impl_defs()` call demonstrably returns correct values
+  from every impl-def register, which suggests the hardware reset defaults are
+  already close to CAF's).
+- Whether an SMMU power-domain vote is needed before the halt handshake, or
+  whether the handshake is simply wrong on the second start.
+- `Tainted: M` (MACHINE_CHECK) was already set before this fault.
+
 ## Source adaptation — Qualcomm KGSL reference, not device-tested
 
 Reference is the user's read-only `../kgsl` checkout of
