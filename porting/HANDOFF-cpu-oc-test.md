@@ -472,6 +472,17 @@ by `DEBUG_INFO_BTF` off and `RUST_INLINE_HELPERS` on, because the wrapper
 rebuilds from `gki_defconfig`. A control build with the tissot fragment only,
 no `apcc.config`, is the experiment that separates that from our symbols.
 
+**What the first successful probe will and will not do.** With `a0616dc9e`
+the APC rail probes for the first time. That probe is read-only: the port's
+`qpnp_smps_init_voltage()` only reads the rail and deliberately leaves the
+SPM's PMIC data as the bootloader programmed it (`reg->uv` is taken from the
+read-back, no SPM write, matching the donor), and mode and step-rate init are
+reads as well. The first write to that rail comes from the CPR4 controller
+once it binds and programs a corner. So run245 is expected to be the first
+boot in which anything moves the shared CPU voltage, and that is the thing to
+watch: the logdump read after it should show the CPR's corner count and the
+first voltage it programs.
+
 Device after run244: stock 4.19, boot_id `bdb10da7-28a1-4081-8e44-1a1f2e6af574`.
 Nothing was ever flashed.
 
