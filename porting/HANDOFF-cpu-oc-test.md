@@ -363,6 +363,54 @@ Still open:
   `d1843a2b-d6ac-4419-89ab-e8fb2ff82549`, after `adb reboot`. Nothing was ever
   flashed; every port boot was `fastboot boot`.
 
+## run240 — the logdump read that ended the guessing
+
+Booted `boot-run240.img` (`2b09aedb…`, same DTB as run239, only the regmap fix
+in `f7ffd961f` differs). Android came up, adb came back, the screen was slow
+again (load 14.4 before reboot), and the same two devices were still unbound.
+
+Because the port kernel was launched with `ramoops.reset_capture=1` and then
+rebooted, its console tail was sitting in the logdump partition. Reading
+`/dev/block/mmcblk0p48` on stock with `su`, and decoding it, produced the
+evidence three runs of inference could not:
+
+- `run240-live/kernel-log.txt`, 115336 kmsg lines, is run240's full kernel log.
+- `kernel-log.txt:479-480` is the whole failure in two lines:
+
+      platform b116000.clock-controller: deferred probe pending: platform: wait
+      for supplier /soc@0/cpr4-ctrl@b018000/thread/regulator
+      platform b018000.cpr4-ctrl: deferred probe pending: platform: wait for
+      supplier /soc@0/spmi@200f000/pmic@1/spm-regulator@2000/avs-limit-regulator
+
+- The live SPMI enumeration in the same log lists only `pmic@0` and `pmic@2`.
+  There is no `pmic@1` on this board.
+
+Root cause, and it was never the DT's shape but its USID: the SoC level donor
+file puts `pm8953_s5` under `qcom,pm8953@1`, but that is the generic variant.
+The donor's **board** file, `mi8953/tissot/pmic.dtsi`, declares `qcom,pm8953@0`
+for this phone. Fixed in `a0a6e785b`.
+
+Lesson worth keeping: the donor SoC file and the donor board file disagree on
+this USID, and only the live bus log says which one this board follows. The
+regmap fix in `f7ffd961f` was real and independent, but it could not show up
+because the rail it fixes was being requested from a PMIC that is not present.
+
+Also from `kernel-log.txt`:
+
+- `psci: [Firmware Bug]: failed to set PC mode: -1` (line 59).
+- The pstore diagnostic's own measurement (lines 164-169) runs 1000000 loop
+  iterations on every CPU before and after the c1 switch; that is the obvious
+  suspect for the slow screen, and it predates this session.
+- Clock state unchanged from the baseline: APCS PLL `lock=0 l=0`, c0 on GPLL0
+  div 1, c1 on src 0, cci on GPLL0 div 3.
+
+**Evidence loop that now works**: boot with `ramoops.reset_capture=1`, reboot to
+stock, read the logdump partition with `su`, decode. No TTL adapter needed.
+This is how every later gate should be verified.
+
+Device after run240: stock 4.19, boot_id `223fcf9e-e04a-4fbc-8c58-e00c7629a90e`.
+Nothing was ever flashed.
+
 ## run239 — first boot of the wired CPU nodes, and what it broke
 
 Gate 5a landed: `arch/arm64/boot/dts/qcom/msm8953-cpu.dtsi` (APCC clock
