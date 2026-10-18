@@ -1,0 +1,255 @@
+# Handoff — MSM8953 CPU bring-up (oc-test → 6.12), 2026-10-18
+
+**Source-only session. Nothing is enabled or wired, and no kernel build, image
+or boot was performed or is authorized.** All new drivers below are compiled
+against this tree's real `out/.config` and committed disabled.
+
+Authoritative scope, design, provenance and per-gate detail live in
+[plan/CPU-oc-test-to-612.md](plan/CPU-oc-test-to-612.md). This file is the
+session state: what is on disk, what was measured, what is next, and what must
+not be touched. `plan/CPU-oc-test-to-612.md` is the reference for *why*; this is
+the reference for *where*.
+
+Goal: make the MSM8953 CPUs report and scale correctly on the 6.12 port, using
+the donor `../oc-test` (`687ee893ae5d6fd61c69397ea157973e50c06714`) as the
+reference. User-approved scope is **stock fused bin-2 range only
+(652.8–2016 MHz), no OC and no undervolt interface**, one shared APCS PLL and
+one eight-core CPUFreq policy.
+
+## Where HEAD is
+
+Base target ACK `24bcdc3ed0d0c3bbb3f01179cd7862bd426d17c4` (6.12.93). Branch
+`master`. Commits added this session, newest last:
+
+| commit | what it does |
+|---|---|
+| `60d877157` | APM (`msm8953-apm.c`) + memory-ACC regulator, disabled; adds the plan doc |
+| `fa6073a73` | live component audit finding + root-candidate packaging scripts |
+| `6b64d90a3` | SAW4 voltage/AVS provider (`msm8953-spm.c`) + `qcom,saw2.yaml` entry |
+| `010690c36` | accept SAW4 AVS minimum level 0 (FTS2 floor maps to VSET 0) |
+| `82a8b7a93` | SPM-backed PM8953 S5 APC rail regulator + AVS-limit child |
+| `735e597e1` | CPR4 port scoping written into the plan before editing |
+| `6536a1cb6` | `porting/build-test/kbuild-check.sh` single-object compile checker |
+| `9eb29e925` | **CPR3 core + CPR4-APSS closed-loop regulator port** |
+| `4f92fd644` | `KBUILD_CHECK_EXTRA` support in the compile checker |
+
+No commit carries a co-author or assisted-by trailer. HEAD is `4f92fd644`.
+
+Working tree is dirty from **another session** (run234 GPU/adb work):
+`porting/HANDOFF.md`, `porting/FAILING-COMPONENTS.md`, `porting/README.md`,
+`porting/REFERENCE-boot-testing.md`, `scripts/initramfs-diag/init.c` and
+untracked `porting/artifacts/snapshot60/*`. Do not reset, revert or reformat
+those; this session did not touch them.
+
+## What is on disk (compiled, disabled, unwired)
+
+| source | config symbol | state |
+|---|---|---|
+| `drivers/soc/qcom/msm8953-apm.c`, `include/soc/qcom/apm.h` | `QCOM_MSM8953_APM` | provider only; no DT node, no consumer |
+| `drivers/regulator/qcom-msm8953-mem-acc.c` | `REGULATOR_QCOM_MSM8953_MEM_ACC` | provider only |
+| `drivers/soc/qcom/msm8953-spm.c`, `include/soc/qcom/msm8953-spm.h` | `QCOM_MSM8953_SPM` | SAW4.1 MMIO/AVS; no DT node |
+| `drivers/regulator/qcom-msm8953-spm-regulator.c` | `REGULATOR_QCOM_MSM8953_SPM` | PM8953 S5 rail + AVS-limit child; no DT node |
+| `drivers/regulator/cpr3-regulator.c`, `cpr3-util.c`, `cpr3-regulator.h`, `cpr4-apss-regulator.c`, `include/linux/regulator/cpr3-uv.h`, `include/linux/regulator/msm-ldo-regulator.h` | `REGULATOR_CPR3`, `REGULATOR_CPR4_APSS` | closed-loop CPR4; depends on the three providers above; no DT node |
+
+Every adaptation from the donor is listed in the plan under "Remaining
+implementation / review gates", gate 2. The load-bearing ones: the donor SPM
+header is replaced by the SAW4 provider, `msm_spm_probe_done()` became the real
+`msm8953_spm_probe_done()`, `list_corner_voltage` is dropped (absent from the
+6.12 `struct regulator_ops`) and the five `msm_spm_avs_*_irq` sites were removed
+because all of them are `CPR_CTRL_TYPE_CPR3`-only and MSM8953 is CPR4 — not
+stubbed.
+
+**The CPR regulator deliberately keeps the donor corner encoding.**
+`list_voltage(sel)` returns `sel + CPR3_CORNER_OFFSET` (1..N) and `set_voltage`
+reads the core's min/max as corner(+offset). These are *not* microvolts. The
+CPR DT constraints (`regulator-min/microvolt` = 1, max = 9) and the donor
+consumer both speak that encoding. Do not "fix" it to microvolts.
+
+## Measured baseline on the current port kernel
+
+Ground truth for the state being replaced, read from the archived port logdump
+that matches the running kernel (`6.12.93-4k #22 SMP PREEMPT` at
+`root-audit-20261018T145300Z/preboot-logdump.bin:4`):
+
+| line | value | meaning |
+|---|---|---|
+| `:160` | `cpuclk pll mode=00000000 lock=0 l=0 user=0000000f rate=0 kHz` | **the APCS HF PLL is not programmed and not locked** |
+| `:161` | `c0 cfg=00000401 src=4 div=1` | CPU0-3 mux on src 4 = GPLL0 |
+| `:162` | `c1 cfg=00000000 src=0 div=0` | CPU4-7 mux on src 0 = XO |
+| `:163` | `cci cfg=00000403 src=4 div=3` | CCI mux on src 4 = GPLL0 |
+| `:172` | `c1 switch: cfg=00000401 update_done` | the pstore diagnostic moved c1 from XO to GPLL0 |
+
+So on the current port no cluster runs from the APCS PLL, CPU4-7 start on the
+19.2 MHz XO, and only the diagnostic in `fs/pstore/ram.c` gives them a usable
+clock. That diagnostic is also what the verified run234 GPU baseline runs on —
+see gate 4 below before touching it.
+
+## What is next
+
+Order matters: each stage depends on the one before. Keep everything disabled
+and unwired until the whole stack is ready, then enable in one reviewed step.
+
+1. **Gate 3 — CCF CPU clock provider `drivers/clk/qcom/apcc-msm8953.c`.** Not
+   started; no file, no `dt-bindings/clock/qcom,apcc-msm8953.h`, no Kconfig
+   symbol exist yet. Inputs and decisions are in the next section.
+2. **Gate 4 — retire the pstore diagnostic clock owner.** `fs/pstore/ram.c`
+   `ramoops_debug_cpuclk()` (`:2181`) and `ramoops_cpuclk_c1_to_gpll0()`
+   (`:2152`) ioremap `0xb011000` and write the c1 RCG (src 4, div 1) plus the
+   core branch directly. Once a real provider owns these muxes, an external
+   write makes CCF's cached `md->src`/`md->div` lie. The diagnostic must not be
+   removed before the provider works, or CPU4-7 are left on XO.
+3. **Gate 5 — CPU-only DTS + config.** APC rail, AVS child, SPM, APM, ACC, CPR
+   and APCC nodes, CPU `clocks`/`clock-names`, and the CPU OPP table, as a CPU
+   only include that composes with the navigation session's board DTS instead
+   of overwriting it. Then `CONFIG_CPUFREQ_DT` etc.
+4. **Gate 6 — thermal.** TSENS is disabled; do not treat PMIC/battery
+   temperature as CPU die temperature, and do not run sustained high-OPP stress
+   before SoC temperature exists.
+5. **Gate 7 — CPUIdle**, later, with its own PSCI conversion.
+
+Gate 1 (SPM/AVS + APC rail sources) is done as sources; only their DT
+declaration is outstanding and belongs to gate 5.
+
+## Gate 3 inputs — verified against the upstream oracle today
+
+Oracle: `msm8953-mainline/linux`, branch `alikates/6.4/cpufreq`, commit
+`de022aeef8daeec136132b3692dfb51b2d3b63ef` — `drivers/clk/qcom/apcc-msm8953.c`
+and `arch/arm64/boot/dts/qcom/msm8953.dtsi`. Fetched and read this session; this
+is a WIP branch and the driver is not upstream-merged. Its DVFS wiring is
+unfinished: the upstream CPU nodes carry no `operating-points-v2`, and the apcc
+node has none either, so upstream's OPP block never runs there.
+
+Reusable, verified facts:
+
+- **Binding IDs** (`include/dt-bindings/clock/qcom,apcc-msm8953.h`):
+  `APCC_CPU0_CLK 0`, `APCC_CPU4_CLK 1`, `APCC_CCI_CLK 2`, `APCC_CPU0_PLL 3`,
+  `APCC_CPU4_PLL 4`, `APCC_CCI_PLL 5`, `APCC_NUM_CLOCKS 6`.
+- **DT node** (upstream `msm8953.dtsi`): `apcc: clock-controller@b011050`,
+  `compatible = "qcom,apcc-msm8953"`, `#clock-cells = <1>`, and six
+  `reg`/`reg-names` pairs in this order: `cpu4-rcg-clk` `0xb011050 0x10`,
+  `cpu4-pll-clk` `0xb016000 0x50`, `cpu0-rcg-clk` `0xb111050 0x10`,
+  `cpu0-pll-clk` `0xb116000 0x50`, `cci-pll-clk` `0xb1d0000 0x50`,
+  `cci-rcg-clk` `0xb1d1050 0x10`. The driver ioremaps by the *clock* name and
+  uses `fast_io`, `reg_stride 4`, `max_register 0x34` for a PLL and `0xc` for a
+  mux. CPU nodes use `clocks = <&apcc APCC_CPU0_CLK>` (CPU0-3) and
+  `<&apcc APCC_CPU4_CLK>` (CPU4-7) with `clock-names = "cpu"`.
+- **Alpha PLL**: custom reg map `L_VAL 0x08, ALPHA_VAL 0x10, USER_CTL 0x18,
+  CONFIG_CTL 0x20, CONFIG_CTL_U 0x24, STATUS 0x28, TEST_CTL 0x30,
+  TEST_CTL_U 0x34`; config `l = 34, config_ctl_val = 0x200d4828,
+  config_ctl_hi_val = 0x6, test_ctl_val = 0x1c000000, test_ctl_hi_val = 0x4000,
+  main_output_mask = BIT(0), early_output_mask = BIT(3)`. All of this matches
+  the donor `apcs_hf_pll` in `../oc-test/drivers/clk/msm/clock-cpu-8953.c`
+  (`base 0xb116000`, same config/test values, same main/early masks), which is
+  the strongest available confirmation that the two implementations describe
+  the same hardware.
+- **Mux-div**: three clocks at `0xb111050`, `0xb011050`, `0xb1d1050` using this
+  tree's `clk_regmap_mux_div_ops` with `parent_map = {5, 4, 2}`,
+  `hid_width = 5`, `src_shift = 8`, `src_width = 3`, `reg_offset = 0`,
+  `enable_reg = 8`, `enable_mask = BIT(0)`. The enable register matches the
+  donor's `APCS_ALIAS1_CORE_CBCR_OFF 0x8` / enable `BIT(0)`.
+- **Parent map cross-check (important).** `md->parent_map[i]` is the *register
+  src value* of parent `i`, and in this tree's
+  `clk-regmap-mux-div.c:145,172,183` it is used both to write src and to decode
+  a read src back to a parent. So upstream asserts parent 0 (the APCS PLL) is
+  src 5. That is confirmed by the donor, which lists exactly one source for all
+  three muxes: `MUX_SRC_LIST({ &apcs_hf_pll.c, 5 })` — the APCS PLL's early
+  output. Parents 1 and 2 are `muxsrc4` = `GPLL0_EARLY` (src 4) and `muxsrc2` =
+  `GPLL2_EARLY` (src 2), extra bring-up sources the donor does not use. Note
+  the donor's own `early_initcall(cpu_clock_pwr_init)` writes `SRC_SEL 5` with
+  the comment "Source GPLL0" — **that comment is wrong**; src 5 is the APCS PLL
+  early output, and the port's own diagnostic agrees (`fs/pstore/ram.c:2222`
+  decodes `src == 5` as "the PLL" and treats everything else as unknown).
+- **Rate notifiers**: `cpu_mux_div_pll_notifier` (PRE_RATE_CHANGE on the PLL
+  while it is mux-selected) and `cpu_mux_div_notifier` (PRE_RATE_CHANGE on the
+  mux) implement the "raise the divider before raising the parent" ordering,
+  because CCF would otherwise always change the parent first. Preserve the
+  behaviour; the donor achieves the same by driving the RCG itself.
+- **API surface** is all present in this tree and was checked: `alpha_pll_config`
+  field names, `PLL_OFF_*`/`PLL_OFF_MAX_REGS`,
+  `clk_alpha_pll_regs[CLK_ALPHA_PLL_TYPE_DEFAULT]`, `pll_vco`/`VCO()`,
+  `struct clk_alpha_pll`, `SUPPORTS_DYNAMIC_UPDATE`,
+  `clk_alpha_pll_configure`, `struct clk_regmap_mux_div`, `mux_div_set_src_div`,
+  `struct dev_pm_opp_config`, `devm_pm_opp_set_config`. This tree's
+  `clk_alpha_pll_ops` still has `.round_rate`, which upstream's override
+  (`rounddown(rate, prate)`) relies on. `clk-regmap-mux-div.o` is already part
+  of `clk-qcom-y`, so the new driver needs no extra `select`.
+
+Decisions to make deliberately, not by copying:
+
+- **OPP block.** Upstream's `probe()` tail runs only if the apcc node has
+  `operating-points-v2`, then does `devm_pm_opp_set_config()` with
+  `genpd_names = {"cpr"}` and `clk_names = {"cci"}` plus
+  `devm_pm_opp_of_add_table()`. That is the mainline `apcc`/`cpr` genpd model,
+  which is **not** our CPR port: our CPR is a regulator and its consumer
+  requests corner-encoded voltages. Upstream's DT has no OPP here either, so
+  the block is dead code on this SoC. Plan is to drop it and drive the CPU OPP
+  table from cpufreq-dt with `cpu-supply = <&apc_vreg>` and corner-encoded
+  `opp-microvolt`; record whichever way it is resolved.
+- **SoC matching.** Upstream reads the *root* node compatible
+  (`of_find_node_by_path("/")` + `of_match_node`) to pick a PLL count — a
+  workaround for the same driver serving msm8953/sdm450/sdm632. For a
+  single-SoC port, do not copy the root-node lookup; match the device node.
+- **PLL count / VCO oddity.** Upstream passes `num_plls = 1` for msm8953 and
+  `3` for sdm632, and in `register_pll()` the `if (num_plls)` branch overwrites
+  the msm8953 `VCO(0, 652800000, 2208000000)` with `apcc_sdm632_pll_vcos[0]` =
+  `VCO(0, 614400000, 2016000000)`. That looks like an upstream bug; the donor's
+  `apcs_hf_pll` uses `min_rate 480000000 / max_rate 2784000000`. For our
+  stock-bin-2 scope the honest range is 652.8–2016 MHz. Flagged, unresolved —
+  decide and record.
+- **Extra mux parents.** With three parents,
+  `mux_div_determine_rate`/`__mux_div_set_rate_and_parent` can pick GPLL0 or
+  GPLL2 for a rate the PLL "rounds badly", which would silently bypass the
+  voltage/OPP path. Decide whether to keep all three parents or constrain the
+  port to the PLL parent the donor uses.
+
+## Verification available in this session (and its limits)
+
+Single-object compile check against the existing `out/` build tree — this is
+what "compile-verified" means throughout the plan:
+
+```
+KBUILD_CHECK_EXTRA='-DCONFIG_REGULATOR_CPR3 -DCONFIG_REGULATOR_CPR4_APSS' \
+  porting/build-test/kbuild-check.sh drivers/regulator/cpr3-regulator.c ...
+```
+
+The extra `-D` is needed because `out/.config` (run164) predates these symbols;
+the checker takes the saved command from `out/drivers/regulator/.core.o.cmd`
+and re-points its source-tree paths at the repo. Toolchains present:
+`clang` 23.1.3 and `aarch64-linux-gnu-gcc` 16.2.0. Strict
+`scripts/checkpatch.pl` is clean (0 errors, 0 warnings) on every file added or
+changed.
+
+Host tests, all software-only: `porting/build-test/test-msm8953-apm.py`,
+`test-msm8953-mem-acc.py`, `test-msm8953-spm.py`,
+`test-msm8953-spm-regulator.py`. They compile the actual C functions against
+host MMIO/IPI/regmap mocks. They prove nothing about probe, DT schema, real
+timing, IPI delivery, supplier lifetime or hardware. `qcom,saw2.yaml` was only
+parsed for syntax; `dt_binding_check` has not run. The new alpha-PLL/mux port
+has no host test yet.
+
+## Constraints to keep
+
+- **No kernel build, no image, no flash, no boot** without the user explicitly
+  authorizing that step. A passing build never authorizes a boot.
+- Do not edit the navigation-button session's board DTS, and do not change the
+  shared phone's boot state. Do not test the prepared root candidate or touch
+  logdump; coordinate with the user first.
+- Only commit edits; no co-author or assisted-by trailers.
+- Report "unverified" for anything not reproduced on device. Boot cycles are the
+  scarce resource.
+- Before concluding anything, check local history for a prior fix and check
+  upstream/AOSP sources — several subsystems on this port were already solved
+  once and the answer was in the history.
+
+## Unverified / open
+
+- Nothing in this CPU stack has run on hardware. No probe, no clock rate, no
+  corner, no OPP, no cpufreq policy, no CPU info change.
+- The compile checks are against `out/.config` from a different source copy
+  (`/tmp/ack-run164-source`); a real configuration with these symbols selected
+  has not been generated or built.
+- Which of the three mux parents (and the PLL VCO range) the final port should
+  accept is unresolved.
+- The device's state as last observed this session: port kernel `6.12.93-4k
+  #22`, boot_id `7f816860-1f81-497c-95ce-1bba25b78cf2`, no `su`. Not re-checked
+  since.
