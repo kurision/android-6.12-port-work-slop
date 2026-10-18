@@ -174,6 +174,34 @@ The generic target SPM driver and its other SoCs are not changed.
    memory-ACC order, hardware loop limits, locking and error rollback.
    `cpr3_regulator_register()` explicitly requires SPM when hardware closed
    loop is selected (donor cpr3-regulator.c:6445-6461).
+
+   Scoping done 2026-10-18, before editing:
+
+   - Files to port (donor): `cpr3-regulator.c` 6601, `cpr3-regulator.h` 1116,
+     `cpr3-util.c` 2487, `cpr4-apss-regulator.c` 2042, plus two small headers
+     `linux/regulator/cpr3-uv.h` and `linux/regulator/msm-ldo-regulator.h`
+     (~12.3k lines total). Kconfig is `REGULATOR_CPR3` (core, selects
+     `cpr3-util.o`) plus `REGULATOR_CPR4_APSS` which selects it.
+   - The vendor helper names (`regulator_aging_adjust`, `regulator_config_*`,
+     `regulator_update_ctrl_state`, `regulator_set_bhs_mode`, ...) are defined
+     inside the cpr3 files, not in a patched regulator core, so no core
+     changes are implied.
+   - External prerequisites already exist in the target and match the donor
+     signature: `soc/qcom/apm.h` (`msm_apm_ctrl_dev_get`, `msm_apm_get_supply`,
+     `msm_apm_set_supply`, `enum msm_apm_supply`), the SAW4 provider
+     (`msm8953_spm_*`) and the memory-ACC regulator (`vreg->mem_acc_regulator`
+     consumer, `ctrl->mem_acc_threshold_volt`, `ctrl->mem_acc_corner_map`).
+   - Silicon values are DT-provided (`qcom,cpr-fuse-*`, `qcom,cpr-corners`,
+     `qcom,cpr-voltage-floor/ceiling`, `qcom,cpr-ro-sel`, ...); there is no
+     `nvmem` path, the CPR hardware reads its own fuses. The SoC-specific
+     numbers live in the board dtsi, not the C driver.
+   - The target's `CONFIG_QCOM_CPR` / `drivers/pmdomain/qcom/cpr.c` is a
+     different controller (qcs404 only, `qcom,qcs404-cpr`) and cannot serve
+     MSM8953; the donor closed-loop CPR4 remains the only path.
+   - Plan: port the core and CPR4-APSS as a disabled, unwired block, keep the
+     CPR4 path and drop the unused CPR3/CPRH/MMSS variants only where removal
+     is provably inert, and compile-check object by object before any boot.
+
 3. **CCF CPU provider.** Adapt the donor clock behavior to 6.12's clock
    framework; do not import its incompatible private struct-clk framework.
    Preserve both CPU muxes and CCI, PLL MX power voting, transition sequencing,
