@@ -32,8 +32,15 @@ Base target ACK `24bcdc3ed0d0c3bbb3f01179cd7862bd426d17c4` (6.12.93). Branch
 | `6536a1cb6` | `porting/build-test/kbuild-check.sh` single-object compile checker |
 | `9eb29e925` | **CPR3 core + CPR4-APSS closed-loop regulator port** |
 | `4f92fd644` | `KBUILD_CHECK_EXTRA` support in the compile checker |
+| `1c0fbcf33` | dt-bindings: `qcom,apcc-msm8953.yaml` + `qcom,apcc-msm8953.h` |
+| `9e107d1d0` | **CCF CPU clock provider `apcc-msm8953.c` + host test, disabled** |
 
-No commit carries a co-author or assisted-by trailer. HEAD is `4f92fd644`.
+No commit carries a co-author or assisted-by trailer. HEAD is this document's
+own commit, on top of the two gate 3 code commits listed above.
+
+Gate 3 added three commits: the binding header plus schema first, then the
+driver, then the porting record. They only add new files and two lines of
+Kconfig/Makefile; nothing in the tree depends on them yet.
 
 Working tree is dirty from **another session** (run234 GPU/adb work):
 `porting/HANDOFF.md`, `porting/FAILING-COMPONENTS.md`, `porting/README.md`,
@@ -50,6 +57,7 @@ those; this session did not touch them.
 | `drivers/soc/qcom/msm8953-spm.c`, `include/soc/qcom/msm8953-spm.h` | `QCOM_MSM8953_SPM` | SAW4.1 MMIO/AVS; no DT node |
 | `drivers/regulator/qcom-msm8953-spm-regulator.c` | `REGULATOR_QCOM_MSM8953_SPM` | PM8953 S5 rail + AVS-limit child; no DT node |
 | `drivers/regulator/cpr3-regulator.c`, `cpr3-util.c`, `cpr3-regulator.h`, `cpr4-apss-regulator.c`, `include/linux/regulator/cpr3-uv.h`, `include/linux/regulator/msm-ldo-regulator.h` | `REGULATOR_CPR3`, `REGULATOR_CPR4_APSS` | closed-loop CPR4; depends on the three providers above; no DT node |
+| `drivers/clk/qcom/apcc-msm8953.c`, `include/dt-bindings/clock/qcom,apcc-msm8953.h` | `QCOM_CLK_APCC_MSM8953` | shared APCS PLL + 3 mux-dividers + corner-mapped rail voting; no DT node |
 
 Every adaptation from the donor is listed in the plan under "Remaining
 implementation / review gates", gate 2. The load-bearing ones: the donor SPM
@@ -89,9 +97,9 @@ see gate 4 below before touching it.
 Order matters: each stage depends on the one before. Keep everything disabled
 and unwired until the whole stack is ready, then enable in one reviewed step.
 
-1. **Gate 3 — CCF CPU clock provider `drivers/clk/qcom/apcc-msm8953.c`.** Not
-   started; no file, no `dt-bindings/clock/qcom,apcc-msm8953.h`, no Kconfig
-   symbol exist yet. Inputs and decisions are in the next section.
+1. **Gate 3 — done as source.** `drivers/clk/qcom/apcc-msm8953.c` builds,
+   is disabled and has no DT node, so nothing is wired yet. The decisions
+   taken and the contract it imposes on the DTS are in the plan, gate 3.
 2. **Gate 4 — retire the pstore diagnostic clock owner.** `fs/pstore/ram.c`
    `ramoops_debug_cpuclk()` (`:2181`) and `ramoops_cpuclk_c1_to_gpll0()`
    (`:2152`) ioremap `0xb011000` and write the c1 RCG (src 4, div 1) plus the
@@ -101,7 +109,8 @@ and unwired until the whole stack is ready, then enable in one reviewed step.
 3. **Gate 5 — CPU-only DTS + config.** APC rail, AVS child, SPM, APM, ACC, CPR
    and APCC nodes, CPU `clocks`/`clock-names`, and the CPU OPP table, as a CPU
    only include that composes with the navigation session's board DTS instead
-   of overwriting it. Then `CONFIG_CPUFREQ_DT` etc.
+   of overwriting it. Then `CONFIG_CPUFREQ_DT` etc. The CPU nodes must not
+   declare `cpu-supply`: the clock provider owns the corner-encoded rail.
 4. **Gate 6 — thermal.** TSENS is disabled; do not treat PMIC/battery
    temperature as CPU die temperature, and do not run sustained high-OPP stress
    before SoC temperature exists.
@@ -174,6 +183,10 @@ Reusable, verified facts:
   (`rounddown(rate, prate)`) relies on. `clk-regmap-mux-div.o` is already part
   of `clk-qcom-y`, so the new driver needs no extra `select`.
 
+All four decisions below are now resolved; the reasoning and the gate-5
+contract are written up in the plan, gate 3. The facts they rested on are
+kept here.
+
 Decisions to make deliberately, not by copying:
 
 - **OPP block.** Upstream's `probe()` tail runs only if the apcc node has
@@ -221,11 +234,15 @@ changed.
 
 Host tests, all software-only: `porting/build-test/test-msm8953-apm.py`,
 `test-msm8953-mem-acc.py`, `test-msm8953-spm.py`,
-`test-msm8953-spm-regulator.py`. They compile the actual C functions against
-host MMIO/IPI/regmap mocks. They prove nothing about probe, DT schema, real
-timing, IPI delivery, supplier lifetime or hardware. `qcom,saw2.yaml` was only
-parsed for syntax; `dt_binding_check` has not run. The new alpha-PLL/mux port
-has no host test yet.
+`test-msm8953-spm-regulator.py`, `test-msm8953-apcc.py`. They compile the
+actual C functions against host MMIO/IPI/regmap/regulator mocks. They prove
+nothing about probe, real timing, IPI delivery, supplier lifetime or
+hardware. `test-msm8953-apcc.py` covers the corner plan lookup, the
+above-plan refusal, the shared-rail vote and the rollback on regulator
+failure. `qcom,saw2.yaml` was only parsed for syntax; `qcom,apcc-msm8953.yaml`
+passed `make dt_binding_check` with dtschema installed. `test-msm8953-spm.py`
+currently fails to build its host mock on this toolchain (`READ_ONCE`,
+`EPROBE_DEFER` undeclared) and was not touched by this session.
 
 ## Constraints to keep
 
@@ -248,8 +265,11 @@ has no host test yet.
 - The compile checks are against `out/.config` from a different source copy
   (`/tmp/ack-run164-source`); a real configuration with these symbols selected
   has not been generated or built.
-- Which of the three mux parents (and the PLL VCO range) the final port should
-  accept is unresolved.
+- The PLL VCO range and the mux parent set are now decided (plan, gate 3):
+  652.8-2016 MHz, and all three parents kept.
+- The provider is compiled and schema-checked only. It has never probed, has
+  never moved a mux, has never voted a corner, and the PLL rate notifier has
+  never fired. Nothing about gate 3 has run on hardware.
 - The device's state as last observed this session: port kernel `6.12.93-4k
   #22`, boot_id `7f816860-1f81-497c-95ce-1bba25b78cf2`, no `su`. Not re-checked
   since.

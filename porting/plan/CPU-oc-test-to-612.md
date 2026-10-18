@@ -242,6 +242,71 @@ The generic target SPM driver and its other SoCs are not changed.
    Preserve both CPU muxes and CCI, PLL MX power voting, transition sequencing,
    valid clock-rate readback, error rollback and shared policy semantics.
    Review all affected sibling clocks on shared-PLL changes.
+
+   Done 2026-10-18: `drivers/clk/qcom/apcc-msm8953.c`,
+   `include/dt-bindings/clock/qcom,apcc-msm8953.h`,
+   `Documentation/devicetree/bindings/clock/qcom,apcc-msm8953.yaml`, Kconfig
+   `QCOM_CLK_APCC_MSM8953` (bool) and the Makefile entry. Built as a source,
+   disabled, with no DT node, no image and no boot.
+
+   One shared PLL, three mux-dividers, three exported clocks:
+   - The PLL is `clk_alpha_pll` with `CLK_ALPHA_PLL_TYPE_HUAYRA_APSS`, whose
+     register offsets are byte-for-byte the donor's `APCS_PLL_*` map
+     (L 0x08, ALPHA 0x10, USER_CTL 0x18, CONFIG_CTL 0x20/0x24, STATUS 0x28,
+     TEST_CTL 0x30/0x34), so no bespoke register array is needed. Config
+     `l = 34`, `config_ctl_val 0x200d4828`, `config_ctl_hi_val 0x6`,
+     `test_ctl_val 0x1c000000`, `test_ctl_hi_val 0x4000`, main output BIT(0),
+     early output BIT(3): the donor's values. `SUPPORTS_DYNAMIC_UPDATE`
+     because the donor reprograms a running PLL.
+   - Each mux is this tree's `clk_regmap_mux_div_ops` with `hid_width 5`,
+     `hid_shift 0`, `src_width 3`, `src_shift 8` and `parent_map {5, 4, 2}`,
+     which is the donor's `is_half_divider` mux with the register src values.
+
+   Decisions, made deliberately rather than copied from the WIP upstream:
+   - **VCO.** `VCO(0, 652800000, 2016000000)`, the stock fused bin-2 range the
+     user approved. Upstream's `if (num_plls)` branch overwrites the msm8953
+     VCO with the sdm632 one, `VCO(0, 614400000, 2016000000)`, which is an
+     upstream bug and is not copied. The donor's 480-2784 MHz OC range is out
+     of scope. A request above the plan is refused with `-ERANGE` rather than
+     rounded up into an unfused corner.
+   - **SoC match and PLL count.** No root-node `of_match_node()` and no
+     `num_plls`: single-SoC driver, device node compatible only.
+   - **One PLL, three ids dropped.** All three upstream `*-pll-clk` entries
+     alias the same APCS PLL (0xb016000/0xb116000/0xb1d0000 are the APSS APLL
+     aliases and the donor drives one `apcs_hf_pll`). Exporting three ids for
+     one register block would let two consumers reprogram it behind each
+     other's back, so the binding exposes only the three mux clocks and the
+     PLL is parent 0 of all three.
+   - **Mux parents kept.** GPLL0 (src 4) and GPLL2 (src 2) stay, because the
+     RCG really has those sources and the measured boot state parks c0/c1 on
+     GPLL0; a single-parent provider would answer `get_parent` with
+     "Can't find parent with src 4" on a boot that is working. The rail
+     coupling is rate based, so a GPLL rate still gets a correct corner.
+   - **Transition sequencing.** One PLL `PRE_RATE_CHANGE` notifier parks every
+     mux still muxed on the PLL at its largest divider (divide by 64) before
+     the PLL moves, the SDX55 pattern. Upstream's second notifier on the mux
+     adds nothing on top of that. The src the notifier uses is the one CCF
+     last programmed, which is all a clock driver can know about writes made
+     outside it; gate 4 is what removes those external writes.
+   - **OPP block dropped.** No `operating-points-v2` handling, no
+     `devm_pm_opp_set_config()`, no genpd "cpr" domain. That is the mainline
+     apcc/cpr genpd model, not our CPR regulator.
+   - **The provider owns the rail.** This is the donor's `vdd_class`, ported:
+     each of the three clocks votes the corner its new rate needs, the highest
+     vote is programmed to the corner-encoded `vdd-cl` regulator, and the vote
+     is applied *before* the frequency moves and rolled back if the rate
+     change fails. That is what the donor's `clk_core_set_rate_nolock()` did:
+     `vote_rate_vdd()` before `set_rate`, `unvote_rate_vdd()` after.
+   - **Speed bin.** Read from PTE EFUSE bits 8-10 (donor resource `efuse`,
+     0xa4124) and used to select `qcom,speedN-bin-v0-cl` and
+     `qcom,speedN-bin-v0-cci`, with the donor's fallback to bin 0.
+
+   Contract for gate 5, recorded here so the DTS does not fight the driver:
+   the CPU nodes must **not** declare `cpu-supply`, because the provider owns
+   the rail; the CPU OPP table carries `clock-frequency` only, and the `apcc`
+   node needs `vdd-cl-supply = <&apc_vreg>` plus `clocks`/`clock-names` for
+   XO, GPLL0 early and GPLL2 early. CCI keeps its own plan so a CCI rate change
+   cannot leave the shared rail at a CPU corner.
 4. **Replace the diagnostic clock owner deliberately.** Target
    `fs/pstore/ram.c:2152-2178,2226-2228` currently switches CPU4-7 to GPLL0.
    Keep this proven baseline until a real provider takes ownership; do not
