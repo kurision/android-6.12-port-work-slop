@@ -1,0 +1,27 @@
+$ python3 porting/logging/test_ramoops_witness_open.py
+witness allocation failure, retry cleanup, and successful caching passed
+rc=0
+$ python3 porting/logging/test_ramoops_stage_queue.py
+stage queue: blocked storage, bounds, copies, FIFO, errors, teardown passed
+rc=0
+$ python3 porting/logging/test_ramoops_snap_commit.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.241s
+
+OK
+rc=0
+$ python3 porting/logging/test_decode_reset.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.033s
+
+OK
+rc=0
+$ python3 porting/logging/test_decode_reset_path.py
+reset path: actual C write/first-event retention/next-boot copy, identity, truncation, torn records and recovery CRC checks passed
+rc=0
+total: 0 errors, 0 warnings, 0 checks, 110 lines checked
+
+Your patch has no obvious style problems and is ready for submission.
+checkpatch_rc=0

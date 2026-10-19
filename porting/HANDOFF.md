@@ -1,5 +1,45 @@
 # Handoff — tissot 6.12 port, update 2026-10-18
 
+## User-built run259: do not interpret the recovered log as a new boot
+
+The user built/booted run259 after the agent's W=1 build failed in pstore.
+Splash/reset is user-reported; fastboot command output is not yet available.
+Read-only recovery found rooted stock and a 64 MiB logdump **identical to run258**;
+there is no fresh run259 failure log. Checkout/staged pstore sources diverge and
+the staged version deletes complete diagnostic helper implementations, not just
+printks. Both sources and provenance were preserved without code/device changes.
+See [CPU handoff](HANDOFF-cpu-bringup-2026-10-19.md) and
+`artifacts/snapshot60/run259-user-capture/`. Do not overwrite/reuse run259 or infer
+an early-kernel cause from stale records. Next diagnostic change needs agreement.
+
+## After run258: CPU source repair implemented, not built or booted
+
+Approved batch now narrows MSM8953 mailbox reservation to its IPC register,
+restores the PLL's MX-AO SVS vote through rpmpd, pins successful CPU/MX power
+acquisitions across probe failures, and hands the real GPLL0/XO boot state to
+APCC at 652.8 MHz using the checked CPU/CCI transaction. The pstore CPU4 clock
+writer is removed. New DTB must include the now-required MX power domain.
+Seven GCC/Clang host suites, strict checkpatch and focused APCC schema/compiled
+DT wiring checks pass, including 349 MMIO fault positions. This does not prove
+real CCF/genpd integration or hardware behavior. **No new kernel build, staged
+sync, package or phone operation.** See [CPU handoff](HANDOFF-cpu-bringup-2026-10-19.md)
+for exact changes, test logs, source hashes and remaining verification gates.
+
+## 2026-10-19 run258: build/boot capture complete, CPUFreq still blocked
+
+Fresh build and RAM boot completed without flashing; phone restored to rooted
+stock. [CPU handoff](HANDOFF-cpu-bringup-2026-10-19.md#run258-built-and-ram-booted-apcc-blocked-by-cpu4mailbox-resource-overlap)
+records hashes, config/source checks and capture limits. Evidence is under
+`artifacts/snapshot60/run258-*`; Image SHA256 begins `527a8bcbd8ee59d1`.
+
+APCC fails requesting CPU4 RCG `0xb011050` with `-EBUSY`
+(`run258-logdump.log:560-563`), reproduced from run257. This window overlaps the
+APCS mailbox resource, despite CPU0 being disjoint from APM. No CPUFreq policy;
+transaction/rollback/AVS hardware behavior remains unverified. Physical homescreen
+was observed but severely laggy. Two live samples show ~98% busy CPU and 2.2–2.3
+GiB available RAM; logcat records two SystemUI ANRs. Actual clocks and lag's root
+cause are not yet established. No repair or repeat boot was attempted.
+
 ## Post-run234 component audit
 
 [Fresh live inventory](findings/2026-10-18-live-component-audit.md) records two

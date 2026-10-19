@@ -1,0 +1,17 @@
+[
+  {
+    "path": "drivers/gpu/msm/adreno-zap-compat.h",
+    "checkout_sha256": "3e311805a4d1fad465ecb348556889bd8b61f0dc92e0b73000527f3dabb07cad",
+    "staged_sha256": "987e460f592e18efd2b4a2f58d720196c14e94178038d3e9a20e9661fc68abb0"
+  },
+  {
+    "path": "drivers/misc/qseecom.c",
+    "checkout_sha256": "f032f8e8a02da24f03b726fed34f64bf8295d0e67ebc78e0466b5ac93be72dac",
+    "staged_sha256": "75fde03a0880f821f287f94865cf1761b5048e5108f83e2fed013055dc752871"
+  },
+  {
+    "path": "kernel/reboot.c",
+    "checkout_sha256": "0e24bfa4eeb7abbdb0323748a65f78bce9da734dc097b39552fcd1fe8e8669ae",
+    "staged_sha256": "d8094e854a5047a84461a13a7b2e1c7e20719c262949fab2d2d86fa0cfab731d"
+  }
+]

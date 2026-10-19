@@ -1,5 +1,18 @@
 # MSM8953 CPU bring-up from oc-test
 
+## Latest status after run258 (supersedes historical implementation status below)
+
+The CPU stack exists and run258 booted, but APCC failed on CPU4/mailbox resource
+overlap and CPUFreq remained absent. The user approved the subsequent source
+repair: narrow MSM8953 mailbox ownership, restore PLL MX-AO SVS voting, implement
+checked voltage-first firmware handoff, retain safe power references on errors,
+and remove the pstore clock writer. That batch is implemented and host/focused-DT
+checked, **not kernel-built or hardware-tested**. No idle/suspend/TSENS changes.
+See [current CPU handoff](../HANDOFF-cpu-bringup-2026-10-19.md) for exact scope,
+source hashes and the separately authorized build/boot gates. Prior design
+descriptions below (alpha PLL operations, diagnostic ownership, absent OPPs)
+are historical, not the current implementation contract.
+
 ## Scope approved 2026-10-18
 
 User selected stock-range bring-up first: preserve the donor's shared PLL,

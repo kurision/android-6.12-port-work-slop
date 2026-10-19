@@ -1,0 +1,118 @@
+$ /usr/bin/clang -E -nostdinc -undef -D__DTS__ -x assembler-with-cpp -I include -I scripts/dtc/include-prefixes arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts -o /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dts
+rc=0
+$ dtc -I dts -O dtb -o /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dts
+arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts:697.3-30: Warning (reg_format): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000:reg: property has invalid length (8 bytes) (#address-cells == 2, #size-cells == 1)
+arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts:90.33-95.5: Warning (unit_address_vs_reg): /reserved-memory/qseecom_region@0: node has a unit name, but no reg or ranges property
+arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-mdss.dtsi:568.20-593.5: Warning (unit_address_vs_reg): /soc@0/spmi@200f000/pmic@3/labibb@0: node has a unit name, but no reg or ranges property
+/tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb: Warning (pci_device_reg): Failed prerequisite 'reg_format'
+/tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb: Warning (pci_device_bus_num): Failed prerequisite 'reg_format'
+/tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb: Warning (simple_bus_reg): Failed prerequisite 'reg_format'
+/tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb: Warning (i2c_bus_reg): Failed prerequisite 'reg_format'
+/tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb: Warning (spi_bus_reg): Failed prerequisite 'reg_format'
+arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts:695.38-755.4: Warning (avoid_default_addr_size): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000: Relying on default #address-cells value
+arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts:695.38-755.4: Warning (avoid_default_addr_size): /soc@0/gpu@1c00000/qcom,kgsl-iommu@1c40000: Relying on default #size-cells value
+/tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb: Warning (avoid_unnecessary_addr_size): Failed prerequisite 'avoid_default_addr_size'
+/tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb: Warning (unique_unit_address): Failed prerequisite 'avoid_default_addr_size'
+rc=0
+$ dt-mk-schema -j Documentation/devicetree/bindings/clock/qcom,apcc-msm8953.yaml
+rc=0
+$ dt-validate -s /tmp/opencode/cpu-after-run258-dt-rt3em1n3/schema.json -l qcom,apcc-msm8953 /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /soc@0/clock-controller@b116000 phandle
+3
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@0 clocks
+3 0
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@0 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@1 clocks
+3 0
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@1 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@2 clocks
+3 0
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@2 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@3 clocks
+3 0
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@3 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@100 clocks
+3 1
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@100 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@101 clocks
+3 1
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@101 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@102 clocks
+3 1
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@102 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@103 clocks
+3 1
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /cpus/cpu@103 operating-points-v2
+4
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table phandle
+4
+rc=0
+$ fdtget -l /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table
+opp-652800000
+opp-1036800000
+opp-1401600000
+opp-1689600000
+opp-1804800000
+opp-1958400000
+opp-2016000000
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /opp-table opp-shared
+
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /soc@0/clock-controller@b116000 power-domains
+3b 6
+rc=0
+$ fdtget -t x /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /soc@0/clock-controller@b116000 power-domains
+3b 6
+rc=0
+$ fdtget -t s /tmp/opencode/cpu-after-run258-dt-rt3em1n3/board.dtb /soc@0/clock-controller@b116000 power-domain-names
+mx
+rc=0
+PASS: compiled DT: all eight CPUs share one OPP table, correct CPU clock IDs, seven OPPs, opp-shared and active-only MX domain.
+board.dtb SHA256=e082c7fbfad1997e329b6ea6949bfa3a76c267c3e05ecdfd0fbc7926610f1b78

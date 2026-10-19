@@ -1,0 +1,12 @@
+[
+  {
+    "file": "ram-checkout.c",
+    "source": "fs/pstore/ram.c",
+    "sha256": "f1ed368d9f313715a6cbe13faf47adc6532e24a2a334a5b265c0968b66264bd1"
+  },
+  {
+    "file": "ram-staged.c",
+    "source": "../ack-staged-run239/fs/pstore/ram.c",
+    "sha256": "5e735eca1526ef4a59f4d8525ff98a5531304e8c46e41b67038648017fd88feb"
+  }
+]

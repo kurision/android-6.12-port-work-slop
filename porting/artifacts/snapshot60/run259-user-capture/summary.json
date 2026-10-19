@@ -1,0 +1,9 @@
+{
+  "user_report": "run259 shows static splash and later resets; no host boot transcript supplied",
+  "image_sha256": "6fa41d995d9d2f6ebded85c933611d4b01d0be478a866ed677416771f5fb1a71",
+  "raw_logdump_identical_to_run258": true,
+  "fresh_run259_kernel_evidence": false,
+  "device": "rooted stock, boot ID a0764a72-cac2-43f8-b0fa-e78fd5fa7fe4",
+  "agent_actions": "read-only recovery; no boot, clearing, rebuilding or source edits after user reported run259",
+  "agent_build_status": "initial run259 build failed W=1 in pstore; user later produced image independently"
+}

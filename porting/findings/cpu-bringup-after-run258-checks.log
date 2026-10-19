@@ -1,0 +1,114 @@
+Source-only checks; no kernel build or device operation.
+2026-10-19T10:10:27.855583+00:00
+$ CC=cc python3 porting/build-test/test-msm8953-apcs-mailbox.py
+PASS: exact MSM8953 IPC reservation/send address; six other variants unchanged
+PASS: missing/short resources and mapping/regmap/controller errors propagate
+PASS: minimum resource ends exactly after IPC; DT resource is not mutated
+rc=0
+$ CC=cc python3 porting/build-test/test-msm8953-apcc.py
+PASS: all 49 stock transitions, both CPUs/CCI, voltage ordering, readback and bounds
+PASS: parking source voltage requirement is held even above the target corner
+PASS: warm/cold handoff, external veto ABORT restores full snapshot and old voltage
+PASS: voltage rejection vetoes PRE without hardware writes
+PASS: every one-shot MMIO fault in scenario 0 (78 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 1 (78 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 2 (89 positions) restores both clusters/CCI
+PASS: persistent rollback failure retains safe voltage and blocks further DVFS
+PASS: PLL lock timeout restores original integer L and all muxes
+PASS: silent RCG/L/output-enable write loss is detected and rolled back
+PASS: silent rollback L write loss is detected before voltage can fall
+PASS: failed POST voltage decrease keeps the higher safe vote
+PASS: warm and actual GPLL0/XO cold boot handoff, CPU4 branch enable, idempotent rail pin
+PASS: every cold split-handoff MMIO failure (104 positions) preserves/restores boot state
+PASS: lost CPU4 branch-enable write detected and complete split boot state restored
+PASS: fractional/partial/unknown-source/above-stock handoff states fail without clock writes
+PASS: failed rail enable prevents clock writes and retry enables exactly once
+PASS: absent MX floor/activation blocks handoff and DVFS before MMIO
+PASS: failed rollback latches across fresh per-probe state; no retry can drop its safe vote
+PASS: rail/MX acquisition, attach, runtime-resume and SVS-vote failures retry without ref leaks
+PASS: fresh probe after publication failure reuses powered CPU/PLL state and all power pins
+PASS: probe retries reuse lifetime input pins; failed acquisition cannot disable a live source
+rc=0
+$ CC=cc python3 porting/build-test/test-msm8953-spm.py
+PASS: SAW4 request/idle/level handshake, errors, routing, AVS limits and masks
+rc=0
+$ CC=cc python3 porting/build-test/test-msm8953-spm-regulator.py
+PASS: FTS2-family/HF voltage, selector and step-rate arithmetic
+rc=0
+$ CC=cc python3 porting/build-test/test-msm8953-apm.py
+PASS: APM reads, both switch directions, mask, invalid request, timeout
+rc=0
+$ CC=cc python3 porting/build-test/test-msm8953-mem-acc.py
+PASS: memory-ACC corners, write order, unrelated bits, invalid/stuck states
+rc=0
+$ CC=cc python3 porting/build-test/test-msm8953-cpr-tables.py
+PASS: CPR per-bin, per-revision and misc-fuse table dimensions
+rc=0
+$ CC=/usr/bin/clang python3 porting/build-test/test-msm8953-apcs-mailbox.py
+PASS: exact MSM8953 IPC reservation/send address; six other variants unchanged
+PASS: missing/short resources and mapping/regmap/controller errors propagate
+PASS: minimum resource ends exactly after IPC; DT resource is not mutated
+rc=0
+$ CC=/usr/bin/clang python3 porting/build-test/test-msm8953-apcc.py
+PASS: all 49 stock transitions, both CPUs/CCI, voltage ordering, readback and bounds
+PASS: parking source voltage requirement is held even above the target corner
+PASS: warm/cold handoff, external veto ABORT restores full snapshot and old voltage
+PASS: voltage rejection vetoes PRE without hardware writes
+PASS: every one-shot MMIO fault in scenario 0 (78 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 1 (78 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 2 (89 positions) restores both clusters/CCI
+PASS: persistent rollback failure retains safe voltage and blocks further DVFS
+PASS: PLL lock timeout restores original integer L and all muxes
+PASS: silent RCG/L/output-enable write loss is detected and rolled back
+PASS: silent rollback L write loss is detected before voltage can fall
+PASS: failed POST voltage decrease keeps the higher safe vote
+PASS: warm and actual GPLL0/XO cold boot handoff, CPU4 branch enable, idempotent rail pin
+PASS: every cold split-handoff MMIO failure (104 positions) preserves/restores boot state
+PASS: lost CPU4 branch-enable write detected and complete split boot state restored
+PASS: fractional/partial/unknown-source/above-stock handoff states fail without clock writes
+PASS: failed rail enable prevents clock writes and retry enables exactly once
+PASS: absent MX floor/activation blocks handoff and DVFS before MMIO
+PASS: failed rollback latches across fresh per-probe state; no retry can drop its safe vote
+PASS: rail/MX acquisition, attach, runtime-resume and SVS-vote failures retry without ref leaks
+PASS: fresh probe after publication failure reuses powered CPU/PLL state and all power pins
+PASS: probe retries reuse lifetime input pins; failed acquisition cannot disable a live source
+rc=0
+$ CC=/usr/bin/clang python3 porting/build-test/test-msm8953-spm.py
+PASS: SAW4 request/idle/level handshake, errors, routing, AVS limits and masks
+rc=0
+$ CC=/usr/bin/clang python3 porting/build-test/test-msm8953-spm-regulator.py
+PASS: FTS2-family/HF voltage, selector and step-rate arithmetic
+rc=0
+$ CC=/usr/bin/clang python3 porting/build-test/test-msm8953-apm.py
+PASS: APM reads, both switch directions, mask, invalid request, timeout
+rc=0
+$ CC=/usr/bin/clang python3 porting/build-test/test-msm8953-mem-acc.py
+PASS: memory-ACC corners, write order, unrelated bits, invalid/stuck states
+rc=0
+$ CC=/usr/bin/clang python3 porting/build-test/test-msm8953-cpr-tables.py
+PASS: CPR per-bin, per-revision and misc-fuse table dimensions
+rc=0
+$ perl scripts/checkpatch.pl --strict --no-signoff -
+total: 0 errors, 0 warnings, 0 checks, 1669 lines checked
+
+Your patch has no obvious style problems and is ready for submission.
+rc=0
+$ perl scripts/checkpatch.pl --strict --no-signoff -
+total: 0 errors, 0 warnings, 0 checks, 64 lines checked
+
+Your patch has no obvious style problems and is ready for submission.
+rc=0
+$ dt-doc-validate Documentation/devicetree/bindings/clock/qcom,apcc-msm8953.yaml
+rc=0
+$ python3 /home/kurision/.agents/skills/kernel-development-skills/scripts/check_kernel_api_patterns.py --strict /tmp/opencode/cpu-after-run258-zak22wkd.patch
+No advisory kernel API pattern findings in 3 file(s).
+rc=0
+ba816e8a4fb00dd40501e8bc9a397868a449394c9a940a8faee4c8e9eef99a23  drivers/mailbox/qcom-apcs-ipc-mailbox.c
+287789194adbecdbc07559ca99c8c346acfffd8433dfc83a8b10a840b9e6bb0e  drivers/clk/qcom/apcc-msm8953.c
+8b6eb2c3de37396e6414c82391db6e3f097eca0ebc32c4ffb967bb9170e4b42b  drivers/clk/qcom/Kconfig
+6c75452cb341f5363211971e85776f9f278666b8f3ce0901476051e9d3b8fc9a  fs/pstore/ram.c
+a359e45b7671f99878c35c4b8d12b0088f4eb463feccf86c14b153dabfd98eff  arch/arm64/boot/dts/qcom/msm8953-cpu.dtsi
+df42531c5b69970c4d346aba2c8bb1104e82d742f3dc456ceb01f654f25e7011  Documentation/devicetree/bindings/clock/qcom,apcc-msm8953.yaml
+158b139e4e1e130a322868ee35a5df0f8e4b7c442970bdecd24ef603ff10a6bd  porting/build-test/apcc.config
+00341ae8f9e6a82f705adfbb53a28b174063d38f98c4706cc1f930d3a86152f6  porting/build-test/test-msm8953-apcc.py
+4d04c2b51e840349b272f92e21a618c7bef51c0ad1d0fe558c9f94f2c396e764  porting/build-test/test-msm8953-apcs-mailbox.py

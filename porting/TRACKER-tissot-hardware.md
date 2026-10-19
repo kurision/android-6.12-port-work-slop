@@ -126,3 +126,13 @@ adaptation analysis.
 | IPA + RMNET | Off | `K:2526,2584` | Needs IPA v2.6L |
 | QMI / QRTR channels | Partial | `net/qrtr/`; `vendor.qrtr-ns` exits 1 | Needs remote processors running |
 | Xiaomi modem quirks | Unknown | No Xiaomi-specific quirk found | Bring MPSS up before classifying failures |
+# Run258 CPU test update — 2026-10-19
+
+Built, packaged and RAM-booted the coordinated CPU repair; no flashing. Back on
+rooted stock after capture. APCC fails `-EBUSY` on CPU4's `0xb011050` window
+(`artifacts/snapshot60/run258-logdump.log:560-563`), also present in run257.
+The overlapping APCS mailbox resource was missed by the earlier APM-only review.
+CPUFreq remains absent; DVFS/AVS behavior is not hardware-validated. Severe UI
+lag has measured CPU saturation and two SystemUI ANRs, with >2 GiB RAM available;
+actual clock rates and root cause remain unverified. No repair/repeat boot done.
+See [CPU handoff](HANDOFF-cpu-bringup-2026-10-19.md) for image hashes and raw evidence.

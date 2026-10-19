@@ -1,0 +1,9 @@
+{
+  "image_sha256": "527a8bcbd8ee59d14b4a079ea44a192dd20b6a54e5ad97b53f8b15dd161e94fa",
+  "config_diff": "",
+  "source_files_verified": 69622,
+  "sparse": "unavailable",
+  "dt_validation": "not clean; identical messages against run257 using same schemas",
+  "binding_validation_log": "run258-binding-validation.log",
+  "build_log": "run258-build.log"
+}
