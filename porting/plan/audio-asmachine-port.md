@@ -183,3 +183,24 @@ dependency order:
 The driver compatibles match the donor's nodes exactly, so nothing here is a
 guessing problem; it is a volume problem. A DT written without the clock
 provider would compile, probe, and produce silence.
+
+## The audio clock provider is a rewrite, not a port
+
+CAF's `audio-ext-clk.c` embeds `struct clk` by value in each of its clock
+objects and registers them with `clk_init()`. In this kernel both
+`struct clk` and `struct clk_core` are private to `drivers/clk/clk.c`;
+out-of-tree providers only get `struct clk_hw` plus `struct clk_ops`,
+and `clk_register(dev, hw)` is the exported entry point. So the provider
+has to be written against `clk_hw` ops, not translated.
+
+What it does, from the donor: a GPIO-controlled clock, a pinctrl-state
+clock, and an LPASS clock whose prepare/unprepare call
+`afe_set_lpass_clk_cfg()`, which is why the AFE had to land first. The DT
+node is `qcom,audio-ref-clk` with `qcom,codec-ext-clk-src`,
+`qcom,codec-lpass-ext-clk-freq` and `qcom,codec-lpass-clk-id`; CAF picks
+which of its clocks to build from `qcom,audio-ref-clk-gpio` and
+`qcom,node_has_rpm_clock`.
+
+Tissot uses the LPASS variant (`AUDIO_LPASS_MCLK_2`, 9.6 MHz, id 0x300)
+with no GPIO and no RPM parent, so only the AFE-backed clock and its ops
+are actually needed.
