@@ -524,3 +524,43 @@ donor kernel): `pm8953_s5` is enabled at 1090 mV with 400-1140 mV limits and
 range are the ones that work on this phone. `test-msm8953-spm.py` still fails
 to build its host mock (`READ_ONCE`, `EPROBE_DEFER` undeclared); pre-existing,
 not touched.
+
+## Progress update 2026-10-19, run246/run247
+
+**Scope settled by the user: stock fused range only, 652.8-2016 MHz, no OC.**
+`CONFIG_CPUFREQ_DT=y` is now enabled in `porting/build-test/apcc.config`
+(`b577d9cad`). It is inert until the rail binds: the clock provider takes
+`vdd-cl-supply`, so while the rail is missing the provider defers, the CPU
+clocks stay unregistered, and cpufreq-dt forms no policy.
+
+**Log spam: done.**
+- zapstg per-submission print removed from source, `vmlinux` grep = 0
+  (`b84056c46`).
+- The remaining DIAG printfs in `adreno-zap-compat.h`, `adreno.c` and
+  `adreno_a5xx.c`, commented out by the user, folded in as deletions
+  (`f949cbf2d`). The zap stage records still go to ramoops once per stage.
+- The pstore per-CPU 1M-iteration measurement removed (`aa2fed6ac`).
+- The snapshot heartbeat thinned from every 10th to every 100th, about
+  1260 lines per boot down to about one (`c47a9f1ad`).
+
+**run246 booted for real** (`6.12.93-4k #5`, banner confirmed in its own
+logdump capture). The `-EINVAL` is gone, which confirms `a0616dc9e`. The
+rail now reaches the PMIC and is refused one step later:
+
+    qcom-msm8953-spm-regulator 200f000.spmi:pmic@0:spm-regulator@2000:
+        error -ENODEV: unsupported SMPS type
+
+Two possibilities remain and they are different: the rail is at the wrong
+offset on USID 0, or the type/subtype encoding differs from what the port
+expects. `-ENODEV` does not distinguish them, which is why two boots in a
+row looked identical. `653a4103a` now logs the two bytes and the base
+address, so the next boot names it.
+
+run246 did **not** reset. The earlier apparent reset was me reading a stale
+partition; always match the capture against the run's own banner.
+
+**Standing risk list once the rail binds** (none of this is exercised yet):
+the corner plan and the OPP table must agree or the CPU runs fast at a low
+corner; the APLL is programmed for the first time on this port; the sibling
+mirroring in `apcc-msm8953.c` runs for the first time; and TSENS is still
+off, so nothing throttles on die temperature.
