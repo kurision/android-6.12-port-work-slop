@@ -245,3 +245,14 @@ loopback, compress, effects, LSM and stub codec are not ported at all.
 So the remaining order is: port the PCM platforms (starting with
 `msm-pcm-dsp-noirq`, which every playback route goes through), then the
 stub codec, then write the DT. The DT is the last step, not the first.
+
+## The PCM platforms need CAF ALSA extensions too
+
+msm-pcm-q6-noirq.c, the DSP PCM playback goes through, fails on
+snd_pcm_volume. That type is not upstream; CAF adds
+snd_pcm_add_volume_ctls() and struct snd_pcm_volume to include/sound/pcm.h
+and plumbs them through sound/core/pcm.c.
+
+Third CAF API this kernel lacks, after the clk_hw split for the clock
+provider and the component arrays for the sound card. The audio port is
+therefore CAF audio down to ALSA, not a driver list.
