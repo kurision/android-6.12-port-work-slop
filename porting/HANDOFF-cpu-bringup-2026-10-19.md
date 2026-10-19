@@ -35,18 +35,29 @@ the hardening are in
    port has **no thermal control loop** - `CONFIG_QCOM_TSENS` is not set, the
    CPU nodes do not reference the thermal zones and the shared OPP table has
    no cooling-device, so nothing can throttle them.
-5. **The UI lag is unchanged and is not a clock problem:** system_server at
-   566 % CPU and load 19.96 at 243 s, the same class as run258 but now at
-   2.016 GHz instead of 800 MHz. The graphics/display path is the real
-   porting work.
-6. **Proposed next step, not authorized/executed:** one variable, one boot.
-   Cap the maximum frequency (drop the top entries of the shared OPP table
-   for a test build, or add a board maximum-frequency limit to cpufreq-dt; a
-   governor override is not available from the command line) and add a log
-   line to every coupled transition, so the next run separates a power
-   event from a clock-path hang. A capped image that survives points at the
-   missing TSENS/cooling-device work; a capped image that dies at the same
-   point points into the transaction.
+5. **The UI lag is not a clock problem, and not the display either.** The
+   MDSS fbdev port is **done** (fb0 at 1080x1920, the real otm1911 panel,
+   the vendor composer opening the framebuffer, 1200 frame kickoffs) - the
+   plan document's "nothing ported yet" is out of date. The frames stall
+   because the **GPU stops retiring work**: the kgsl watchdog prints
+   `possible gpu syncpoint deadlock for context 4` with
+   `queue=3123328, submit=3121536, start=3121536, retire=3121536` and 8-10 ms
+   host-side submit times, the composer's kgsl timeline fence never signals
+   (`mdss-fence: sync_fence_wait failed! ret = ffffff92`), SurfaceFlinger
+   fakes vsync, and the display HAL inside system_server retries at 566 %
+   CPU. Full evidence: `findings/gpu-retirement-stall-run261-2026-10-19.md`.
+6. **Proposed next step, not authorized/executed:** the **GPU retirement
+   stall** in the ported kgsl - why `submit`/`start`/`retire` freeze while
+   the queue runs ahead, and why the host-side submit takes 8-10 ms. The
+   port's dispatcher work is the only caller of
+   `kgsl_process_event_groups()`, so the first evidence to collect is the
+   kgsl debugfs state (dispatcher, fault count, per-context
+   queue/submit/start/retire, pending event groups) plus the first submit
+   freeze correlated with the kgsl fault/snapshot prints. Separately, and
+   independently of the GPU, the port has no thermal feedback at all
+   (`CONFIG_QCOM_TSENS` unset, the CPU nodes do not name their thermal zone,
+   the shared OPP table has no cooling-device), which is why a 5.7-core
+   spin at the top OPP kills the phone in about five minutes.
 7. **Phone:** rooted stock `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`,
    boot ID `7185f97b-862e-4d98-87ee-0d0850c36413`, root confirmed. The host
    did not request a recovery reboot; the user force rebooted. No flashing

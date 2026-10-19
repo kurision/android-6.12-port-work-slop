@@ -1,6 +1,7 @@
 # Plan: port the downstream MDSS (fbdev) display driver to 6.12 (tissot)
 
-Written 2026-10-11 after snapshot60 run33. Status: **plan only, nothing ported yet.**
+Written 2026-10-11 after snapshot60 run33. Status: **superseded - the driver is
+ported and it works.** See "Status update" below before working from this doc.
 The decision recorded here is option 2: port the 4.19 donor display driver, so the
 vendor composer (sdm) runs unchanged. This doc covers how display works today on both
 kernels, why the port is needed, what has to be ported, every known or likely bug,
@@ -11,6 +12,30 @@ this session. **unverified** means inferred, and must be proven on a boot before
 is relied on.
 
 ---
+
+## Status update (2026-10-19, after run261)
+
+**The port is done; do not re-plan it.** The downstream MDSS fbdev driver was
+imported into the tree (`6b76153f7`, run198) and now probes, registers
+`fb0` at 1080x1920, finds the real `otm1911` panel with the donor's timing,
+and the vendor composer opens the framebuffer and commits frames
+(`mdss_fb_open: mdssfb_80000 by android.hardwar`, DSI clocked at 802.6 MHz,
+1200 kickoffs). The boot animation renders.
+
+**The lag is not the display.** The frames stall because the **GPU stops
+retiring work** in the ported kgsl: the composer's kgsl timeline fence never
+signals, the MDSS drops the frame
+(`__mdss_fb_wait_for_fence_sub: mdp-fence: sync_fence_wait failed! ret =
+ffffff92`), SurfaceFlinger reports `Faking VSYNC due to driver stall`, and
+the Android display HAL (which lives inside system_server on this ROM) turns
+that into a 5.7-core retry loop. The kgsl's own watchdog fires first:
+`possible gpu syncpoint deadlock for context 4`, with
+`queue=3123328, submit=3121536, start=3121536, retire=3121536` and 8-10 ms
+host-side submit times.
+
+Full evidence and the next step:
+[`findings/gpu-retirement-stall-run261-2026-10-19.md`](findings/gpu-retirement-stall-run261-2026-10-19.md).
+The remaining milestone is the GPU retirement stall, not this driver.
 
 ## 0. Where the project stands (verified)
 
