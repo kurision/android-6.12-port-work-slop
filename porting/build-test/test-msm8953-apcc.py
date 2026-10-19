@@ -331,6 +331,19 @@ static void check_target(struct apcc_msm8953 *a, int index)
     assert(!safety_failures && !a->faulted);
     assert(maps[2].regs[APCC_RCG_CBCR / 4] & APCC_RCG_ENABLE);
 }
+/*
+ * The donor's boot handoff end state: CPU4 on the PLL at the boot rate with
+ * its core branch enabled, while the running CPU0 cluster and the CCI keep
+ * the firmware's configuration.
+ */
+static void check_handoff(struct apcc_msm8953 *a, unsigned long cpu0,
+                          unsigned long cci)
+{
+    assert(raw_rate(1) == 652800000);
+    assert(raw_rate(0) == cpu0 && raw_rate(2) == cci);
+    assert(maps[2].regs[APCC_RCG_CBCR / 4] & APCC_RCG_ENABLE);
+    assert(!safety_failures && !a->faulted);
+}
 int main(void)
 {
     struct apcc_msm8953 a;
@@ -445,11 +458,28 @@ int main(void)
         }
         apcc_power.enabled = false;
         assert(apcc_handoff(&a) == 0);
-        check_target(&a, 1);
-        assert(rail == 1 && rail_enables == 1 && apcc_power.enabled);
+        if (cold)
+            check_handoff(&a, 600000000, 300000000);
+        else
+            check_handoff(&a, 652800000, 261120000);
+        assert(rail == (cold ? 2 : 7) && rail_enables == 1 && apcc_power.enabled);
         assert(apcc_handoff(&a) == 0 && rail_enables == 1);
     }
     puts("PASS: warm and actual GPLL0/XO cold boot handoff, CPU4 branch enable, idempotent rail pin");
+
+    /*
+     * The handoff must not touch the mux of the running CPU0 cluster or the
+     * live CCI: only the PLL and the CPU4 alias1 mux may change.
+     */
+    init(&a, true, 1);
+    maps[2].regs[1] = 0;
+    maps[2].regs[APCC_RCG_CBCR / 4] = 0;
+    struct regmap cpu0_cfg = maps[1], cci_cfg = maps[3];
+    assert(apcc_handoff(&a) == 0);
+    assert(!memcmp(cpu0_cfg.regs, maps[1].regs, sizeof(cpu0_cfg.regs)) &&
+           !memcmp(cci_cfg.regs, maps[3].regs, sizeof(cci_cfg.regs)));
+    check_handoff(&a, 600000000, 300000000);
+    puts("PASS: boot handoff leaves the running CPU0 mux and the CCI untouched");
 
     init(&a, true, 1); maps[2].regs[1] = 0;
     maps[2].regs[APCC_RCG_CBCR / 4] = 0;
@@ -524,8 +554,8 @@ int main(void)
     retry.supply = NULL; retry.corner = 0;
     domain = &retry;
     for (int i = 0; i < APCC_NUM_CLOCKS; i++) retry.output[i].apcc = &retry;
-    assert(apcc_pin_power(&retry) == 0 && retry.corner == 1);
-    assert(apcc_handoff(&retry) == 0); check_target(&retry, 1);
+    assert(apcc_pin_power(&retry) == 0 && retry.corner == 2);
+    assert(apcc_handoff(&retry) == 0); check_handoff(&retry, 600000000, 300000000);
     assert(supply_gets == 1 && rail_enables == 1 && mx_attaches == 1 && mx_refs == 1 && mx_votes == 1);
     puts("PASS: fresh probe after publication failure reuses powered CPU/PLL state and all power pins");
 
