@@ -1,0 +1,16 @@
+== snapshot60/run261 image=/home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/boot-run261.img sha256=6b008c81b57f4099d24ae521dec84eab10d43d21000fb730062294df3c76a054
+scratch retained: /tmp/opencode/ack-evidence-ylmd_ww3
+raw success: 67108864 bytes; readable prefix: 1965307 bytes
+slot0: magic=0x52414d4f seq=277 timestamp_ns=272123160155 header_valid=True version=1 validation=header-and-payload-crc32-verified integrity=verified: header and payload CRC32 console=recovered dmesg=0
+  diag marks boot_id=0xae1d8704: 0x00=0x314d4453/0x00000000 0x08=0x324d4453/0x00000000 0x10=0x4d445053/0x00000000 0x18=0x20524556/0x10100000 0x20=0x3056524d/0x00000000 0x28=0x3156524d/0x10100000 0x30=0x3049484d/0x10100000 0x40=0x3057484d/0x00000000 0x48=0x3157484d/0x00000005 0x50=0x3149484d/0x10100000 0x68=0x3046494d/0x00000000 0x70=0x3146494d/0x00000100 0x78=0x3150534d/0x00000000
+slot1: magic=0x52414d4f seq=276 timestamp_ns=266897416720 header_valid=True version=1 validation=header-and-payload-crc32-verified integrity=verified: header and payload CRC32 console=recovered dmesg=0
+  diag marks boot_id=0xae1d8704: 0x00=0x314d4453/0x00000000 0x08=0x324d4453/0x00000000 0x10=0x4d445053/0x00000000 0x18=0x20524556/0x10100000 0x20=0x3056524d/0x00000000 0x28=0x3156524d/0x10100000 0x30=0x3049484d/0x10100000 0x40=0x3057484d/0x00000000 0x48=0x3157484d/0x00000005 0x50=0x3149484d/0x10100000 0x68=0x3046494d/0x00000000 0x70=0x3146494d/0x00000100 0x78=0x3150534d/0x00000000
+slot pair: compatible with consecutive samples; same boot not proven; freshness remains unverified
+periodic-tail-slot0: seq=277 timestamp_ns=274319431040 header_valid=True version=1 validation=header-and-payload-crc32-verified integrity=verified: header and payload CRC32 tail=recovered
+periodic-tail-slot1: seq=276 timestamp_ns=271820064374 header_valid=True version=1 validation=header-and-payload-crc32-verified integrity=verified: header and payload CRC32 tail=recovered
+periodic tail slot pair: compatible with consecutive samples; same boot not proven; periodic samples are not crash/reset records
+No valid dmesg dump record recovered from the snapshot slots.
+No valid panic/oops dmesg crash record recovered; this does not prove no crash occurred.
+recovery report: /home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/run261-ramoops.json
+SD unavailable/error: 0 bytes; command failed or invalid diagnostic capture; retained /tmp/opencode/ack-evidence-ylmd_ww3/sd.log
+USB independently captured; collector does not modify USB evidence

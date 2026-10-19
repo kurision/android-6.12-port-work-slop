@@ -1,0 +1,19 @@
+{
+  "image_sha256": "6b008c81b57f4099d24ae521dec84eab10d43d21000fb730062294df3c76a054",
+  "kernel_payload_sha256": "59eb2793a5f7993002f544864f18e46250f51395f1eec8b69b802374bfe33d15",
+  "banner": "Linux version 6.12.93-4k (kurision@omarchy) (clang version 23.1.3, LLD 23.1.3) #1 SMP PREEMPT Mon Oct 19 21:50:01 +0545 2026",
+  "config_diff": "",
+  "dtb_sha256": "e082c7fbfad1997e329b6ea6949bfa3a76c267c3e05ecdfd0fbc7926610f1b78",
+  "dtb_identical_to_run260": true,
+  "source_delta_vs_run260": [
+    "drivers/clk/qcom/apcc-msm8953.c"
+  ],
+  "ramdisk_init_cmdline_vs_run258_and_run260": "identical",
+  "diagnostic_symbols": "all five present",
+  "w1_objects": "fs/pstore/ram.o kernel/reboot.o drivers/clk/qcom/apcc-msm8953.o drivers/mailbox/qcom-apcs-ipc-mailbox.o drivers/soc/qcom/msm8953-spm.o built clean; only the inherited sorttable.c and kernel-doc warnings",
+  "new_dt_messages": [],
+  "removed_dt_messages": [],
+  "dt_message_count_vs_run260": "332 identical lines",
+  "sparse": "unavailable",
+  "state": "build/package verified; not yet booted"
+}

@@ -1,0 +1,8 @@
+21:58-22:00 host: the port kernel was alive on adb (6.12.93-4k, boot id
+50b6b84b-0f7d-4545-95bd-77681a90c948) with a working cpufreq policy0 over
+CPUs 0-7 and all seven stock OPPs, scaling_cur_freq 2016000 kHz.
+The user reports the boot animation lagging hard.
+21:59 host: "adb root" was issued; adbd restarted and the adb link was
+intermittently absent afterwards. Two manual logcat dumps were attempted
+at 22:00 and failed with "device not found" (23-byte stub files removed).
+22:00 user: the phone died; the user will force reboot.

@@ -1,0 +1,5 @@
+{
+  "new_messages": [],
+  "removed_messages": [],
+  "note": "run261 changes only drivers/clk/qcom/apcc-msm8953.c; the compiled DTB is byte-identical to run260 (e082c7fbfad1997e329b6ea6949bfa3a76c267c3e05ecdfd0fbc7926610f1b78) and the 332 schema messages are identical to run260"
+}

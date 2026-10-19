@@ -1,85 +1,81 @@
-# Handoff: MSM8953 CPU bring-up — source repair after run258; runtime unverified
+# Handoff: MSM8953 CPU bring-up — run261 boots with a working CPUFreq policy
 
-## Resume here — paused at the user's request
+## Resume here — the splash/reset is fixed; the phone now dies of something else
 
-**No diagnosis is established for the new splash/reset.** The run258→run260
-source delta has now been collected and analysed; the analysis and the
-source hardening it implies are in
-`findings/cpu-boot-failure-analysis-run258-run260-2026-10-19.md` and in the
-APCC hardening commit that follows. **The hardened driver has not been
-compiled, packaged or booted.** Do not boot again without approval for the
-next isolation experiment.
+**The boot is fixed.** run261 booted the port kernel, handed the clock over
+the donor's way, created one shared cpufreq policy over CPUs 0-7 with the
+seven stock OPPs and reached `sys.boot_completed=1`. The phone then died
+about 326 s of kernel uptime later with **no kernel-side fault record**. The
+evidence and the analysis are in
+`findings/cpu-dvfs-first-boot-run261-2026-10-19.md`; the pre-run analysis and
+the hardening are in
+`findings/cpu-boot-failure-analysis-run258-run260-2026-10-19.md`.
 
-1. **Delta, now measured rather than assumed:** comparing the run258 and
-   run260 build manifests shows exactly **nine** source files differ (the
-   APCC driver, the apcc power-domain DT lines, the Kconfig dependency, the
-   mailbox doorbell reservation, the deleted pstore CPU4 writer, three
-   declaration-only files, the binding). Everything else, including the
-   uncommitted PMIC/S5/CPR/AVS and diag-init edits, is byte-identical in
-   both builds and cannot explain the regression. run259 and run260 share
-   byte-identical APCC/DT/mailbox sources, so the regression is in that
-   source, not in one build or one packaging step.
-2. **The zero logdump bounds the failure to ~0.8 s .. 4.9 s** after boot,
-   which contains the APCC `device_initcall` probe. `smp_init()` runs before
-   all initcalls, so CPU4-7 on XO is not a boot blocker.
-3. **Ranked suspects:** (1) the APCC probe programmed the live CPU clock
-   path for the first time - it re-wrote the running CPU0 mux and the live
-   CCI divider, and its PLL lock budget was ~2.3x shorter than the donor's,
-   which is the difference between a lockable PLL and a spurious timeout;
-   (2) the new `power-domains` on the clock node lets the platform bus
-   power the shared MX domain off when the probe fails, because the
-   driver's own domain reference was created after the first fallible step;
-   (3) the mailbox change is the enabler, not the fault; (4) the deleted
-   pstore writer is not a boot blocker but removed the only CPU4 clock
-   fallback.
-4. **Hardening applied (not yet built):** the boot handoff is now the
-   donor's proven sequence (PLL, then only the CPU4 alias1 mux and its core
-   branch; the running CPU0 cluster and the CCI are left alone), the PLL
-   lock budget matches the donor, the MX domain is attached before any
-   fallible step, and the park/restore no longer write a mux whose
-   configuration did not change. Host suites pass with GCC and Clang;
-   strict checkpatch is clean; no kernel build and no device operation.
-5. **Last completed test: run260.** Agent built/packaged/restored
-   diagnostic interfaces, RAM-booted once, observed no port ADB, and recovered evidence.
-   Fastboot Sending/Booting both OKAY; user saw static splash then reset. The
-   precleared 64 MiB logdump remained all zero, including console/tail slots and
-   reset records. There is no fresh kernel banner or trace to locate failure.
-   Run259's recovered logdump, by contrast, was entirely stale run258 data.
-6. **Phone:** last confirmed rooted stock
-   `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot ID
-   `770479a1-5951-4bf3-92e7-d382aaa24d83`. The host did not request a recovery
-   reboot for run260: stock returned itself. Readers/logcat children stopped.
-   No flashing, extra boot, or governor/frequency writes were performed.
-7. **Committed checkpoints:** binding `2d56bc749`, mailbox `22529fab4`, APCC
-   `931064e41`, diagnostic declarations/tests `9c1bc7000`, prior provenance
-   `28d9cf677`, run260 handoff `e1e4c2d42`, plus the analysis and the
-   hardening commits that follow. See `findings/cpu-repair-commit-map-2026-10-19.md`.
-   No attribution/sign-off tags or push. Pre-existing PMIC/S5/AVS/CPR-table, init
-   and unrelated documentation changes deliberately remain uncommitted; do not
-   discard them. **The run260 image was built from the complete working tree, not
-   clean HEAD alone.**
-8. **Exact artifact:** snapshot60 `boot-run260.img`, SHA256
-   `5b521015c64e7ab8b36cbde2e73bbcca75b51a8a85b4fa72af94337045a5ff9d`;
-   matching kernel/output `../ack-out-run260`, staged source
-   `../ack-staged-run239`. Image/config/ramdisk/init/cmdline and all 69625 source
-   hashes were verified. Real base was run258; init remains init-run257. Keep
-   these images and raw files; ignored artifacts cannot be recovered by reset.
-9. **Best proposed next test, not authorized/executed yet:** same run260
-   kernel/DTB/ramdisk/init, append only
-   `initcall_blacklist=apcc_msm8953_driver_init`. This skips the APCC probe/power/
-   handoff path without another kernel build. Exact initcall symbol confirmed
-   in matching vmlinux; target blacklist implementation reviewed. Command line
-   becomes 502 bytes and fits without deleting inherited parameters. CPUFreq
-   should be absent and CPU4 may remain at firmware XO speed: this is a control,
-   not a performance fix. A booting control narrows a path, not its failing step.
-   Booting the *hardened* driver instead needs a build first.
-10. **Do not reuse run259/run260 capture helpers directly:** their artifact
-    namespaces are occupied and their guards intentionally refuse overwrites.
-    Inspect `*run261*` before choosing a new run. The existing helper also gates
-    on build.status; for a package-only control use a real package-verification
-    gate, not a fabricated successful build status. Preserve/hash current evidence
-    and early logcat before any approved preclear; start bounded capture before
-    fastboot and poll identity through return to stock. Read the boot reference.
+1. **Last completed test: run261.** Image SHA256
+   `6b008c81b57f4099d24ae521dec84eab10d43d21000fb730062294df3c76a054`,
+   kernel payload `59eb2793a5f7993002f544864f18e46250f51395f1eec8b69b802374bfe33d15`,
+   banner `#1 ... Mon Oct 19 21:50:01 +0545 2026`. The only source difference
+   against run260 is `drivers/clk/qcom/apcc-msm8953.c`; the DTB, config,
+   ramdisk, init and command line are identical. Fastboot Sending/Booting
+   both OKAY. 41 port ADB samples, boot_completed 1, bootanim stopped.
+2. **The APCC handoff worked and is now evidenced:**
+   `boot state: pll 00000000 00000000 00000000 0000000f mux 00000401 00000000
+   00000403` followed by `shared CPU/CCI domain, speed bin 2, CPU 799999804
+   CCI 399999902 Hz, corner 2` - the donor's post-boot state. cpufreq then
+   reported `Running at unlisted initial frequency: 799999 KHz, changing to:
+   1036800 KHz` and one policy0 covers CPUs 0-7 with all seven stock OPPs.
+3. **There is a kernel log for a boot that reached userspace** for the first
+   time: 1,965,307 readable bytes plus two CRC32-verified snapshot slots and
+   two verified periodic printk tails. run260's logdump was 64 MiB of zeros.
+4. **The death is a separate, unverified problem.** Last kernel message at
+   272.35 s (ordinary Android service startup), last ADB at host 348.3 s,
+   device gone at 353.3 s, back on rooted stock at 453.3 s after the user's
+   force reboot. No panic, oops, lockup, watchdog bite or ACKRESET1 record.
+   Leading hypothesis: the CPUs sat at 2016 MHz for 91 % of the run and this
+   port has **no thermal control loop** - `CONFIG_QCOM_TSENS` is not set, the
+   CPU nodes do not reference the thermal zones and the shared OPP table has
+   no cooling-device, so nothing can throttle them.
+5. **The UI lag is unchanged and is not a clock problem:** system_server at
+   566 % CPU and load 19.96 at 243 s, the same class as run258 but now at
+   2.016 GHz instead of 800 MHz. The graphics/display path is the real
+   porting work.
+6. **Proposed next step, not authorized/executed:** one variable, one boot.
+   Cap the maximum frequency (drop the top entries of the shared OPP table
+   for a test build, or add a board maximum-frequency limit to cpufreq-dt; a
+   governor override is not available from the command line) and add a log
+   line to every coupled transition, so the next run separates a power
+   event from a clock-path hang. A capped image that survives points at the
+   missing TSENS/cooling-device work; a capped image that dies at the same
+   point points into the transaction.
+7. **Phone:** rooted stock `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`,
+   boot ID `7185f97b-862e-4d98-87ee-0d0850c36413`, root confirmed. The host
+   did not request a recovery reboot; the user force rebooted. No flashing
+   and no governor/frequency writes were performed.
+8. **Committed checkpoints:** binding `2d56bc749`, mailbox `22529fab4`, APCC
+   `931064e41`, diagnostic declarations/tests `9c1bc7000`, provenance
+   `28d9cf677`, run260 handoff `e1e4c2d42`, analysis `3b3f9f660`, APCC
+   hardening `647bd6404`, then the run261 evidence commit. No
+   attribution/sign-off tags or push. Pre-existing PMIC/S5/AVS/CPR-table,
+   init and unrelated documentation changes deliberately remain uncommitted;
+   do not discard them.
+9. **Exact artifact:** snapshot60 `boot-run261.img` (gitignored, keep the
+   file), output `../ack-out-run261`, staged source `../ack-staged-run239`,
+   source manifest `run261-source-verification.json` (69625 files, only
+   `drivers/clk/qcom/apcc-msm8953.c` changed against run260), config diff
+   empty, DTB byte-identical to run260, schema messages identical (332).
+10. **Do not reuse run259/run260/run261 capture helpers directly:** their
+    artifact namespaces are occupied and their guards intentionally refuse
+    overwrites. `run261-host-experiment.py` reuses the SHA-pinned reviewed
+    `run259-host-experiment.py` in the run261 namespace. For a package-only
+    control use a real package-verification gate, not a fabricated build
+    status. Preserve/hash current evidence before any approved preclear; start
+    bounded capture before fastboot and poll identity through return to
+    stock. Read the boot reference.
+11. **Build hygiene, updated rule:** do not do clean builds unless required,
+    and use the default `out` directory instead of a per-run output
+    directory. The run261 build used the historical per-run layout
+    (`../ack-out-run261`) because it continues that chain; the next build
+    should follow the new rule.
 
 The diagnostic restoration fixes W=1 declarations, not the boot failure. Do not
 revert the CPU repair wholesale or resume speculative PLL/voltage edits. First
