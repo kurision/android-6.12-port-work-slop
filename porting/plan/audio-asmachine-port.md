@@ -160,3 +160,26 @@ still names cpu_dai_name, platform_name and codec_dai_name, 143 sites,
 which this tree replaces with the cpus[] and codecs[] component arrays.
 That conversion decides which DAI each route reaches and there is no
 test here that would catch a mistake until the phone makes a sound.
+
+## What audio still needs, measured 2026-10-19
+
+The drivers are in; what is left is not a transcription. Three things, in
+dependency order:
+
+1. **The AFE driver.** CAF's `qcom,audio-ref-clk` node, which supplies the
+   codec's external clock, is a clock provider whose prepare() calls
+   `afe_set_lpass_clk_cfg()` in CAF's `techpack/audio/dsp/q6afe.c` — **11,391
+   lines**, plus its 593-line header and the ADSP loader, SSR and glink glue
+   around it. This tree has no AFE, so the clock provider has nothing to
+   program. This is larger than everything ported so far in this series
+   combined.
+2. **The clock provider**, `audio-ext-clk.c`, 341 lines, once the AFE exists.
+3. **The pinmux and DT.** This tree's `msm8953.dtsi` has no audio pin groups at
+   all, so CAF's tissot `pinctrl.dtsi` (263 lines, of which the pri TLMM lines
+   are gpio88/91/93) plus the SoC-level audio pin groups have to come across,
+   and with them `msm8953-audio.dtsi` (516 lines) and tissot `audio.dtsi`
+   (148 lines).
+
+The driver compatibles match the donor's nodes exactly, so nothing here is a
+guessing problem; it is a volume problem. A DT written without the clock
+provider would compile, probe, and produce silence.
