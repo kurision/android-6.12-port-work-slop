@@ -2,35 +2,69 @@
 
 ## Resume here — paused at the user's request
 
-**No diagnosis is established for the new splash/reset. Do not boot again
-without approval for the next isolation experiment.** The user suspects another
-CPU-related change. That remains a hypothesis, not a confirmed cause.
+**No diagnosis is established for the new splash/reset.** The run258→run260
+source delta has now been collected and analysed; the analysis and the
+source hardening it implies are in
+`findings/cpu-boot-failure-analysis-run258-run260-2026-10-19.md` and in the
+APCC hardening commit that follows. **The hardened driver has not been
+compiled, packaged or booted.** Do not boot again without approval for the
+next isolation experiment.
 
-1. **Last completed test: run260.** Agent built/packaged/restored diagnostic
-   interfaces, RAM-booted once, observed no port ADB, and recovered evidence.
+1. **Delta, now measured rather than assumed:** comparing the run258 and
+   run260 build manifests shows exactly **nine** source files differ (the
+   APCC driver, the apcc power-domain DT lines, the Kconfig dependency, the
+   mailbox doorbell reservation, the deleted pstore CPU4 writer, three
+   declaration-only files, the binding). Everything else, including the
+   uncommitted PMIC/S5/CPR/AVS and diag-init edits, is byte-identical in
+   both builds and cannot explain the regression. run259 and run260 share
+   byte-identical APCC/DT/mailbox sources, so the regression is in that
+   source, not in one build or one packaging step.
+2. **The zero logdump bounds the failure to ~0.8 s .. 4.9 s** after boot,
+   which contains the APCC `device_initcall` probe. `smp_init()` runs before
+   all initcalls, so CPU4-7 on XO is not a boot blocker.
+3. **Ranked suspects:** (1) the APCC probe programmed the live CPU clock
+   path for the first time - it re-wrote the running CPU0 mux and the live
+   CCI divider, and its PLL lock budget was ~2.3x shorter than the donor's,
+   which is the difference between a lockable PLL and a spurious timeout;
+   (2) the new `power-domains` on the clock node lets the platform bus
+   power the shared MX domain off when the probe fails, because the
+   driver's own domain reference was created after the first fallible step;
+   (3) the mailbox change is the enabler, not the fault; (4) the deleted
+   pstore writer is not a boot blocker but removed the only CPU4 clock
+   fallback.
+4. **Hardening applied (not yet built):** the boot handoff is now the
+   donor's proven sequence (PLL, then only the CPU4 alias1 mux and its core
+   branch; the running CPU0 cluster and the CCI are left alone), the PLL
+   lock budget matches the donor, the MX domain is attached before any
+   fallible step, and the park/restore no longer write a mux whose
+   configuration did not change. Host suites pass with GCC and Clang;
+   strict checkpatch is clean; no kernel build and no device operation.
+5. **Last completed test: run260.** Agent built/packaged/restored
+   diagnostic interfaces, RAM-booted once, observed no port ADB, and recovered evidence.
    Fastboot Sending/Booting both OKAY; user saw static splash then reset. The
    precleared 64 MiB logdump remained all zero, including console/tail slots and
    reset records. There is no fresh kernel banner or trace to locate failure.
    Run259's recovered logdump, by contrast, was entirely stale run258 data.
-2. **Phone:** last confirmed rooted stock
+6. **Phone:** last confirmed rooted stock
    `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot ID
    `770479a1-5951-4bf3-92e7-d382aaa24d83`. The host did not request a recovery
    reboot for run260: stock returned itself. Readers/logcat children stopped.
    No flashing, extra boot, or governor/frequency writes were performed.
-3. **Committed checkpoints:** binding `2d56bc749`, mailbox `22529fab4`, APCC
+7. **Committed checkpoints:** binding `2d56bc749`, mailbox `22529fab4`, APCC
    `931064e41`, diagnostic declarations/tests `9c1bc7000`, prior provenance
-   `28d9cf677`. See `findings/cpu-repair-commit-map-2026-10-19.md`. The final
-   handoff/evidence update follows those commits. No attribution/sign-off tags
-   or push. Pre-existing PMIC/S5/AVS/CPR-table, init and unrelated documentation
-   changes deliberately remain uncommitted; do not discard them. **The run260
-   image was built from the complete working tree, not clean HEAD alone.**
-4. **Exact artifact:** snapshot60 `boot-run260.img`, SHA256
+   `28d9cf677`, run260 handoff `e1e4c2d42`, plus the analysis and the
+   hardening commits that follow. See `findings/cpu-repair-commit-map-2026-10-19.md`.
+   No attribution/sign-off tags or push. Pre-existing PMIC/S5/AVS/CPR-table, init
+   and unrelated documentation changes deliberately remain uncommitted; do not
+   discard them. **The run260 image was built from the complete working tree, not
+   clean HEAD alone.**
+8. **Exact artifact:** snapshot60 `boot-run260.img`, SHA256
    `5b521015c64e7ab8b36cbde2e73bbcca75b51a8a85b4fa72af94337045a5ff9d`;
    matching kernel/output `../ack-out-run260`, staged source
    `../ack-staged-run239`. Image/config/ramdisk/init/cmdline and all 69625 source
    hashes were verified. Real base was run258; init remains init-run257. Keep
    these images and raw files; ignored artifacts cannot be recovered by reset.
-5. **Best proposed next test, not authorized/executed yet:** same run260
+9. **Best proposed next test, not authorized/executed yet:** same run260
    kernel/DTB/ramdisk/init, append only
    `initcall_blacklist=apcc_msm8953_driver_init`. This skips the APCC probe/power/
    handoff path without another kernel build. Exact initcall symbol confirmed
@@ -38,13 +72,14 @@ CPU-related change. That remains a hypothesis, not a confirmed cause.
    becomes 502 bytes and fits without deleting inherited parameters. CPUFreq
    should be absent and CPU4 may remain at firmware XO speed: this is a control,
    not a performance fix. A booting control narrows a path, not its failing step.
-6. **Do not reuse run259/run260 capture helpers directly:** their artifact
-   namespaces are occupied and their guards intentionally refuse overwrites.
-   Inspect `*run261*` before choosing a new run. The existing helper also gates
-   on build.status; for a package-only control use a real package-verification
-   gate, not a fabricated successful build status. Preserve/hash current evidence
-   and early logcat before any approved preclear; start bounded capture before
-   fastboot and poll identity through return to stock. Read the boot reference.
+   Booting the *hardened* driver instead needs a build first.
+10. **Do not reuse run259/run260 capture helpers directly:** their artifact
+    namespaces are occupied and their guards intentionally refuse overwrites.
+    Inspect `*run261*` before choosing a new run. The existing helper also gates
+    on build.status; for a package-only control use a real package-verification
+    gate, not a fabricated successful build status. Preserve/hash current evidence
+    and early logcat before any approved preclear; start bounded capture before
+    fastboot and poll identity through return to stock. Read the boot reference.
 
 The diagnostic restoration fixes W=1 declarations, not the boot failure. Do not
 revert the CPU repair wholesale or resume speculative PLL/voltage edits. First

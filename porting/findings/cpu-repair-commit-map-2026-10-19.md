@@ -8,6 +8,8 @@ These are source/evidence checkpoints, **not known-good CPU DVFS revisions**.
 | `22529fab4` | Reserve only MSM8953's four-byte mailbox IPC register | CPU4 `-EBUSY` reproduced in runs257/258; host probe/send checks pass; hardware coexistence unverified |
 | `931064e41` | Shared CPU/CCI transactions, MX/rail lifetime pins, split boot handoff, shared policy; remove pstore CPU4 clock writer | 49 rate pairs and 349 MMIO fault positions pass; real CCF/genpd and hardware DVFS remain unverified |
 | `9c1bc7000` | Shared non-static diagnostic prototypes and retained file reference; guard exports and update host mocks | Five diagnostic suites pass; fixes source/W=1 declarations, not an established splash/reset cause |
+| analysis commit | Measure the run258→run260 source delta from the two build manifests and rank the boot-fatal suspects | Nine files differ; the rest is byte-identical; see `cpu-boot-failure-analysis-run258-run260-2026-10-19.md` |
+| hardening commit | Donor-shaped boot handoff (PLL, then only the CPU4 mux and branch), donor-length PLL lock budget, MX domain attached before any fallible step, park/restore that do not rewrite unchanged muxes | Host suites pass with GCC and Clang; strict checkpatch clean; **not compiled, packaged or booted** |
 
 The APCC checkpoint includes the accumulated transaction implementation required
 by the new ownership/handoff repair. No fake CPU identification, OC/UV, TSENS or
