@@ -1,5 +1,12 @@
 # Handoff: MSM8953 CPU bring-up, session 2 (2026-10-19)
 
+**Superseded by `HANDOFF-cpu-session3-2026-10-20.md`.** Read that one
+instead; this file is kept for the history. The corrections are in
+`findings/cpu-boot-failure-analysis-run265-2026-10-19.md`: the last
+successful scripted boot was run261 (not run262), runs 261-264 all carry
+the same kernel payload, the GPU stall is not CPU starvation, and the
+fastrpc fault is a uapi mismatch rather than a missing DMA region.
+
 **Read this file first.** It is a self-contained briefing for a fresh session:
 state, what is proven, what is broken, the evidence paths, the next actions
 and the working rules. The long history is in the older files listed at the
