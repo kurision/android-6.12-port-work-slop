@@ -221,3 +221,27 @@ which the machine driver and the CDC read as a property.
 Audio therefore needs the pinmux and the DT, and no longer needs a
 clock provider. `audio-ext-clk-up.h` stays staged because
 `wcd9xxx-soc-init.c` includes it.
+
+## What the DT still needs behind it
+
+Writing the sound card node first would reference drivers that do not exist
+here yet. CAF's `asoc-platform` list pulls in ten PCM platforms and
+`asoc-cpu` pulls in roughly thirty DAI endpoints:
+
+- PCM: `msm-pcm-dsp.0/.1/.2` (msm-pcm-q6-v2), `msm-voip-dsp`,
+  `msm-pcm-voice`, `msm-pcm-loopback`, `msm-compress-dsp`,
+  `msm-pcm-hostless`, `msm-pcm-afe`, `msm-lsm-client`,
+  `msm-pcm-routing`, `msm-pcm-dsp-noirq`
+- DAI: q6 auxpcm, six mi2s endpoints, ten slimbus endpoints, bt sco,
+  int fm, afe pcm and proxy, the incall endpoints and the proxies
+- codecs: `msm-stub-codec.1`, `msm-dig-codec` and the WCD9335
+  analog codec, plus the pinctrl groups for the mi2s lines, the cross
+  connection detect, the PDM lines and the EU/US switch
+
+Of those, `msm-dai-q6-v2.c`, `msm-dai-fe.c` and the routing header are
+already staged; the PCM platforms are staged but not built, and the
+loopback, compress, effects, LSM and stub codec are not ported at all.
+
+So the remaining order is: port the PCM platforms (starting with
+`msm-pcm-dsp-noirq`, which every playback route goes through), then the
+stub codec, then write the DT. The DT is the last step, not the first.
