@@ -564,3 +564,36 @@ the corner plan and the OPP table must agree or the CPU runs fast at a low
 corner; the APLL is programmed for the first time on this port; the sibling
 mirroring in `apcc-msm8953.c` runs for the first time; and TSENS is still
 off, so nothing throttles on die temperature.
+
+---
+
+## 2026-10-19: the rail was never called — USID 1's PMIC does not bind
+
+Full write-up with todos, evidence paths and the boot/build loop:
+`porting/HANDOFF-cpu-bringup-2026-10-19.md`. Summary of this session:
+
+* run248 (`3e27c0b0d`, S5 back on USID 1) showed **no** "unsupported SMPS type".
+  That was not the fix working: the rail probe never ran. Same banner, same
+  result, wrong reading — the reason the plan's step 2 was chasing type bytes.
+* run249: Magisk-patched `boot-run248.img` (magiskinit as `/init`, port init at
+  `.backup/init`) — kernel boots to 13.5 s with no panic, userspace never starts,
+  board falls back to stock. Root via Magisk is a dead end here.
+* run250: same kernel, new diagnostic init adding a `logcat -b kernel`
+  collector. This ROM has no kernel buffer (`logcat -g`: main/system/crash), and
+  `adb root` does not stick.
+* run251: probe diagnostics in the kernel. Result, verbatim from
+  `run251-logdump.log:240`:
+
+      pmic-spmi 0-01: error -ENODEV: failed to read PMIC revision
+
+  USID 1 (`0-01`) never binds `pmic-spmi`, so `devm_of_platform_populate()` never
+  runs and no child device is created for `spm-regulator@2000` — confirmed live:
+  `0-00/0-02/0-03` are bound and have children, `0-01` is unbound and has none.
+  CPR4, the APCC clock controller and cpufreq-dt then defer forever, and
+  `/sys/class/regulator` has no `pm8953_s5`.
+* `-ENODEV` originates in `drivers/spmi/spmi-pmic-arb.c:1078`, i.e. APID
+  resolution: the arbiter finds no APID for USID 1. That is the whole blocker.
+* Both probe paths that used to fail silently now report:
+  `drivers/mfd/qcom-spmi-pmic.c` (PMIC revision read) and
+  `drivers/regulator/qcom-msm8953-spm-regulator.c` (SAW4 lookup).
+  checkpatch `--strict`: 0 errors.

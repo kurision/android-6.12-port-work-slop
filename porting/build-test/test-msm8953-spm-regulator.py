@@ -8,6 +8,9 @@ and drives them against a tiny regmap mock.  The expected FTS2 step rate
 out-lto/dmesg-boot.txt:259, so a passing test cross-checks the ported
 arithmetic against observed donor hardware behaviour.  It is not a hardware,
 probe or regmap test.
+
+Also checks that probe selects the 16-bit extended SPMI regmap API; this is
+a source-level regression guard, not a test of bus transactions.
 """
 from pathlib import Path
 import os
@@ -17,6 +20,13 @@ import tempfile
 
 REPO = Path(__file__).resolve().parents[2]
 SOURCE = (REPO / "drivers/regulator/qcom-msm8953-spm-regulator.c").read_text()
+
+regmap_config = re.search(r"static const struct regmap_config "
+                          r"spmi_regulator_regmap_config = \{.*?\n\};",
+                          SOURCE, re.S).group(0)
+assert re.search(r"\.reg_bits\s*=\s*16\s*,", regmap_config)
+assert "devm_regmap_init_spmi_ext(" in SOURCE
+assert "devm_regmap_init_spmi_base(" not in SOURCE
 
 voltage_range = re.search(r"struct voltage_range \{.*?\n\};", SOURCE, re.S).group(0)
 enums = re.search(r"enum qpnp_regulator_uniq_type \{.*?\n\};", SOURCE, re.S).group(0)

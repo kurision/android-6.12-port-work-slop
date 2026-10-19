@@ -84,6 +84,51 @@ CPUFreq. [CPU scope and remaining gates](plan/CPU-oc-test-to-612.md).
 The complete CPU stack is **not ready for the build/run test yet**; shared
 PLL/CCI, CPR4 closed-loop and SPM/AVS integration remain to be implemented.
 
+## run234: the GPU port works. adb, vendor EGL and rendering all verified.
+
+`/dev/kgsl-3d0` is up on the port kernel with the stock ioctl ABI, the 2020
+vendor EGL blob drives it as **Adreno (TM) 506, OpenGL ES 3.2**, and
+`screencap` returns a real 1080x1920 frame. This is the "GPU 3D" row of
+`FAILING-COMPONENTS.md` closed, and it is the end of the kgsl bring-up.
+
+What made it verifiable was removing the diag USB console, not the driver. The
+diag gadget bound the board's only UDC, so adbd could never bind and adb never
+enumerated; because `open_sink()` only falls back to USB when the logdump
+partition is unavailable — which it never is — the gadget bought no evidence
+and cost the only live channel into the device. `setup_gadget()`,
+`open_usb_sink()` and `guard_usb_handoff()` are now behind
+`-DANDROID_USB_CONSOLE`, off by default. Rebuilt with
+`aarch64-linux-gnu-gcc -Os -static -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT`;
+that is the toolchain that built the shipped `init-run228`, verified by an
+instruction-identical `guard_usb_handoff` and a glibc fingerprint
+(`_IO_stdin_used` present, musl `__init_libc` absent). The `zig cc
+-target aarch64-linux-musl` recipe in the tracker and reference is stale.
+
+run234 is single-variable against run231 — the init. The kernel source is
+identical after reverting run232's GPU power pin, so this also restores the
+proven-good turbo baseline.
+
+Verified live, not inferred:
+
+| check | result |
+|---|---|
+| `uname -r` | `6.12.93-4k`, uptime 402 s |
+| device node | `/dev/kgsl-3d0` present |
+| adb | up ~35 s after boot, `init.svc.adbd=running` |
+| USB stack | `sys.usb.configfs=2` |
+| SurfaceFlinger | `GLES: Qualcomm, Adreno (TM) 506, OpenGL ES 3.2 V@0502.0 (GIT@03dd3ba)` |
+| `screencap` | lockscreen, wallpaper, status bar, vendor "Select USB mode" dialog |
+
+**Tooling notes for whoever boots next.** `package-diag-boot.py` refuses to
+overwrite an existing `--out`, and it fails *silently* if stderr is discarded —
+the stale report then reads as "the flag was ignored". Use a fresh output
+name. A transient `PermissionError` opening `/dev/ttyACM0` is a udev race (the
+node is recreated root-owned 0600 on each re-enumeration), not a device fault;
+retry before concluding anything.
+
+**Unrelated, still open:** "Bluetooth keeps stopping" appears on the running
+device. Not investigated.
+
 ## Correction: there is no reset. run232/run233's logdump proves it.
 
 Superseding everything below about resets. The recovered console snapshots:
@@ -92,27 +137,20 @@ Superseding everything below about resets. The recovered console snapshots:
 |---|---|---|---|
 | 231 | `seq=6707` | **1695.9 s** | systemui + init alive, KGSL cycling states |
 | 232 | `seq=1171` | **331.4 s** | init processing `vendor.per_mgr=running` |
+| 233 | `seq=1103` | **323.5 s** | init running, ACM still bound |
 
-Zero panic, SError or reset markers in either. Both are **running systems**.
-The board does not reset; our ACM console simply stops at ~42-43.7 s because
-the diag init holds gadget `g1` on the only UDC and adb cannot bind over it —
-the documented UDC-handoff cutoff that I misread as a board reset because
-run229's identical cutoff had a real PS_HOLD reset behind it.
+Zero panic, SError or reset markers in any of them. All are **running
+systems**. The board does not reset; our ACM console stopped at ~42-43.7 s
+because the diag init held gadget `g1` on the only UDC — the documented
+UDC-handoff cutoff, misread as a board reset because run229's identical cutoff
+had a real PS_HOLD reset behind it. That is now moot: the console is off.
 
 Consequences: the PS_HOLD/cold-boot reasoning, the TrustZone-watchdog theory
-and run227's "89.5 s reset" are all discredited. Any conclusion drawn from a
-~43 s capture cutoff needs re-deriving from the logdump instead.
+and run227's "89.5 s reset" are discredited. Any conclusion drawn from where a
+capture stopped needs re-deriving from the logdump.
 
 **Still valid:** the SMMU SError fix (run230 moved the faulting PC to a plain
-load, proving async delivery; run231 removed SError and panic; run233 reached
-the Android boot animation).
-
-**The real open problem is adb.** It does not enumerate on the port kernel.
-The handoff marker is absent from every capture, so the UDC is never released.
-`e9f6f932b` calls `init-run228`'s handoff "neutered", but disassembly shows
-`guard_usb_handoff` is defined *and called* from `launch_android` (target
-`0x4015bc`) — so the append or the property trigger is what fails, not the
-call. Unverified which; both are one boot apart.
+load, proving async delivery; run231 removed SError and panic).
 
 ## run231: the SMMU SError is fixed
 

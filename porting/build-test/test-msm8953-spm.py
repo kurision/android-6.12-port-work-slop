@@ -26,6 +26,8 @@ typedef unsigned cpumask_t;
 #define BIT(n) (1U << (n))
 #define GENMASK(h, l) ((~0U << (l)) & (~0U >> (31 - (h))))
 #define EXPORT_SYMBOL_GPL(name)
+#define READ_ONCE(value) (value)
+#define EPROBE_DEFER 517
 #define raw_spin_lock_irqsave(lock, flags) do { \
     (flags) = 0; assert(!*(lock)); *(lock) = 1; \
 } while (0)
@@ -36,7 +38,7 @@ static u32 regs[0x1000 / 4];
 static unsigned writes, log_offsets[32], reads, poll_mode, delay_reads;
 static unsigned hotplug_lock, dispatches;
 static int dispatch_error, drop_write = -1;
-static bool pending;
+static bool pending, fail_avs_restore;
 static u32 readl(const void *address);
 static void writel(u32 value, void *address);
 static void might_sleep(void) { assert(!hotplug_lock); }
@@ -84,6 +86,7 @@ static void writel(u32 value, void *address)
     assert(writes < sizeof(log_offsets) / sizeof(log_offsets[0]));
     log_offsets[writes++] = offset;
     if ((int)offset == drop_write) return;
+    if (fail_avs_restore && offset == SAW4_AVS_CTL && (value & SAW4_AVS_ENABLE)) return;
     regs[offset / 4] = value;
     if (offset == SAW4_PMIC_DATA3) pending = true;
 }
@@ -93,6 +96,10 @@ int main(void)
 {
     struct msm8953_spm spm = { .base = regs, .cpus = 0xff };
     unsigned before, saved, count;
+
+    assert(msm8953_spm_probe_done() == -EPROBE_DEFER);
+    msm8953_spm_ready = true;
+    assert(msm8953_spm_probe_done() == 0);
 
     assert(SAW4_VERSION == 0xfd0 && SAW4_TIMEOUT_US == 500);
     assert(SAW4_VCTL == 0x900 && SAW4_AVS_LIMIT == 0x908);
@@ -124,10 +131,12 @@ int main(void)
     saved = regs[SAW4_AVS_LIMIT / 4];
     delay_reads = 3;
     assert(msm8953_spm_set_vlevel(&spm, 150) == 0);
-    assert(writes == before + 3 && !hotplug_lock);
-    assert(log_offsets[before] == SAW4_RESET);
-    assert(log_offsets[before + 1] == SAW4_VCTL);
-    assert(log_offsets[before + 2] == SAW4_PMIC_DATA3);
+    assert(writes == before + 5 && !hotplug_lock);
+    assert(log_offsets[before] == SAW4_AVS_CTL);
+    assert(log_offsets[before + 1] == SAW4_RESET);
+    assert(log_offsets[before + 2] == SAW4_VCTL);
+    assert(log_offsets[before + 3] == SAW4_PMIC_DATA3);
+    assert(log_offsets[before + 4] == SAW4_AVS_CTL);
     assert(regs[SAW4_VCTL / 4] == 0xa5000096);
     assert(regs[SAW4_PMIC_DATA3 / 4] == 0x5a000096);
     assert(regs[SAW4_AVS_LIMIT / 4] == saved && regs[SAW4_AVS_CTL / 4] == 0x11);
@@ -138,13 +147,23 @@ int main(void)
     count = reads;
     assert(msm8953_spm_set_vlevel(&spm, 160) == -ETIMEDOUT);
     assert(reads - count <= SAW4_TIMEOUT_US + 1 && !hotplug_lock);
+    assert(msm8953_spm_avs_enabled(&spm));
     poll_mode = 2; /* Idle FSM, wrong returned level: also not success. */
     delay_reads = 1;
     assert(msm8953_spm_set_vlevel(&spm, 170) == -ETIMEDOUT);
+    assert(msm8953_spm_avs_enabled(&spm));
     before = writes;
     dispatch_error = -ENXIO;
     assert(msm8953_spm_set_vlevel(&spm, 180) == -ENXIO);
     assert(writes == before && !hotplug_lock);
+
+    dispatch_error = 0;
+    poll_mode = 0;
+    delay_reads = 1;
+    fail_avs_restore = true;
+    assert(msm8953_spm_set_vlevel(&spm, 180) == -EIO);
+    assert(!msm8953_spm_avs_enabled(&spm));
+    fail_avs_restore = false;
 
     assert(msm8953_spm_set_avs(&spm, false) == 0);
     assert(regs[SAW4_AVS_CTL / 4] == 0x10 && !msm8953_spm_avs_enabled(&spm));
