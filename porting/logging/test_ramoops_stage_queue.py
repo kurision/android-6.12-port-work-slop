@@ -13,7 +13,7 @@ def main():
     start = source.index('struct ramoops_stage_entry {')
     end = source.index('EXPORT_SYMBOL_GPL(ramoops_stage_write);', start)
     constants = '\n'.join(re.findall(
-        r'^#define RAMOOPS_(?:STAGE_OFFSET|STAGE_SLOTS|WITNESS_LEN)\s+[^\n]+',
+        r'^#define RAMOOPS_(?:STAGE_OFFSET|STAGE_SLOTS|WITNESS_LEN|SNAP_FAST_MS)\s+[^\n]+',
         source, re.M))
     harness = r'''
 #include <assert.h>
@@ -21,6 +21,7 @@ def main():
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 typedef uint8_t u8;
@@ -45,6 +46,11 @@ struct workqueue_struct {
     bool stop;
 };
 static bool fail_alloc;
+static atomic_bool ramoops_snap_fast;
+static struct { atomic_uint wake; } ramoops_snapper;
+#define smp_load_acquire(p) atomic_load_explicit((p), memory_order_acquire)
+#define smp_store_release(p, v) atomic_store_explicit((p), (v), memory_order_release)
+#define complete(p) atomic_fetch_add((p), 1)
 static pthread_mutex_t ramoops_witness_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t io_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t io_ready = PTHREAD_COND_INITIALIZER;
@@ -130,7 +136,10 @@ static void *stop_queue(void *unused)
 int main(void)
 {
     unsigned char data[RAMOOPS_WITNESS_LEN] = { 77 };
+    assert(!atomic_load(&ramoops_snap_fast) && atomic_load(&ramoops_snapper.wake) == 0);
     assert(ramoops_stage_write(0, data, 1) == -ENODEV);
+    /* Stage activity wakes the snapshotter even before its queue is ready. */
+    assert(atomic_load(&ramoops_snap_fast) && atomic_load(&ramoops_snapper.wake) == 1);
     fail_alloc = true;
     ramoops_stage_start();
     assert(ramoops_stage_write(0, data, 1) == -ENODEV);
@@ -141,6 +150,7 @@ int main(void)
 
     blocked = true;
     assert(!ramoops_stage_write(31, data, sizeof(data)));
+    assert(atomic_load(&ramoops_snap_fast) && atomic_load(&ramoops_snapper.wake) == 1);
     pthread_mutex_lock(&io_lock);
     while (!entered)
         pthread_cond_wait(&io_ready, &io_lock);
@@ -177,11 +187,12 @@ int main(void)
         assert(!ramoops_stage_write(i, data, 1));
     ramoops_stage_stop();
     assert(writes == 2 * RAMOOPS_STAGE_SLOTS + 1);
+    assert(atomic_load(&ramoops_snapper.wake) == 1);
     ramoops_stage_stop();
     return 0;
 }
 '''
-    with tempfile.TemporaryDirectory(prefix='ack-stage-test-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='ack-stage-test-', dir='/tmp/opencode') as tmp:
         root = Path(tmp)
         unit = root / 'stage.c'
         unit.write_text(constants + '\n' + harness + source[start:end] + check)

@@ -97,7 +97,7 @@ int main(void) {
     assert(readl(page + 0x100) == 0);
     ramoops_reset_ready = true;
     ramoops_reset_mark(0, "invalid");
-    ramoops_reset_mark(5, "invalid");
+    ramoops_reset_mark(RAMOOPS_RESET_PANIC_SNAPSHOT_DONE + 1, "invalid");
     assert(ramoops_reset_seen == 0);
     ramoops_reset_mark(RAMOOPS_RESET_PANIC, reason);
     ramoops_reset_mark(RAMOOPS_RESET_PANIC, "must not overwrite first panic");
@@ -114,7 +114,7 @@ int main(void) {
     return 0;
 }
 '''
-    with tempfile.TemporaryDirectory(prefix='reset-path-check-') as directory:
+    with tempfile.TemporaryDirectory(prefix='reset-path-check-', dir='/tmp/opencode') as directory:
         c = Path(directory) / 'check.c'
         exe = Path(directory) / 'check'
         c.write_text(harness + constants + '\n' + enum + '\n' + record + '\n' + writer + recovery + checks)

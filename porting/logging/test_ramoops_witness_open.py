@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise the real witness-open function with allocation failure; no hardware."""
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 
@@ -9,6 +10,17 @@ SOURCE = Path(__file__).resolve().parents[2] / 'fs/pstore/ram.c'
 
 def main():
     source = SOURCE.read_text()
+    repo = SOURCE.parents[2]
+    header = (repo / 'include/linux/pstore_ram.h').read_text()
+    for name in ('ramoops_witness_write', 'ramoops_witness_read',
+                 'ramoops_stage_write', 'ramoops_qtrace_write', 'ramoops_reset_note'):
+        assert re.search(r'^(?:int|void) ' + name + r'\([^;]*\);', header, re.M), name
+        assert re.search(r'^(?:int|void) ' + name + r'\([^;]*\)\n\{', source, re.M), name
+        assert 'EXPORT_SYMBOL_GPL(' + name + ');' in source, name
+        assert not re.search(r'^static (?:int|void) ' + name + r'\(', source, re.M), name
+    for path in ('drivers/misc/qseecom.c', 'drivers/gpu/msm/adreno-zap-compat.h',
+                 'kernel/reboot.c'):
+        assert '#include <linux/pstore_ram.h>' in (repo / path).read_text(), path
     start = source.index('static int ramoops_witness_open(void)')
     end = source.index('\n}\n', start) + 3
     function = source[start:end]
@@ -65,7 +77,7 @@ int main(void)
     return 0;
 }
 '''
-    with tempfile.TemporaryDirectory(prefix='ack-witness-test-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='ack-witness-test-', dir='/tmp/opencode') as tmp:
         root = Path(tmp)
         unit = root / 'witness.c'
         unit.write_text(harness + function + check)
