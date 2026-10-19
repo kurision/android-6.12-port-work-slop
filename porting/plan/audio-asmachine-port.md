@@ -59,9 +59,40 @@ What that established, all measured:
   `asoc/`, `dsp/`, `soc/`, `ipc/`, `linux/` and `uapi/sound/`, and a few more
   live outside it, in the CAF `include/soc/qcom/`.
 
-The staged files were then removed rather than committed: they do not compile
-yet, and leaving tens of thousands of lines of non-building vendor code in the
-tree would make the next boot's behaviour depend on unfinished work.
+## The 6.12 adaptations this port actually needed
+
+All measured while compiling the WCD9335 closure with `W=1`, not inferred:
+
+| CAF 4.19 | this tree | note |
+|---|---|---|
+| `snd_soc_component_read32()` | `snd_soc_component_read()` | 6.12 already returns the value directly, CAF's name is just old. 91 call sites in `wcd9335.c` alone |
+| `struct soc_multi_mixer_control`, `SOC_SINGLE_MULTI_EXT`, `snd_soc_info_multi_ext()` | **absent upstream** | Qualcomm addition; added to this tree's `include/sound/soc.h` and `sound/soc/soc-ops.c` |
+| `SND_SOC_DAPM_MICBIAS_E()` | **absent upstream** | likewise; added to `include/sound/soc-dapm.h` |
+| `strlcpy()` | `strscpy()` | removed in v6.8 |
+| `snd_info_create_subdir()` | `snd_info_card_create()` plus `snd_info_create_card_entry()` | the ALSA info API was reworked |
+| `snd_soc_card_change_online_state()` | **absent upstream** | dropped with a comment; it only matters for subsystem restart, which is not wired on this port |
+| `regmap_config.use_single_rw` | `use_single_read` plus `use_single_write` | split upstream |
+| `slim_device_id` carrying a string name | manufacturer/product form | **structural**, see below |
+| platform `.remove` returning `int` | `void` | since v6.11 |
+| i2c `.probe(client)`, `.remove` | `.probe(client, id)`, `void .remove` | |
+| function definitions in a header | `static inline` | `-Wmissing-prototypes` is fatal here, and several CAF headers define stubs that way |
+| `CONFIG_WCD9XXX_CODEC_CORE` | the symbol name must be kept | the staged CAF headers are guarded by it, so renaming the symbol silently compiles its declarations out |
+
+### The one structural decision
+
+CAF binds the codec through slimbus, using a `slim_device_id` whose `name` is
+compared against the DT compatible. This tree's `slim_device_id` is the
+manufacturer/product struct from `include/linux/mod_devicetable.h`, so CAF's
+table cannot exist here. Rather than invent manufacturer and product codes, the
+codec is bound through its **platform** driver, which CAF also implements
+(`tasha_codec_driver` with `tasha_probe`), and CAF's slim probe path is left out
+with a comment saying why. That removed 338 lines of glue that would otherwise
+have referenced a struct shape this tree does not have.
+
+This is where the port stops being mechanical, and it is the shape the rest of
+the closure will take: where CAF's API has no 6.12 equivalent, decide and
+document rather than fabricate.
+
 
 ## What this tree has today
 
@@ -117,3 +148,15 @@ boot cycle that also tests the already-written nav-key and FastRPC changes would
 give this port the evidence it currently lacks entirely.
 
 Nothing here has been built, booted or flashed.
+## Port status, 2026-10-19
+
+Building with W=1 on fix/components: efea7da77 (WCD9335 codec, wcd9xxx
+core, mbhc, class-H, DSP glink manager), 63dda8dbd (SDM660 CDC and its
+regs and irq), 874b7a623 and a28ce6944 (their headers). Twenty-two
+objects.
+
+Not yet building: msm8952.c, the machine driver. Its DAI-link table
+still names cpu_dai_name, platform_name and codec_dai_name, 143 sites,
+which this tree replaces with the cpus[] and codecs[] component arrays.
+That conversion decides which DAI each route reaches and there is no
+test here that would catch a mistake until the phone makes a sound.
