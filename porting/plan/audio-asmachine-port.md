@@ -204,3 +204,20 @@ which of its clocks to build from `qcom,audio-ref-clk-gpio` and
 Tissot uses the LPASS variant (`AUDIO_LPASS_MCLK_2`, 9.6 MHz, id 0x300)
 with no GPIO and no RPM parent, so only the AFE-backed clock and its ops
 are actually needed.
+
+## The audio clock provider is not needed on tissot
+
+Chasing the last provider turned out to be the wrong target. CAF's
+`qcom,audio-ref-clk` node exists to feed the WSA881x headphone amplifier
+codec -- it is the `clocks` entry of `wsa881x-i2c-codec@f`. Tissot has
+no WSA881x: its audio dtsi carries a MAX98927 speaker amplifier and
+explicitly deletes `asoc-wsa-codec-names`, `asoc-wsa-codec-prefixes` and
+`msm-vdd-wsa-switch-supply` from the sound node.
+
+So the provider has no consumer here and the clk_hw rewrite is not on
+tissot's path. The codec MCLK comes from `qcom,msm-mclk-freq` instead,
+which the machine driver and the CDC read as a property.
+
+Audio therefore needs the pinmux and the DT, and no longer needs a
+clock provider. `audio-ext-clk-up.h` stays staged because
+`wcd9xxx-soc-init.c` includes it.
