@@ -1,0 +1,5 @@
+User physical-panel observation during the run260 RAM-boot test:
+"Static splash, then reset"
+
+No visible Android UI was reported. This observation does not by itself
+establish whether Linux executed or identify a reset/hang mechanism.

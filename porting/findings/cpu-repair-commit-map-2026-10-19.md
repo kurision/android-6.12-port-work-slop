@@ -20,7 +20,7 @@ functional ownership transfer, **not just removing log messages**.
 |---|---|---|
 | 258 | `527a8bcbd8ee59d14b4a079ea44a192dd20b6a54e5ad97b53f8b15dd161e94fa` | Agent-observed Android boot/ashmem, absent CPUFreq and CPU4 mapping `-EBUSY`; user-visible severe lag; two SystemUI ANRs |
 | 259 | `6fa41d995d9d2f6ebded85c933611d4b01d0be478a866ed677416771f5fb1a71` | User-built after the initial agent build failed; user reports splash/reset; recovered bytes are entirely stale run258 data |
-| 260 | Not yet established at this checkpoint | Fresh cumulative build/package started with diagnostic interfaces restored; no agent boot yet |
+| 260 | `5b521015c64e7ab8b36cbde2e73bbcca75b51a8a85b4fa72af94337045a5ff9d` | Build/package verified, helpers restored; fastboot Sending/Booting OKAY; user reports splash/reset; no port ADB; precleared logdump remained entirely zero; rooted stock recovered |
 
 Run259's entire recovered 67108864-byte logdump matches run258 SHA256
 `a4c095fb0d333237f0109996c4b1187dde8de5d1f653afb9a40049cdd4594742`.
@@ -44,7 +44,7 @@ principally declaration/header ownership and the file-reference annotation.
 - Standalone DT compilation, focused APCC schema/wiring checks pass. Full-board
   DT validation retains inherited findings. Sparse is unavailable.
 - Each intermediate commit was not separately kernel-built or boot-tested.
-  The in-progress run260 build uses the complete working tree, including the
+  The completed run260 build used the complete working tree, including the
   existing prerequisite edits listed below; do not conflate it with a clean
   checkout build of these commits alone.
 - Pre-existing PM8953 matching, S5 extended-SPMI access, CPR numeric-table cells,

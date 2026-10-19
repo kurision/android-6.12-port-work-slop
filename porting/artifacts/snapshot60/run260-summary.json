@@ -1,0 +1,17 @@
+{
+  "run": 260,
+  "image_sha256": "5b521015c64e7ab8b36cbde2e73bbcca75b51a8a85b4fa72af94337045a5ff9d",
+  "kernel_banner_expected": "Linux version 6.12.93-4k #1 Mon Oct 19 20:54:21 +0545 2026",
+  "fastboot": "Sending OKAY; Booting OKAY",
+  "port_adb_samples": 0,
+  "panel": "Static splash, then reset (user observation)",
+  "logdump_bytes": 67108864,
+  "logdump_sha256": "3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351",
+  "remote_sha256": "3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351",
+  "logdump_all_zero": true,
+  "fresh_kernel_banner": false,
+  "reset_record": "absent",
+  "final_stock_identity": "4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d\n770479a1-5951-4bf3-92e7-d382aaa24d83\nuid=0(root) gid=0(root) groups=0(root) context=u:r:magisk:s0\n",
+  "cause": "unverified",
+  "host_recovery_reboot_sent": false
+}

@@ -1,0 +1,5 @@
+waiting for 18d1:9008 (diag gadget, serial tissot-diag)
++ fastboot -s 2819f2320604 boot /home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/boot-run260.img
+Sending 'boot.img' (42660 KB)                      OKAY [  0.933s]
+Booting                                            OKAY [  1.197s]
+Finished. Total time: 2.141s

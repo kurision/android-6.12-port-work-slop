@@ -1,0 +1,9 @@
+{
+  "new_messages": [],
+  "removed_messages": [
+    "porting/artifacts/snapshot60/kdir-RUN/msm8953-xiaomi-tissot.dtb: clock-controller@b116000 (qcom,apcc-msm8953): 'power-domains' is a required property",
+    "\tfrom schema $id: http://devicetree.org/schemas/clock/qcom,apcc-msm8953.yaml",
+    "\tfrom schema $id: http://devicetree.org/schemas/clock/qcom,apcc-msm8953.yaml",
+    "porting/artifacts/snapshot60/kdir-RUN/msm8953-xiaomi-tissot.dtb: clock-controller@b116000 (qcom,apcc-msm8953): 'power-domain-names' is a required property"
+  ]
+}

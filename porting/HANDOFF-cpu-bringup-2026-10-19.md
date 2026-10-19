@@ -1,5 +1,124 @@
 # Handoff: MSM8953 CPU bring-up — source repair after run258; runtime unverified
 
+## Resume here — paused at the user's request
+
+**No diagnosis is established for the new splash/reset. Do not boot again
+without approval for the next isolation experiment.** The user suspects another
+CPU-related change. That remains a hypothesis, not a confirmed cause.
+
+1. **Last completed test: run260.** Agent built/packaged/restored diagnostic
+   interfaces, RAM-booted once, observed no port ADB, and recovered evidence.
+   Fastboot Sending/Booting both OKAY; user saw static splash then reset. The
+   precleared 64 MiB logdump remained all zero, including console/tail slots and
+   reset records. There is no fresh kernel banner or trace to locate failure.
+   Run259's recovered logdump, by contrast, was entirely stale run258 data.
+2. **Phone:** last confirmed rooted stock
+   `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d`, boot ID
+   `770479a1-5951-4bf3-92e7-d382aaa24d83`. The host did not request a recovery
+   reboot for run260: stock returned itself. Readers/logcat children stopped.
+   No flashing, extra boot, or governor/frequency writes were performed.
+3. **Committed checkpoints:** binding `2d56bc749`, mailbox `22529fab4`, APCC
+   `931064e41`, diagnostic declarations/tests `9c1bc7000`, prior provenance
+   `28d9cf677`. See `findings/cpu-repair-commit-map-2026-10-19.md`. The final
+   handoff/evidence update follows those commits. No attribution/sign-off tags
+   or push. Pre-existing PMIC/S5/AVS/CPR-table, init and unrelated documentation
+   changes deliberately remain uncommitted; do not discard them. **The run260
+   image was built from the complete working tree, not clean HEAD alone.**
+4. **Exact artifact:** snapshot60 `boot-run260.img`, SHA256
+   `5b521015c64e7ab8b36cbde2e73bbcca75b51a8a85b4fa72af94337045a5ff9d`;
+   matching kernel/output `../ack-out-run260`, staged source
+   `../ack-staged-run239`. Image/config/ramdisk/init/cmdline and all 69625 source
+   hashes were verified. Real base was run258; init remains init-run257. Keep
+   these images and raw files; ignored artifacts cannot be recovered by reset.
+5. **Best proposed next test, not authorized/executed yet:** same run260
+   kernel/DTB/ramdisk/init, append only
+   `initcall_blacklist=apcc_msm8953_driver_init`. This skips the APCC probe/power/
+   handoff path without another kernel build. Exact initcall symbol confirmed
+   in matching vmlinux; target blacklist implementation reviewed. Command line
+   becomes 502 bytes and fits without deleting inherited parameters. CPUFreq
+   should be absent and CPU4 may remain at firmware XO speed: this is a control,
+   not a performance fix. A booting control narrows a path, not its failing step.
+6. **Do not reuse run259/run260 capture helpers directly:** their artifact
+   namespaces are occupied and their guards intentionally refuse overwrites.
+   Inspect `*run261*` before choosing a new run. The existing helper also gates
+   on build.status; for a package-only control use a real package-verification
+   gate, not a fabricated successful build status. Preserve/hash current evidence
+   and early logcat before any approved preclear; start bounded capture before
+   fastboot and poll identity through return to stock. Read the boot reference.
+
+The diagnostic restoration fixes W=1 declarations, not the boot failure. Do not
+revert the CPU repair wholesale or resume speculative PLL/voltage edits. First
+obtain fresh failure evidence or run the agreed single-variable control. Early
+APCC failure can precede the ~5 s durable snapshot channel, so even restored
+logging may be silent; silence alone cannot show Linux never executed.
+
+Key files to read next: `run260-summary.json`, `run260-live/usb-capture.out`,
+`run260-live/adb-timeline.jsonl`, `run260-live/pull-evidence.out`,
+`run260-preclear.status`, `run260-build-verification.json`,
+`run260-dt-comparison.json` under `artifacts/snapshot60/`, followed by the detailed
+sections below. No further build, package or device operation is in progress.
+
+## Run260: build/package passed; splash/reset with no fresh kernel evidence
+
+Fresh cumulative Image.gz build and W=1 pstore/reboot/APCC/mailbox/SPM object
+checks succeeded. The four missing pstore prototypes and unused file-pointer
+errors from the initial run259 build are gone. Final vmlinux contains the five
+diagnostic helpers; this does not prove their runtime execution.
+
+Image SHA256 `5b521015c64e7ab8b36cbde2e73bbcca75b51a8a85b4fa72af94337045a5ff9d`,
+kernel payload SHA256
+`55f5ab11109abaa06dec2355d58a35b1cd96d1cffecea8bee46fcc5987ef958d`.
+Banner: `#1 ... Mon Oct 19 20:54:21 +0545 2026`. Config has no diff from run258;
+ramdisk/init/cmdline hashes match the real run258 base. All 69625 recorded source
+hashes matched the checkout after the build. The build uses pending prerequisite
+edits as documented in the commit map, not just the committed CPU changes.
+
+APCC binding example compiled/validated through dt_binding_check. Inherited
+global schema-processing and full-board validation findings remain; comparing
+run258/run260 DTBs against the same processed schemas finds no new messages and
+removes the two missing-MX-property findings. Build logs also retain unchanged
+sorttable unused-global and reboot kernel-doc parameter warnings. Sparse absent.
+
+The authorized RAM boot/capture completed after these checks:
+
+- Exact image Sending and Booting both returned OKAY. User reports "Static
+  splash, then reset". No port ADB identity was observed in 45 samples; stock
+  returned at host +176.01 s, stock uptime 23.88 s. Stock policy/frequency values
+  in that final sample belong to 4.19, not the port.
+- Previous 64 MiB logdump and five early-logcat files were archived and verified
+  before preclear; readback was proven zero. Post-attempt raw logdump is **still
+  entirely zero**, 67108864 bytes, SHA256
+  `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351`.
+  Device/local SHA match. No readable prefix, valid console/tail slots or reset
+  record. Unlike run259, this is a verified zero result, not stale run258 bytes.
+- The ACM gadget never appeared (expected for this init); its reader was stopped
+  after stock returned. An empty USB stream is not a kernel-execution verdict.
+  No recovery reboot was sent by the host; stock is rooted with fresh boot ID
+  `770479a1-5951-4bf3-92e7-d382aaa24d83`.
+
+**No fresh run260 kernel banner or failure cause is established.** Bootloader
+acceptance is proven; Linux execution/stage of failure is not. Restoring the
+diagnostic interfaces did not make this image reach an observable port boot.
+This does not identify a CPU clock, rail, CPR, genpd or other step as the cause.
+The pre-snapshot blackout still applies.
+
+See `run260-summary.json`, `run260-build-verification.json`,
+`run260-dt-comparison.json`, `run260-preclear.status`,
+`run260-panel-observation.txt` and `run260-live/` under snapshot60. Existing raw
+records and base images are preserved. No second boot was attempted.
+
+Proposed next isolation, **not packaged or booted yet**: reuse the exact run260
+kernel/DTB/ramdisk/init and append only
+`initcall_blacklist=apcc_msm8953_driver_init`. The function is present in the
+matching vmlinux, CONFIG_KALLSYMS is enabled, and the target init/main.c handles
+exact function-name blacklisting, cross-checked with ACK and upstream docs.
+The header command line would be 502 bytes, below the 512-byte limit, without
+dropping any inherited parameter. This skips APCC registration/MX acquisition/
+handoff as one path; CPUFreq is expected to remain absent and firmware CPU4 may
+remain on XO. It is an isolation control, not a performance fix. A successful
+control would narrow the failure to that path, not identify the individual step.
+Obtain approval before consuming another boot cycle.
+
 ## Diagnostic restoration after the user-built run259 (run260 build started)
 
 User agreed to restore/reconcile the diagnostics. Preserved staged changes in

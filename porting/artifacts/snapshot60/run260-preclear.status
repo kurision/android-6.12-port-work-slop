@@ -1,0 +1,8 @@
+== clear /dev/block/by-name/logdump for run260
+-- pull current partition (discarded: it is the previous run's evidence, already archived)
+pre_clear_sha256=a4c095fb0d333237f0109996c4b1187dde8de5d1f653afb9a40049cdd4594742
+-- write zeros
+-- verify readback
+   readback all zero: OK (payload discarded)
+zero_readback=verified_nonzero=0
+status=0

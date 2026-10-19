@@ -1,0 +1,14 @@
+== snapshot60/run260 image=/home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/boot-run260.img sha256=5b521015c64e7ab8b36cbde2e73bbcca75b51a8a85b4fa72af94337045a5ff9d
+scratch retained: /tmp/opencode/ack-evidence-ug9x2bm8
+raw success: 67108864 bytes; readable prefix: 0 bytes
+slot0: magic=0x00000000 seq=0 timestamp_ns=0 header_valid=False version=0 validation=rejected integrity=unverified: rejected slot console=unavailable dmesg=0 error=empty or invalidated header page
+slot1: magic=0x00000000 seq=0 timestamp_ns=0 header_valid=False version=0 validation=rejected integrity=unverified: rejected slot console=unavailable dmesg=0 error=empty or invalidated header page
+slot pair: insufficient valid slots to compare; freshness remains unverified
+periodic-tail-slot0: seq=0 timestamp_ns=0 header_valid=False version=0 validation=rejected integrity=unverified: rejected slot tail=unavailable error=empty or invalidated header page
+periodic-tail-slot1: seq=0 timestamp_ns=0 header_valid=False version=0 validation=rejected integrity=unverified: rejected slot tail=unavailable error=empty or invalidated header page
+periodic tail slot pair: insufficient valid slots to compare; periodic samples are not crash/reset records
+No valid dmesg dump record recovered from the snapshot slots.
+No valid panic/oops dmesg crash record recovered; this does not prove no crash occurred.
+recovery report: /home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/run260-ramoops.json
+SD unavailable/error: 0 bytes; command failed or invalid diagnostic capture; retained /tmp/opencode/ack-evidence-ug9x2bm8/sd.log
+USB independently captured; collector does not modify USB evidence
