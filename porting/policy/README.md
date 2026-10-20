@@ -1,4 +1,4 @@
-# Harness-only SELinux policy fragments
+# SELinux policy fragments for the boot image
 
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
@@ -6,8 +6,15 @@
 > [BUILD_TISSOT.md](../../BUILD_TISSOT.md).
 
 Extra CIL appended to the ramdisk's `userdebug_plat_sepolicy.cil` by
-`porting/logging/package-diag-boot.py --policy-append`, at boot time only.
-Nothing here is flashed, and none of it is shippable.
+`porting/logging/package-diag-boot.py --policy-append`. The policy is
+compiled at boot, so a fragment changes what the ROM enforces without
+touching `/system` or `/vendor`, both of which are read-only and dm-verity
+protected.
+
+`port-*.cil` are part of the port: `porting/tools/build-kernel.sh` appends
+them on every build. `harness-*.cil` are the one-off experiments that
+produced the battery and display fixes, kept here as evidence; the build
+does not apply them.
 
 This file is the experiment log. The procedure for a ROM developer who has
 to adapt a ROM's policy to a newer kernel is
@@ -20,11 +27,31 @@ rebuilding a ROM. Each file's SHA256 is recorded in the matching
 `package-run<N>.json` as `policy_append_sha256`, so a run can always be tied
 back to the exact text that produced it.
 
-Verify one landed correctly before booting:
+`build-kernel.sh` passes `porting/policy/port-genfs-kgsl.cil` to
+`--policy-append` and fails the build unless the package report's
+`policy_append_sha256` is that file's SHA256. The packaging tool appends the
+bytes to the `userdebug_plat_sepolicy.cil` record and re-parses the cpio it
+built, so a fragment that did not land is a build failure, not a boot
+surprise.
 
-    python3 - <<'EOF'
-    # extract the CIL from an image and diff it against the fragment
-    EOF
+## port-genfs-kgsl.cil — KGSL attributes for the Power HAL
+
+**Applied by `build-kernel.sh` from this change on; not booted yet.**
+
+One `genfscon` for `/devices/platform/soc@0/1c00000.gpu/kgsl/kgsl-3d0`.
+The vendor policy grants `hal_power_default` write on `sysfs_kgsl`, but the
+rule's literal 4.19 CAF path no longer matches this kernel, so the
+attributes were on the generic `sysfs` type and the writes were denied.
+The path is literal, which is a prefix match because
+`genfs_seclabel_wildcard` is 0, so the one line covers the whole directory
+including the files the graphics, perf and thermal domains read.
+
+The runtime relabel in `scripts/initramfs-diag/init.c` is kept as a
+fallback: it reads the directory's label (which the relabel worker itself
+never changes) and relabels the files only when the `genfscon` did not
+land. A boot with this fragment should log `kgsl sysfs labelled by
+policy`; a boot without it still logs the older `kgsl sysfs relabelled`
+count.
 
 ## harness-genfs.cil — battery/charging power_supply labels
 
