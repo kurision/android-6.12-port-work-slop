@@ -259,7 +259,7 @@ Built on a staged copy of this tree, `/home/kurision/development/kernel/ack-stag
 build residue and kbuild refuses an `O=` build there. The repo itself was not
 cleaned. Every file under test was compared with `cmp` before building.
 
-Toolchain per `BUIL_TISSOT.md`: rustc 1.99.0 from the stable toolchain, the
+Toolchain per `BUILD_TISSOT.md`: rustc 1.99.0 from the stable toolchain, the
 cached bindgen 0.73.2, libclang 22.1.8, `RUSTFLAGS_AUTOFDO_CLANG` with the
 `-Zdebuginfo-for-profiling` spelling. Note the drift: the system clang is
 23.1.3, not the 22.1.8 the table records.
@@ -455,7 +455,7 @@ Two port-level faults found on the way, both mine:
    `# CONFIG_RUST is not set` and no `CONFIG_ASHMEM`, so SurfaceFlinger could
    not mmap its queue and the ROM never came up. Caused by re-resolving the
    config with an environment missing `RUST_LIB_SRC` and `LIBCLANG_PATH`,
-   which `BUIL_TISSOT.md:82` warns about by name. `BUIL_TISSOT.md` is the
+   which `BUILD_TISSOT.md:82` warns about by name. `BUILD_TISSOT.md` is the
    documented wrapper and its required-symbol guard would have caught this;
    it was bypassed for the sake of preserving the run236 config, which was the
    wrong trade. Build through `scripts/build-ack-tissot.sh` from now on, with

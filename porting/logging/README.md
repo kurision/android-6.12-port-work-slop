@@ -3,7 +3,7 @@
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](../../BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](../../BUILD_TISSOT.md).
 >
 > The per-run evidence this document cites (boot images, kernel directories,
 > init binaries, logdumps) is no longer in the repository; it is
@@ -12,7 +12,7 @@
 
 ## Current Android / ACK capture workflow
 
-Read [BUIL_TISSOT.md](../../BUIL_TISSOT.md) for build, package, RAM boot and capture
+Read [BUILD_TISSOT.md](../../BUILD_TISSOT.md) for build, package, RAM boot and capture
 instructions, and [REFERENCE-boot-testing.md](../REFERENCE-boot-testing.md) before
 any boot cycle. Run verdicts belong in [HANDOFF.md](../HANDOFF.md) and the
 trackers; raw evidence belongs in `porting/artifacts/snapshot<number>/`.

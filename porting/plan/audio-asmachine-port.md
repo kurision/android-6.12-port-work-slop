@@ -3,7 +3,7 @@
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](../../BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](../../BUILD_TISSOT.md).
 
 **Measured 2026-10-19** against the donor tree `../oc-test/techpack/audio` and
 this tree. No code written yet; this is the closure and the sequence.

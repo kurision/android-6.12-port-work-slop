@@ -3,7 +3,7 @@
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](../../BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](../../BUILD_TISSOT.md).
 
 ## Established (snapshot50 run1, no guessing)
 - `mount_all --early` at t≈84 s because init blocks on

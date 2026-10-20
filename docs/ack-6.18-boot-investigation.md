@@ -3,7 +3,7 @@
 > **Current state: porting/CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](BUILD_TISSOT.md).
 
 Investigation recorded on 2026-10-04; corrected after source and saved-image review on the same date. Device observations and boot timings below are historical session reports, not fresh device measurements. Source-verified behavior, saved-artifact checks, and unresolved hypotheses are distinguished explicitly. References and review limitations are in §11.
 

@@ -3,7 +3,7 @@
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](../BUILD_TISSOT.md).
 >
 > The per-run evidence this document cites (boot images, kernel directories,
 > init binaries, logdumps) is no longer in the repository; it is
@@ -337,7 +337,7 @@ RAM recovery. Reset cause unknown; no rendering verdict.
 
 ## Historical verdict — run186/run187/run188
 
-Use [BUIL_TISSOT.md](../BUIL_TISSOT.md) for procedures and the
+Use [BUILD_TISSOT.md](../BUILD_TISSOT.md) for procedures and the
 [current handoff](HANDOFF.md) for exact hashes, register corrections and capture
 provenance. Earlier run sections describe their own artifacts and hypotheses.
 All evidence named here is in `artifacts/snapshot60/`.

@@ -3,7 +3,7 @@
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](../BUILD_TISSOT.md).
 >
 > The per-run evidence this document cites (boot images, kernel directories,
 > init binaries, logdumps) is no longer in the repository; it is
@@ -16,7 +16,7 @@ Run187 completes Android boot at the first 103.73 s sample and remains up at
 479.70 s, but the user sees a dimly backlit panel and UCHE faults persist.
 See [current handoff](HANDOFF.md), [failing components](FAILING-COMPONENTS.md)
 and `artifacts/snapshot60/run187-summary.json` for evidence and limits.
-Build/package/boot/capture procedures: [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+Build/package/boot/capture procedures: [BUILD_TISSOT.md](../BUILD_TISSOT.md).
 Run187 filenames below are relative to `porting/artifacts/snapshot60/`.
 
 Historical baseline evidence is run123

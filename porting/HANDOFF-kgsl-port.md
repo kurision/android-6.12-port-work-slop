@@ -12,7 +12,7 @@
 not the current worktree state or an instruction to rebuild. Read
 [HANDOFF.md](HANDOFF.md) for run187 and [TRACKER-kgsl-port.md](TRACKER-kgsl-port.md)
 for progress. Current build/package/boot/capture commands are in
-[BUIL_TISSOT.md](../BUIL_TISSOT.md); the unpinned build commands below are retained
+[BUILD_TISSOT.md](../BUILD_TISSOT.md); the unpinned build commands below are retained
 only as history. The current branch is `mdss-bisect`, with uncommitted tested
 driver changes and local evidence artifacts.
 

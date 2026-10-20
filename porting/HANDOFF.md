@@ -3,7 +3,7 @@
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](../BUILD_TISSOT.md).
 >
 > The per-run evidence this document cites (boot images, kernel directories,
 > init binaries, logdumps) is no longer in the repository; it is
@@ -1082,7 +1082,7 @@ Do next, in order:
    `drivers/gpu/msm/kgsl_pwrctrl.c`, `fs/pstore/ram.c`.
    The staged tree currently carries run208, not `a6684a45d`.
 3. Build **incrementally in `out/`**, preserving its merged config. Use the
-   pinned Rust/bindgen environment in `BUIL_TISSOT.md`, with `CC=clang`
+   pinned Rust/bindgen environment in `BUILD_TISSOT.md`, with `CC=clang`
    and `/usr/bin` first in PATH. Spelling it `CC=/usr/bin/clang` triggered
    unrelated recompilation during run208; that invocation was stopped and
    the build completed with the original `CC=clang`. No clean was run.
@@ -1278,7 +1278,7 @@ Do next, in order:
 1. Ask the user what the panel showed during run206 (not yet answered).
 2. With the user's OK, **re-boot `boot-run206.img` unchanged** (sha256
    `c595cfdf...0fe4`) to tell an intermittent hang from a systematic one.
-   Procedure as BUIL_TISSOT.md: verify device logdump sha == archived
+   Procedure as BUILD_TISSOT.md: verify device logdump sha == archived
    `run206-logdump.bin` before `clear-logdump.sh`; observer + fastboot
    capture as in `run206-host-timeline.log`; file it as run207 (copy/symlink
    not needed, pull script takes the image path: `pull-run-evidence.sh 207
@@ -1532,7 +1532,7 @@ command stream, not the port's MMU/SMMU programming.
 
 ## Previous handoff — run188, 2026-10-17
 
-Build/package/boot/capture instructions are in [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+Build/package/boot/capture instructions are in [BUILD_TISSOT.md](../BUILD_TISSOT.md).
 Keep run evidence in this handoff, the trackers and `artifacts/snapshot60/`.
 Run filenames in this section are relative to `artifacts/snapshot60/`.
 Earlier "Latest", "read first" and "current best" headings below are historical.

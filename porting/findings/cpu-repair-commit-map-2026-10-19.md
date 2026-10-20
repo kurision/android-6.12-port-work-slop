@@ -62,5 +62,5 @@ principally declaration/header ownership and the file-reference annotation.
   of an ignored known-good image; metadata hashes cannot recreate its ramdisk.
 
 Full chronology: [CPU handoff](../HANDOFF-cpu-bringup-2026-10-19.md).
-Procedures: [BUIL_TISSOT.md](../../BUIL_TISSOT.md) and
+Procedures: [BUILD_TISSOT.md](../../BUILD_TISSOT.md) and
 [boot-testing reference](../REFERENCE-boot-testing.md).

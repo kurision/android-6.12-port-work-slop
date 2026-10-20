@@ -377,7 +377,7 @@ stock `4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d` after observation.
   Real run257 base SHA and package payload hashes were verified. Ramdisk, init
   and command line are unchanged; the new DTB contains the intended OPP sharing.
 - Pinned installed Clang/libclang 23.1.3, Rust 1.99.0 and bindgen 0.73.2.
-  BUIL_TISSOT.md's Clang 22 listing is stale; run257 already used Clang 23.1.3.
+  BUILD_TISSOT.md's Clang 22 listing is stale; run257 already used Clang 23.1.3.
   Preserved run257's embedded configuration, with **no resolved config diff**.
   Rust, ashmem and CPUFREQ_DT remain built in. Fresh output: `../ack-out-run258`.
 - Compared 69622 tracked source/binding files against `../ack-staged-run239`;
