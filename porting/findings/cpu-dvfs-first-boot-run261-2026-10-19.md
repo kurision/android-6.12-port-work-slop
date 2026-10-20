@@ -1,5 +1,9 @@
 # run261: the first port boot with a working CPUFreq policy
 
+> **Historical record - 2026-10-19.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-19. Image SHA256
 `6b008c81b57f4099d24ae521dec84eab10d43d21000fb730062294df3c76a054`.
 Source delta against run260: `drivers/clk/qcom/apcc-msm8953.c` only, plus the

@@ -1,5 +1,15 @@
 # rktdnt: Tissot donor bring-up commit record
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 Recorded 2026-10-17. The history/source investigation is not a diagnosed
 explanation for run210's reset. The approved source-only panel-policy
 correction is recorded below; it has not been built or booted.

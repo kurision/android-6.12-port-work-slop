@@ -1,5 +1,15 @@
 # Plan: port the downstream MDSS (fbdev) display driver to 6.12 (tissot)
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 Written 2026-10-11 after snapshot60 run33. Status: **superseded - the driver is
 ported and it works.** See "Status update" below before working from this doc.
 The decision recorded here is option 2: port the 4.19 donor display driver, so the

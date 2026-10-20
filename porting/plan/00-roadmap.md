@@ -1,5 +1,9 @@
 # 00 — Roadmap
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Target: Xiaomi Mi A1 (`tissot`) on android-mainline. Definition of "usable" at
 the end of each phase, and what must be true before starting it.
 

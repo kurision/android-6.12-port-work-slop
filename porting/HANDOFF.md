@@ -1,5 +1,15 @@
 # Handoff — tissot 6.12 port, update 2026-10-18
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 ## User-built run259: do not interpret the recovered log as a new boot
 
 The user built/booted run259 after the agent's W=1 build failed in pstore.

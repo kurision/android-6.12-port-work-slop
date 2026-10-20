@@ -1,5 +1,9 @@
 # run186 results
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../../../CURRENT-STATE.md).
+
 Image `boot-run186.img` sha256 `649ca6ad09a120e45854a529a60b9cbdec0c395df7a6ed1dddc0b0c28b7f0e36`,
 kernel payload `42b3691a76b2cc42787819c0e33cd55074fd23ba69685215c5882cff9bc35bc9`.
 Base `boot-run185.img`; ramdisk/init/cmdline byte-identical to run185. Only the kernel differs.

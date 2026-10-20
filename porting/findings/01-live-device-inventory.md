@@ -1,5 +1,9 @@
 # 01 — Live device inventory
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Source: `artifacts/tissot-live.dts` (decoded from the FDT the running kernel
 received) and `artifacts/dmesg-live.txt`. Line references are to those files.
 

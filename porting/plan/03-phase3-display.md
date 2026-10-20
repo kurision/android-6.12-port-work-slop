@@ -1,5 +1,9 @@
 # Phase 3 — display
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 **Goal:** a working 1080×1920 panel with backlight, driven by upstream msm DRM.
 
 ## Why this phase is the real work

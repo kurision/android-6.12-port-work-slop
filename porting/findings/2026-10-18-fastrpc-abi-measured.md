@@ -1,5 +1,9 @@
 # FastRPC: the CAF ioctl mismatch, measured from the shipped library
 
+> **Historical record - 2026-10-18.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 **Date:** 2026-10-18 · **Tree:** `ack-kgsl` (6.12.93) · **Device:** tissot, run237 port boot
 
 ## What this settles

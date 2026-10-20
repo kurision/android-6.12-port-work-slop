@@ -1,5 +1,9 @@
 # run198 — GPU address-mode fix, and what it did and did not prove
 
+> **Historical record - 2026-10-17.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../../../CURRENT-STATE.md).
+
 Date: 2026-10-17. Image `boot-run198.img`, payload `0b042809…`, based on
 `boot-run197.img` (which is `boot-run196.img` + the panel-regulator counter
 fix). One source change vs run197, in `drivers/gpu/msm/adreno.c`.

@@ -1,5 +1,10 @@
 # Harness-only SELinux policy fragments
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../../BUIL_TISSOT.md).
+
 Extra CIL appended to the ramdisk's `userdebug_plat_sepolicy.cil` by
 `porting/logging/package-diag-boot.py --policy-append`, at boot time only.
 Nothing here is flashed, and none of it is shippable.

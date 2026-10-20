@@ -1,5 +1,10 @@
 # Handoff — Mi A1 (tissot): ACK 6.18 port, session of 2026-10-04
 
+> **Current state: porting/CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](BUIL_TISSOT.md).
+
 Read this first in a new session, then [project-mainline.md](project-mainline.md) for the full record.
 
 ## Where things are

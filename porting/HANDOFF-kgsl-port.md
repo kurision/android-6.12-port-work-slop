@@ -1,5 +1,13 @@
 # Handoff: kgsl 4.19 → 6.12 port (tissot) — mid Stage 2
 
+> **Superseded.** The current state is [CURRENT-STATE.md](CURRENT-STATE.md); the
+> successor to this handoff is [HANDOFF-cpu-session3-2026-10-20.md](HANDOFF-cpu-session3-2026-10-20.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 **Historical archive — superseded.** This is the Stage 2 record from 2026-10-10,
 not the current worktree state or an instruction to rebuild. Read
 [HANDOFF.md](HANDOFF.md) for run187 and [TRACKER-kgsl-port.md](TRACKER-kgsl-port.md)

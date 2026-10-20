@@ -1,5 +1,13 @@
 # Handoff: MSM8953 CPU bring-up, session 3 (2026-10-20)
 
+> **Superseded.** The current state is [CURRENT-STATE.md](CURRENT-STATE.md); the
+> successor to this handoff is [HANDOFF-cpu-session3-2026-10-20.md](HANDOFF-cpu-session3-2026-10-20.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 **Read this file first.** It supersedes
 `HANDOFF-cpu-session2-2026-10-19.md`; the run-by-run evidence is in
 `findings/cpu-boot-failure-analysis-run265-2026-10-19.md`, which itself

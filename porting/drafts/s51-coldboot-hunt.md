@@ -1,5 +1,10 @@
 # Snapshot51 coldboot hunt (34.3 s vs stock 2.8 s)
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../../BUIL_TISSOT.md).
+
 ## Established (snapshot50 run1, no guessing)
 - `mount_all --early` at t≈84 s because init blocks on
   `wait_for_coldboot_done`; ueventd reports `Coldboot took 34.309 s`.

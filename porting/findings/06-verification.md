@@ -1,5 +1,9 @@
 # Porting guide verification — 2026-10-05
 
+> **Historical record - 2026-10-05.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Verdict: **the captured evidence is useful, but the guide is not reliable as an implementation plan yet.** Several proposed driver projects are unnecessary, the PMIC draft contains incorrect interrupt values, and the reserved-memory advice misreads the board DTS.
 
 Scope: README, all five existing findings, all six phase-plan documents, the PMIC draft, standalone build harness, logging documentation and collectors. Checked against local DT/log/config captures and accessible primary upstream sources. No phone was flashed or runtime settings changed. Original guide files remain unchanged.

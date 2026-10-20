@@ -1,5 +1,9 @@
 # Phase 5 — thermal, audio, sensors
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Everything here is optional for "boots and displays", and each item is a new
 driver rather than a DT edit.
 

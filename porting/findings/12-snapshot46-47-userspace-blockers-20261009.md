@@ -1,5 +1,9 @@
 # Snapshot46–47: past QSEE into userspace; graphics now blocks boot (2026-10-09)
 
+> **Historical record - 2026-10-09.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Evidence lives under `porting/artifacts/snapshot46/` and `porting/artifacts/snapshot47/`
 (`runN-usb.log`, `runN-sd.log`, `runN-logdump.bin`, `run4-logcat.txt`).
 

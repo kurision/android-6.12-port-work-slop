@@ -1,5 +1,9 @@
 # run265: the live boot, the CPU burn, and the GPU fence that never signals
 
+> **Historical record - 2026-10-19.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-19. Follows
 `cpu-boot-failure-analysis-run261-264-2026-10-19.md` and
 `gpu-retirement-stall-run261-2026-10-19.md`. Companion to

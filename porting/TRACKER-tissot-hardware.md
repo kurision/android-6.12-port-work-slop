@@ -1,5 +1,15 @@
 # Tracker: tissot (MSM8953 / Mi A1) hardware on ACK 6.12
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 Last update: 2026-10-17. Run187 updates SMMU, display/GPU and ashmem below;
 other rows retain their historical evidence and were not functionally retested.
 Run187 completes Android boot at the first 103.73 s sample and remains up at

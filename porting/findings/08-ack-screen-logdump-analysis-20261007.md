@@ -1,4 +1,9 @@
 # Xiaomi Mi A1 (tissot) ACK Android 16 (Kernel 6.12)
+
+> **Historical record - 2026-10-07.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 ## Screen Logdump Analysis: `ack-screen-logdump-20261007.bin`
 
 **Date:** 2026-10-07  

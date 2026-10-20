@@ -1,9 +1,19 @@
 # Tissot ACK 6.12 port — current progress
 
+> **Current state: porting/CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](BUIL_TISSOT.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 Updated: 2026-10-05 (UTC+0545 device clock). Companion to
 `docs/ack-6.18-boot-investigation.md` §14–§15; this file is the live status
-log. Kernel tree: `../ack-android16-6.12` (android16-6.12 checkout
-`3a7d1771d4925a56f7eeb8a5ba1faff0c544a9ef`, image builds carry local
+log. Kernel tree: `../ack-kgsl` (branch `main`); the android16-6.12 checkout
+`3a7d1771d4925a56f7eeb8a5ba1faff0c544a9ef`, whose image builds carry local
 adaptations and identify as `6.12.93-4k-g3a7d1771d492-dirty`). AOSP baseline
 cited for init behavior: `system/core` `a3b721a32242006b59cb12bd62c9133632af3a2d`.
 

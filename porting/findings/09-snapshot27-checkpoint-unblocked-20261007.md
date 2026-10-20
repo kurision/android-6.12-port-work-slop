@@ -1,4 +1,9 @@
 # Snapshot27: checkpoint blocker resolved, 355s reset unobserved
+
+> **Historical record - 2026-10-07.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-07. Image: `boot-ack-snapshot27-init-relabel-screen.img`
 (sha256 `3ef09286…f2e1dfb`). No kernel build, no flash; all boots temporary.
 

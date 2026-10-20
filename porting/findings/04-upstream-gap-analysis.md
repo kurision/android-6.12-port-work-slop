@@ -1,5 +1,9 @@
 # 04 — android-mainline gap analysis
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Base: `kernel/common` branch `upstream-master`, currently **7.2.0**. Sources
 vendored under `upstream-refs/` (`msm8953.dtsi`, `pm8953.dtsi`,
 `msm8953-xiaomi-tissot.dts`). Line numbers below refer to those files.

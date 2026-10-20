@@ -1,5 +1,9 @@
 # run196 — display pipeline result, taken live over ADB
 
+> **Historical record - 2026-10-17.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../../../CURRENT-STATE.md).
+
 Date: 2026-10-17. Image `boot-run196.img`, kernel payload
 `39f3c9b9e7476afafdb0fa44b24e940fab786db4f7ff771258a6f6…` (see
 `package-run196.json`), booted from `boot-run195.img`, cmdline

@@ -1,5 +1,15 @@
 # Tracker: kgsl 4.19 -> 6.12 port (tissot)
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../BUIL_TISSOT.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 Goal: restore `/dev/kgsl-3d0` with the stock ioctl ABI so the vendor EGL
 (`libGLESv2_adreno.so`, 2020 QC blob), sdm HWC and gralloc work unchanged
 — the "GPU 3D" row of `porting/FAILING-COMPONENTS.md` (backlog #1).

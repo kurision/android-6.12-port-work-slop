@@ -1,5 +1,9 @@
 # Phase 1 — make the tissot device tree build
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 **Goal:** `msm8953-xiaomi-tissot.dts` preprocesses and compiles, the image boots
 to a UART console with all 8 CPUs.
 

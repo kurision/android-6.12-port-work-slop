@@ -1,5 +1,9 @@
 # run261: the display stack is done, the GPU stops retiring work
 
+> **Historical record - 2026-10-19.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-19. Evidence: `run261-logdump.log` (1.97 MB of port console),
 `run261-live/logcat-100.log`, `run261-live/lag-sample-240.txt`,
 `run261-live/adb-timeline.jsonl`.

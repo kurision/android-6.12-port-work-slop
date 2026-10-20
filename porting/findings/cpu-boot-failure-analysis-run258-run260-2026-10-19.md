@@ -1,5 +1,9 @@
 # CPU boot-failure analysis: what changed since run258, and what could not boot
 
+> **Historical record - 2026-10-19.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-19. Scope: the source delta between the run258 image and the
 run260 image, the evidence that bounds the failure, the ranked suspects, and
 the source hardening that follows from them.

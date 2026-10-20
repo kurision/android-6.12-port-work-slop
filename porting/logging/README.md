@@ -1,5 +1,15 @@
 # Logging during the port
 
+> **Current state: CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](../../BUIL_TISSOT.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 ## Current Android / ACK capture workflow
 
 Read [BUIL_TISSOT.md](../../BUIL_TISSOT.md) for build, package, RAM boot and capture

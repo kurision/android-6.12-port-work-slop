@@ -1,5 +1,9 @@
 # qseecom 6.12 build-fix handoff — 2026-10-06
 
+> **Historical record - 2026-10-06.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 ## Status
 Fedora build completed; fetched Image.gz-dtb is 16,936,518 bytes, SHA256
 `b4bd964e617892ccaf9e33b2d904a11050d35a5ecb4322152fa15f6ddfc5a108`.

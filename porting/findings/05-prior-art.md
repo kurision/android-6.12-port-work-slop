@@ -1,5 +1,9 @@
 # 05 — Prior art
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Three bodies of code already exist for this chip. Knowing what each one is good
 for saves weeks of blind work.
 

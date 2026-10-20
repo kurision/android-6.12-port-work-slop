@@ -1,5 +1,9 @@
 # GPU firmware loading: stock 4.19 vs 6.12 (snapshot50 evidence, 2026-10-09)
 
+> **Historical record - 2026-10-09.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 ## The blobs
 Six files feed the Adreno 506 probe: `a530_pm4.fw` / `a530_pfp.fw`
 (ringbuffer microcode), `a506_zap.mdt` + `.b00/.b01/.b02` (secure shader,

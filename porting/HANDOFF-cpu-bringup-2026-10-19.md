@@ -1,5 +1,13 @@
 # Handoff: MSM8953 CPU bring-up — run261 boots with a working CPUFreq policy
 
+> **Superseded.** The current state is [CURRENT-STATE.md](CURRENT-STATE.md); the
+> successor to this handoff is [HANDOFF-cpu-session3-2026-10-20.md](HANDOFF-cpu-session3-2026-10-20.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 ## Resume here — the splash/reset is fixed; the phone now dies of something else
 
 **The boot is fixed.** run261 booted the port kernel, handed the clock over

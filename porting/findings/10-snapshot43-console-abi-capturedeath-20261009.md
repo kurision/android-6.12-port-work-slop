@@ -1,5 +1,9 @@
 # snapshot43 findings through run 11 — console timing, interrupted-SMC ABI, and capture endpoints
 
+> **Historical record - 2026-10-09.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-09. Kernel tree `ack-android16-6.12`, out dir `out-snapshot43`
 (donor reference: `../kernel_xiaomi_msm8953`). Artifacts in
 `porting/artifacts/snapshot43/`. Nothing was flashed; every boot was

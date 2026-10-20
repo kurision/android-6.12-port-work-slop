@@ -1,5 +1,9 @@
 # run266-282: a flashed, rooted port kernel, and the two policy defects
 
+> **Historical record - 2026-10-20.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-20. Continues
 `cpu-boot-failure-analysis-run265-2026-10-19.md` and
 `cpu-boot-failure-analysis-run270-272-2026-10-20.md`.

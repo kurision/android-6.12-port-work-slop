@@ -1,5 +1,13 @@
 # Handoff — MSM8953 CPU bring-up (oc-test → 6.12), 2026-10-18
 
+> **Superseded.** The current state is [CURRENT-STATE.md](CURRENT-STATE.md); the
+> successor to this handoff is [HANDOFF-cpu-session3-2026-10-20.md](HANDOFF-cpu-session3-2026-10-20.md).
+>
+> The per-run evidence this document cites (boot images, kernel directories,
+> init binaries, logdumps) is no longer in the repository; it is
+> git-ignored and disposable, and the boot images are in
+> ../ack-kgsl-artifacts.
+
 **Source-only session. Nothing is enabled or wired, and no kernel build, image
 or boot was performed or is authorized.** All new drivers below are compiled
 against this tree's real `out/.config` and committed disabled.

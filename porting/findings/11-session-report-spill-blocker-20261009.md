@@ -1,5 +1,9 @@
 # SESSION REPORT 2026-10-09 — spill reuse, capture endpoints, and remaining proof gaps
 
+> **Historical record - 2026-10-09.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Evidence: saved snapshot43 artifacts in `porting/artifacts/snapshot43/`.
 The corrected [findings through run 11](10-snapshot43-console-abi-capturedeath-20261009.md)
 cover runs 1–9 and a separate run-11 addendum. This report additionally checks

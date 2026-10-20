@@ -1,5 +1,9 @@
 # 03 — WLAN, firmware and partitions
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 ## WiFi works today, on the mainline-style stack
 
 From `artifacts/dmesg-live.txt`:

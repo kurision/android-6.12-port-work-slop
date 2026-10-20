@@ -1,5 +1,9 @@
 # run261-264: what the boot fix bought, and what is still broken
 
+> **Historical record - 2026-10-19.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Date: 2026-10-19. Companion to
 `cpu-boot-failure-analysis-run258-run260-2026-10-19.md` (the delta analysis
 that led to the hardening) and `gpu-retirement-stall-run261-2026-10-19.md`

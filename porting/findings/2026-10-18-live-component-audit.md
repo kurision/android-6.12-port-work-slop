@@ -1,5 +1,9 @@
 # Live component audit — 2026-10-18, after run234
 
+> **Historical record - 2026-10-18.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 ## Identity and limits
 
 Evidence directory: `../artifacts/snapshot60/live-audit-20261018T143526Z/`.

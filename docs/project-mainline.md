@@ -1,5 +1,10 @@
 # Mi A1 (tissot) mainline port — findings, blockers, progress
 
+> **Current state: porting/CURRENT-STATE.md.** The entries below are the
+> running log and are ordered newest first; the top entry is not
+> necessarily the current state. Build, package and flash:
+> [BUIL_TISSOT.md](BUIL_TISSOT.md).
+
 ## Current status
 
 Two milestones done, still **no flashing**. The phone has not been touched.

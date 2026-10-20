@@ -1,5 +1,9 @@
 # CPU repair checkpoints — 2026-10-19
 
+> **Historical record - 2026-10-19.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 These are source/evidence checkpoints, **not known-good CPU DVFS revisions**.
 
 | Commit | Change | Evidence / limit |

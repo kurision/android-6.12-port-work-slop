@@ -1,5 +1,9 @@
 # 02 — Thermal
 
+> **Historical record - undated.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 Evidence: `sysfs` dumps taken over ssh (`/sys/class/thermal/*`), the live DT
 (`artifacts/tissot-live.dts`), and the bootlog.
 

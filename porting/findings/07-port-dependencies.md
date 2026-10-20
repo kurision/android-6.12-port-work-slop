@@ -1,5 +1,9 @@
 # Mi A1 port dependency research — 2026-10-05
 
+> **Historical record - 2026-10-05.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 The next useful porting step is to compare the working MSM8953 CPU/voltage stack and generated panel driver with a pinned Android target. WLAN already has a working firmware-loading reference; its board supplies must be carried over too.
 
 ## Evidence boundaries

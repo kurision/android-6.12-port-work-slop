@@ -1,5 +1,9 @@
 # Live component audit — run237 port boot (2026-10-18)
 
+> **Historical record - 2026-10-18.** This is what
+> the evidence showed at the time and has not been rewritten. The
+> current state is [CURRENT-STATE.md](../CURRENT-STATE.md).
+
 ## Identity and method
 
 Read-only ADB collection from the phone currently booted on **run237**, plus
