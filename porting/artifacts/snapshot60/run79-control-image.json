@@ -1,6 +1,0 @@
-{
-  "image": "boot-run73.img",
-  "sha256": "2d11fbc063a1c1515889c81039eabf189c8879824aa803373386f2c962bdce93",
-  "kernel_payload_sha256": "965559903147b1fda92b3698299e5f4328ce59ea23b3176cf41d2c66d9078aae",
-  "purpose": "Unmodified preserved run73 ADB control after run78 failed before ADB"
-}

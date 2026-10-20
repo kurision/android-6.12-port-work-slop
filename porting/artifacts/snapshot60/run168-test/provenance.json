@@ -1,8 +1,0 @@
-{
-  "image": "boot-run167.img",
-  "image_sha256": "7494ddcb320806929dc9d1ed784dda254bbd2cca9fada63f17e59e840fc97810",
-  "purpose": "Continue snapshot-access test after user-reported bootloader-splash failure, without modifying image",
-  "pretest_partition": "run167-logdump.bin",
-  "pretest_partition_sha256": "def42a9ffaee9a70708449b067e32ee6a0d2cf64108ee6b5285c6cb286b7199d",
-  "logdump_cleared": false
-}

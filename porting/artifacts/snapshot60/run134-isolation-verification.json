@@ -1,9 +1,0 @@
-{
-  "compared_to": 131,
-  "kernel_and_dtb_identical": true,
-  "compressed_ramdisk_identical": true,
-  "image_bytes_unchanged": 37818368,
-  "only_changed_byte_ranges": "header command line and derived image ID",
-  "cmdline": "androidboot.hardware=qcom loop.max_part=7 androidboot.boot_devices=soc@0/7824900.mmc buildvariant=user ignore_loglevel printk.time=1 androidboot.force_normal_boot=1 rcupdate.rcu_cpu_stall_timeout=10 softlockup_panic=1 hung_task_panic=1 printk.devkmsg=on androidboot.bootdevice=../.. console=ttynull firmware_class.path=/vendor/firmware ramoops.reset_capture=1 pstore.backend=ramoops panic=0 initcall_blacklist=smbchg_init,fg_init",
-  "sha256": "ae709d59d91e0b690b40b3eb8d804b3a2b56c1644dd16c412649f61b49a45c6b"
-}

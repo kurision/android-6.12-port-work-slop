@@ -1,8 +1,0 @@
-{
-  "port_adb_seen": true,
-  "first_port_host_seconds": 68.00617220899949,
-  "returned_stock": true,
-  "host_elapsed": 240.30922173099952,
-  "capture_pid": 209043,
-  "return_to_stock": "host-requested normal reboot to preserve evidence and proceed to approved run135"
-}

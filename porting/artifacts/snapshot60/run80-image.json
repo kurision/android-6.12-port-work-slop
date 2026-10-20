@@ -1,5 +1,0 @@
-{
-  "image": "boot-run78.img",
-  "sha256": "7df790910ba4f72584b88da32368a9ce48dcc653b0dfb83c9225510b1b175236",
-  "purpose": "Corrected caps policy verification after preserved run73 ADB control; kernel and cmdline unchanged"
-}

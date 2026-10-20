@@ -1,0 +1,80 @@
+Coordinated CPU bring-up repair after run256. Host checks only; no kernel build or phone operation.
+COMMAND: /usr/bin/python3 porting/build-test/test-msm8953-apcc.py
+EXIT: 0
+PASS: all 49 stock transitions, both CPUs/CCI, voltage ordering, readback and bounds
+PASS: parking source voltage requirement is held even above the target corner
+PASS: warm/cold handoff, external veto ABORT restores full snapshot and old voltage
+PASS: voltage rejection vetoes PRE without hardware writes
+PASS: every one-shot MMIO fault in scenario 0 (73 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 1 (73 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 2 (84 positions) restores both clusters/CCI
+PASS: persistent rollback failure retains safe voltage and blocks further DVFS
+PASS: PLL lock timeout restores original integer L and all muxes
+PASS: silent RCG/L/output-enable write loss is detected and rolled back
+PASS: silent rollback L write loss is detected before voltage can fall
+PASS: failed POST voltage decrease keeps the higher safe vote
+PASS: probe retries reuse lifetime input pins; failed acquisition cannot disable a live source
+
+COMMAND: /usr/bin/python3 porting/build-test/audit-msm8953-apcc-transitions.py
+EXIT: 0
+PASS: all 49 stock transitions, both CPUs/CCI, voltage ordering, readback and bounds
+PASS: parking source voltage requirement is held even above the target corner
+PASS: warm/cold handoff, external veto ABORT restores full snapshot and old voltage
+PASS: voltage rejection vetoes PRE without hardware writes
+PASS: every one-shot MMIO fault in scenario 0 (73 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 1 (73 positions) restores both clusters/CCI
+PASS: every one-shot MMIO fault in scenario 2 (84 positions) restores both clusters/CCI
+PASS: persistent rollback failure retains safe voltage and blocks further DVFS
+PASS: PLL lock timeout restores original integer L and all muxes
+PASS: silent RCG/L/output-enable write loss is detected and rolled back
+PASS: silent rollback L write loss is detected before voltage can fall
+PASS: failed POST voltage decrease keeps the higher safe vote
+PASS: probe retries reuse lifetime input pins; failed acquisition cannot disable a live source
+
+COMMAND: /usr/bin/python3 porting/build-test/test-msm8953-spm.py
+EXIT: 0
+PASS: SAW4 request/idle/level handshake, errors, routing, AVS limits and masks
+
+COMMAND: /usr/bin/python3 porting/build-test/test-msm8953-spm-regulator.py
+EXIT: 0
+PASS: FTS2-family/HF voltage, selector and step-rate arithmetic
+
+COMMAND: /usr/bin/python3 porting/build-test/test-msm8953-apm.py
+EXIT: 0
+PASS: APM reads, both switch directions, mask, invalid request, timeout
+
+COMMAND: /usr/bin/python3 porting/build-test/test-msm8953-mem-acc.py
+EXIT: 0
+PASS: memory-ACC corners, write order, unrelated bits, invalid/stuck states
+
+COMMAND: /usr/bin/python3 porting/build-test/test-msm8953-cpr-tables.py
+EXIT: 0
+PASS: CPR per-bin, per-revision and misc-fuse table dimensions
+
+COMMAND: /usr/bin/python3 /home/kurision/.agents/skills/kernel-development-skills/scripts/check_kernel_api_patterns.py drivers/clk/qcom/apcc-msm8953.c drivers/soc/qcom/msm8953-spm.c
+EXIT: 0
+No advisory kernel API pattern findings in 2 file(s).
+
+COMMAND: git diff --check
+EXIT: 0
+
+CHECKPATCH: drivers/clk/qcom/apcc-msm8953.c, drivers/soc/qcom/msm8953-spm.c, arch/arm64/boot/dts/qcom/msm8953-cpu.dtsi
+EXIT: 0
+total: 0 errors, 0 warnings, 0 checks, 1360 lines checked
+
+Your patch has no obvious style problems and is ready for submission.
+
+CHECKPATCH: Documentation/devicetree/bindings/clock/qcom,apcc-msm8953.yaml
+EXIT: 0
+total: 0 errors, 0 warnings, 0 checks, 25 lines checked
+
+Your patch has no obvious style problems and is ready for submission.
+
+Source hashes unchanged throughout checks: True
+389f07a9bf05a81e31024d10a8ef5ab5c9cf16b7028856779880e3b6bec72d20  drivers/clk/qcom/apcc-msm8953.c
+155035e749f9e549abd0968b9d41605a6ff3fb52680855c9f53818dab87e2f55  drivers/soc/qcom/msm8953-spm.c
+c4fb9a0a36ec3c30cc8d337656e34fdecfc182cd6bc35f7eb37fd6fe61108241  arch/arm64/boot/dts/qcom/msm8953-cpu.dtsi
+aae5d3c7632aa771cb21657870d85abcb36391d52a077f9967a04e54248f6fc5  Documentation/devicetree/bindings/clock/qcom,apcc-msm8953.yaml
+eaeb91b6a4b746051f9a69bcbcbfd5ab9135fdc857dfa943f3289f63964dbfbb  porting/build-test/test-msm8953-apcc.py
+96df8719d429fc73674e271009a13f3dbe8fdfc1fb9585898ac9af502e6332cd  porting/build-test/test-msm8953-spm.py
+8ab1b03eaddb7de748f23a347a06b7abee259fdcf11dac8df269c03234461357  porting/build-test/test-msm8953-cpr-tables.py

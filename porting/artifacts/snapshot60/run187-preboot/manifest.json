@@ -1,7 +1,0 @@
-{
-  "existing_partition_sha256": "6ed99abba71131b8d2d09c2eceed276b51b570d69583f5bae393590e683264a3",
-  "existing_partition_copy": "../run186-logdump.bin",
-  "partition_cleared": false,
-  "early_logcat_archive_exit": 0,
-  "early_logcat_archive_sha256": "0b7db8d9df71832347374e58df84a1981df087b040866c20c7ad9da50900189c"
-}

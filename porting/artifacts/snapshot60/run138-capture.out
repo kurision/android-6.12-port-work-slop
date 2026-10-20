@@ -1,8 +1,0 @@
-+ adb -s 2819f2320604 reboot bootloader
-waiting for 18d1:9008 serial tissot-diag
-+ fastboot -s 2819f2320604 boot porting/artifacts/snapshot60/boot-run138.img
-Sending 'boot.img' (36932 KB)                      OKAY [  0.820s]
-Booting                                            OKAY [  1.198s]
-Finished. Total time: 2.054s
-opening /dev/ttyACM0
-capture ended: reader-error: [Errno 13] could not open port /dev/ttyACM0: [Errno 13] Permission denied: '/dev/ttyACM0'; bytes=0

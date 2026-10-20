@@ -1,7 +1,0 @@
-waiting for 18d1:9008 serial tissot-diag
-+ fastboot -s 2819f2320604 boot boot-run186.img
-Sending 'boot.img' (42470 KB)                      OKAY [  0.932s]
-Booting                                            OKAY [  1.189s]
-Finished. Total time: 2.150s
-opening /dev/ttyACM0
-capture ended: reader-error: device reports readiness to read but returned no data (device disconnected or multiple access on port?); bytes=422382

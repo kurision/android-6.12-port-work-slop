@@ -1,9 +1,0 @@
-{
-  "base": "boot-run167.img (booted successfully as run168)",
-  "kernel_identical": true,
-  "cmdline_identical": true,
-  "policy_delta": "harness-genfs-backlight-attrs.cil: one MDSS lcd-backlight subtree sysfs_graphics label",
-  "pretest_partition": "run168-logdump.bin",
-  "pretest_partition_sha256": "1d7ff53eb05b61f51632fcf228dde11305201ce8b2105ba0db96378611410abb",
-  "logdump_cleared": false
-}

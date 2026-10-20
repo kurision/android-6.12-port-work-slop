@@ -1,5 +1,0 @@
-{
-  "initiated_by": "host after completed eight-minute capture",
-  "reason": "persistent logdump recovery",
-  "command": "adb -s 2819f2320604 reboot"
-}

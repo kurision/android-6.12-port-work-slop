@@ -1,3 +1,0 @@
-4.19.325-cip136-st20-perf-mglru-next-g5835eacd666d
-770479a1-5951-4bf3-92e7-d382aaa24d83
-uid=0(root) gid=0(root) groups=0(root) context=u:r:magisk:s0

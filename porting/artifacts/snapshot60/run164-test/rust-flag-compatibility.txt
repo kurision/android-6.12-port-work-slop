@@ -1,1 +1,0 @@
-Rust 1.99 renamed -Zdebug-info-for-profiling to -Zdebuginfo-for-profiling. Overridden via make RUSTFLAGS_AUTOFDO_CLANG; no source/config feature changes.

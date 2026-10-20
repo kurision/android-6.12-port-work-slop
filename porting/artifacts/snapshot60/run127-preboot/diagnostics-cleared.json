@@ -1,9 +1,0 @@
-{
-  "archived_manifest": "manifest.json",
-  "verified_before_delete": [
-    "/data/local/tmp/ack-early-logcat.log",
-    "/data/local/tmp/ack-sync-probe.log"
-  ],
-  "remaining_matching_files": [],
-  "previous_logdump_sha256": "3f89dbc1c28d1092ba59622e1530e78f761b7d0d18e6f8d3bb3a6f3a11a9ff7a"
-}

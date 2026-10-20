@@ -1,5 +1,0 @@
-{
-  "reason": "user requested skipping control log recovery and proceeding to run134",
-  "retained_files_moved_to": "/data/local/tmp/ack-run133-preserved-before-run134",
-  "logdump_will_be_cleared": true
-}

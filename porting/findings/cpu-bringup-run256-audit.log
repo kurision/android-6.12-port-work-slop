@@ -1,0 +1,33 @@
+CPU bring-up host audit after run256; no kernel build or device operation.
+COMMAND: python3 porting/build-test/test-msm8953-apcc.py
+EXIT: 0
+PASS: plan lookup, above-plan refusal, shared-rail voting, rollback
+
+COMMAND: python3 porting/build-test/test-msm8953-spm-regulator.py
+EXIT: 0
+PASS: FTS2-family/HF voltage, selector and step-rate arithmetic
+
+COMMAND: python3 porting/build-test/test-msm8953-apm.py
+EXIT: 0
+PASS: APM reads, both switch directions, mask, invalid request, timeout
+
+COMMAND: python3 porting/build-test/test-msm8953-mem-acc.py
+EXIT: 0
+PASS: memory-ACC corners, write order, unrelated bits, invalid/stuck states
+
+COMMAND: python3 porting/build-test/test-msm8953-spm.py
+EXIT: 0
+PASS: SAW4 request/idle/level handshake, errors, routing, AVS limits and masks
+
+COMMAND: python3 porting/build-test/test-msm8953-cpr-tables.py
+EXIT: 0
+PASS: CPR per-bin, per-revision and misc-fuse table dimensions
+
+COMMAND: python3 porting/build-test/audit-msm8953-apcc-transitions.py
+EXIT: 1
+PASS: plan lookup, above-plan refusal, shared-rail voting, rollback
+FAIL: downscale must lower clocks before lowering voltage
+FAIL: failed primary clock change must retain previous votes and voltage
+FAIL: sibling failure must restore the first cluster
+3 transition audit failure(s); host mocks only
+

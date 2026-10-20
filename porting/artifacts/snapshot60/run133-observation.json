@@ -1,8 +1,0 @@
-{
-  "port_adb_seen": true,
-  "first_port_host_seconds": 68.00270677200024,
-  "returned_stock": true,
-  "host_elapsed": 388.2744166500006,
-  "capture_pid": 200883,
-  "return_to_stock": "user-requested host normal reboot; control evidence pull explicitly skipped"
-}

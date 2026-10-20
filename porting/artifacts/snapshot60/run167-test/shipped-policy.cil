@@ -1,9 +1,0 @@
-;; Diagnostic image only: let the authorized adb shell read GPU snapshots
-;; and resolve the LED endpoint. No sysfs writes or new policy types.
-(genfscon sysfs "/devices/platform/soc@0/1c00000.gpu" (u object_r sysfs_gpu ((s0) (s0))))
-(allow shell sysfs_gpu (dir (getattr search open read)))
-(allow shell sysfs_gpu (file (getattr open read)))
-(allow shell sysfs_gpu (lnk_file (getattr read)))
-(allow shell sysfs_leds (dir (getattr search open read)))
-(allow shell sysfs_leds (lnk_file (getattr read)))
-(allow shell sysfs (lnk_file (getattr read)))
