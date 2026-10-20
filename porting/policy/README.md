@@ -3,11 +3,16 @@
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not
 > necessarily the current state. Build, package and flash:
-> [BUIL_TISSOT.md](../../BUIL_TISSOT.md).
+> [BUILD_TISSOT.md](../../BUILD_TISSOT.md).
 
 Extra CIL appended to the ramdisk's `userdebug_plat_sepolicy.cil` by
 `porting/logging/package-diag-boot.py --policy-append`, at boot time only.
 Nothing here is flashed, and none of it is shippable.
+
+This file is the experiment log. The procedure for a ROM developer who has
+to adapt a ROM's policy to a newer kernel is
+[ADAPTING-A-ROM-TO-A-NEWER-KERNEL.md](ADAPTING-A-ROM-TO-A-NEWER-KERNEL.md);
+the entries below are the evidence behind it.
 
 The vendor partition is read-only and dm-verity protected, so these are the
 only way to adjust what the stock vendor policy ends up enforcing without

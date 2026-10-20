@@ -1,0 +1,315 @@
+# Adapting a ROM's SELinux policy to a newer kernel
+
+> **Current state: [CURRENT-STATE.md](../CURRENT-STATE.md).** Build, package
+> and flash: [BUILD_TISSOT.md](../../BUILD_TISSOT.md).
+
+This is the guide for a ROM developer whose Android userspace has to keep
+working on a newer kernel. It is written against what this port actually
+hit moving a Qualcomm CAF 4.19 ROM to an upstream 6.12 kernel, and the
+worked examples are the port's own.
+
+The experiment log next door, [README.md](README.md), records what was
+tried against the running port and what the outcome was. This document is
+the procedure; that one is the evidence.
+
+## The one thing to understand first
+
+**The policy is written for the ROM's userspace, and the userspace is the
+one that decides the ABI.** On a Qualcomm ROM the userspace is stock CAF
+binaries: `adsprpcd`, the vendor EGL and gralloc, the camera and media
+HALs, the framework. Those binaries ask the kernel for things in CAF's
+terms - CAF's fastrpc ioctl numbers, CAF's key codes, CAF's device node
+names, CAF's sysfs paths.
+
+So when the kernel changes, the question is never "what does upstream's
+policy say". It is:
+
+> **What does the CAF binary in the ROM expect the kernel to look like,
+> and does the new kernel still look like that?**
+
+Everything below follows from that. A new kernel that renames a sysfs
+path breaks the ROM's policy even though the policy itself is untouched,
+because the path in the `genfscon` no longer exists and the object falls
+back to the generic `sysfs` type - which almost nothing is allowed to
+touch.
+
+## What the kernel decides and what the ROM decides
+
+| | decided by | changed when |
+|---|---|---|
+| The objects the kernel creates (sysfs, debugfs, /dev, securityfs) | the **kernel's** base policy (`genfscon` in `security/selinux/`) | the kernel changes a path or adds an object |
+| The objects the ROM creates (/data, /cache, the vendor's own nodes) | the **ROM's** policy (`file_contexts`, `genfscon` in the vendor CIL) | the ROM changes |
+| The rules that say who may do what | the **ROM's** policy | the ROM's own services change |
+| The initial SID, the kernel's own types and attributes | the **kernel's** base policy | rarely |
+
+The effective policy is the ROM's. The ROM's `init` loads it, compiled
+ahead of time into a CIL file (`plat_sepolicy_genfs_202604.cil` and the
+vendor's `vendor_sepolicy.cil`), and merges it with the kernel's base
+policy at boot. The kernel does not enforce the ROM's rules; it only
+supplies the labels for the objects it creates.
+
+That gives the three ways to close a gap, in order of preference:
+
+1. **Fix the ROM's policy.** This is the right answer for a shippable
+   ROM: a `file_contexts` or `genfscon` entry for the new path, or a
+   rule for the new access.
+2. **Fix the kernel's base policy.** Right for the objects the *kernel*
+   creates, and right for a port whose ROM is not being rebuilt: the
+   kernel can label its own objects. This is what the port does for the
+   wakeup statistics and the kgsl's power attributes.
+3. **Label the object at run time.** A last resort, and the one the port
+   falls back on when the ROM cannot be rebuilt: a small program in the
+   initramdisk sets the `security.selinux` xattr on the object before
+   userspace touches it. It works, and it is not shippable - it is in the
+   boot image, not in the ROM.
+
+## The three kinds of change a newer kernel brings
+
+### 1. Renamed or moved sysfs paths
+
+The biggest source of breakage, and it is invisible until something is
+denied. Upstream renamed most device nodes to a different convention than
+CAF's, and a `genfscon` with a literal path stops matching.
+
+This is the port's own example, from the vendor policy:
+
+```
+(genfscon sysfs "/devices/platform/soc/200f000.qcom,spmi/spmi-0/spmi0-02/
+   200f000.qcom,spmi:qcom,pmi8950@2:qcom,qpnp-smbcharger/power_supply/battery"
+   (u object_r sysfs_battery_supply ((s0) (s0))))
+```
+
+Under 6.12 every component of that path is different:
+
+| component | CAF 4.19 | upstream 6.12 |
+|---|---|---|
+| root | `platform/soc` | `platform/soc@0` |
+| bus | `200f000.qcom,spmi` | `200f000.spmi` |
+| slave | `spmi0-02` | `spmi-0/0-02` |
+| pmic | `...:qcom,pmi8950@2` | `...:pmic@2` |
+
+The battery's directory therefore kept the generic `sysfs` label, the
+health HAL's `allow` never applied, `vendor.lineage.health-service` never
+registered `IChargingControl`, and SystemServer blocked forever in
+`ChargingControlController.waitForDeclaredService`.
+
+**What to do:** for every `genfscon` with a literal path in the policy,
+find the path the new kernel actually creates and update it. The
+authoritative list is the *running* device tree, not the kernel's source:
+`/sys/firmware/devicetree/base` on the device, or the built DTB with
+`dtc -I dtb -O dts`.
+
+Do not rename the kernel's device nodes to match CAF's. `soc@0` is a
+prefix of every device path on the board, and `spmi0-02` is generated by
+the SPMI core rather than by the device tree, so matching it would mean
+changing the SPMI core and risking every regulator on the board.
+
+### 2. New objects the kernel creates
+
+A new kernel version creates objects the old one did not, and they arrive
+with the generic `sysfs` type unless something labels them.
+
+The port's examples:
+
+| the object | 4.19 | 6.12 | the type it needs |
+|---|---|---|---|
+| the per-device wakeup statistics | `/sys/devices/virtual/wakeup/wakeupN` | `/sys/devices/platform/soc@0/<device>/wakeup/wakeupN` | `sysfs_wakeup` |
+| the kgsl's power attributes | next to the codec's snapshot dir | `/sys/devices/platform/soc@0/1c00000.gpu/kgsl/kgsl-3d0/{max,min}_pwrlevel`, `idle_timer`, `force_clk_on`, `force_rail_on` | `sysfs_gpu` |
+
+The wakeup one is worth spelling out, because it is not a denial anyone
+would expect. The ROM's suspend service reads the wakeup counters to
+decide what is keeping the device awake. The policy has:
+
+```
+(allow system_suspend sysfs_wakeup (file (ioctl read getattr lock map open watch watch_reads)))
+```
+
+Under 6.12 the counters are per device, so they land on the generic
+`sysfs` type and the allow never applies. The suspend service's snapshot
+then fails, the ROM's checkpoint commit fails, `system_server` asks for a
+reboot - and the reboot never finishes, which is the "the phone came up
+on a dim lit screen with no adb and no USB" failure.
+
+The type already exists in the policy (`sysfs_wakeup` is what the 4.19
+path used), so this is a path problem, not a rule problem. The kernel's
+base policy can carry the new `genfscon` and the ROM needs no change at
+all.
+
+### 3. New services, new domains, new rules
+
+A newer kernel usually brings new userspace-visible things: a new
+vendor HAL, a new input device, a new binder service. Those need rules
+in the ROM's policy, and they are the ordinary work of a kernel bump.
+
+Two traps here are specific to this port:
+
+* **The kernel's own name collisions.** The tree may already carry
+  upstream's version of a driver that the CAF port also provides - the
+  WCD9335 codec and the microphone bias helper, for instance - and they
+  define the same symbols. See
+  [CURRENT-STATE.md](../CURRENT-STATE.md) for how that was resolved.
+* **A versioned attribute is not a type.** The policy has both
+  `sysfs_leds` (a type) and `sysfs_leds_202604` (a versioned *attribute*
+  mapped to it). Labelling an object with the attribute makes the
+  compiler abort:
+
+  ```
+  secilc: Type not a type or type alias
+  secilc: Failed to compile cildb: -1
+  init: secilc exit_code=0xff00
+  ```
+
+  and the boot stops there. Always check that the label you use is a
+  type in the policy, not an attribute.
+
+## Finding the gaps
+
+The method that works is to read the denials and map them back to the
+rules.
+
+**1. Collect the denials.** They arrive in the kernel log as avc records:
+
+```
+type=1400 audit(1791521618.259:19396): avc:  denied  { read } for
+  comm="binder:389_3" name="event_count" dev="sysfs" ino=33243
+  scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs:s0
+  tclass=file permissive=0
+```
+
+Read it as: *this domain (scontext) wanted this class of access (tclass)
+to this object (tcontext, and the name/inode), and the policy has no
+rule that allows it.*
+
+**2. Map the object to its path.** The `name=` and `ino=` are there, but
+the path is easier to get from the running system:
+
+```
+ls -lZ /sys/devices/platform/soc@0/200f000.spmi/spmi-0/0-02/.../wakeup/wakeup18/event_count
+```
+
+`ls -lZ` prints the label, and that is the fastest way to see whether an
+object is on the generic type when it should not be.
+
+**3. Find the rule that should have applied.** The ROM's policy is
+precompiled, but the sources are usually on the device or in the ROM
+build tree. Grep for the type:
+
+```
+grep -rn "sysfs_wakeup" /system/etc/selinux/ vendor_sepolicy.cil
+```
+
+`sesearch` does the same job on a live system if it is available.
+
+**4. Watch out for the audit flood.** If the kernel is denying a lot,
+the audit queue overflows and the records you need are the ones that get
+dropped:
+
+```
+audit: audit_lost=6181 audit_rate_limit=5 audit_backlog_limit=64
+```
+
+Every denial that arrives is one the port has to answer, and losing them
+means guessing. If the log shows `audit_lost`, raise the backlog before
+you go looking - the port's logdumps show this regularly.
+
+## The three ways to close a gap, in practice
+
+### A. The ROM's policy - the shippable answer
+
+For an object the ROM creates, add a `file_contexts` entry:
+
+```
+/sys/devices/platform/soc@0/1c00000.gpu/kgsl/kgsl-3d0/idle_timer  u:object_r:sysfs_gpu:s0
+```
+
+or a `genfscon` for a path with a wildcard. Then rebuild the policy and
+flash it with the ROM.
+
+For the *rules*, the denial tells you what to add: the `tclass` and the
+permitted access are in the record, and the ROM's own `neverallow` rules
+have to be respected - widening a rule is not always allowed.
+
+### B. The kernel's base policy - for the objects the kernel creates
+
+The kernel can label its own objects, and this is the route that does not
+need a ROM rebuild. The port's base policy carries the `genfscon` for the
+new paths, for example:
+
+```
+(genfscon sysfs "/devices/platform/soc@0/*/wakeup" (u object_r sysfs_wakeup ((s0) (s0))))
+```
+
+The kernel's base policy is compiled into the kernel image, so this
+changes with the kernel and applies to every ROM that boots it. It is
+also the right place for a path that only the kernel could have named.
+
+### C. A label set at run time - the emergency answer
+
+When the ROM cannot be rebuilt, a small program can set the label on the
+object before userspace gets there. The port's initramdisk does this for
+the wakeup statistics and the kgsl's attributes.
+
+Three things make this delicate, and the port has learned all three:
+
+* **It has to happen in the right mount namespace.** After the init
+  chroots into the ROM's root, `/sys` is the ROM's, and the ROM has not
+  mounted it yet, so the object is not there. The label has to be set
+  from the initramdisk's own namespace, where `/sys` is the kernel's.
+* **It must not delay anything time critical.** The port's bootdevice
+  guard has about a 1.35 second window to install its configuration
+  before the ROM's init opens its SELinux policy. A relabel in front of
+  the guard loses that race and the phone comes up on a dim lit screen
+  with no adb and no USB. Do the relabel in a separate process, in
+  parallel, after the guard is finished.
+* **It is not shippable.** It lives in the boot image, and it is a
+  workaround for a policy that has not been updated.
+
+## A run-time policy rewrite is not an option here
+
+KernelSU-Next's grant-root feature rewrites the live policy in the
+kernel (`KSU_IOCTL_SET_SEPOLICY`, which duplicates and rewrites the whole
+policydb). **On this kernel that deadlocks**: the first attempt froze the
+phone, and the manager's "allow an app root" does the same thing. The
+manager's *adb root* feature does not touch the policy and is fine.
+
+The port's rule follows from that: if the live policy cannot be
+rewritten, then the policy has to be right before the ROM's init loads
+it, which means the kernel's base policy and the ROM's policy have to
+agree before the first userspace process starts.
+
+## The checklist
+
+For a ROM developer moving to a newer kernel:
+
+1. **Collect the denials** from a boot with the new kernel, and check
+   the audit log for `audit_lost` - if the queue overflowed, the log is
+   incomplete and the next step is to make it complete.
+2. **For every denial, name the object and its path** on the running
+   system, with `ls -lZ`.
+3. **Decide whose object it is.** The kernel's, or the ROM's? A kernel
+   object can be labelled by the kernel's base policy; a ROM object has
+   to go into the ROM's `file_contexts`.
+4. **For a path that moved, update the `genfscon` in the ROM's policy**
+   to the path the new kernel creates. Get the path from the running
+   device tree, not from the kernel's source.
+5. **Check that the label is a type**, not a versioned attribute.
+6. **For a new access, add the rule** the denial describes, and check
+   the ROM's `neverallow` rules first.
+7. **Rebuild the policy, flash it with the ROM, and boot.** A policy
+   that does not compile stops the boot at `init: secilc exit_code=0xff00`
+   - keep a way back to a working image.
+8. **Re-check the denials after the change.** A rule that was added for
+   one object can deny another, and the audit flood hides it.
+
+## The port's own policy fragments
+
+The `.cil` files in this directory are appended to the ramdisk's
+`userdebug_plat_sepolicy.cil` by
+`porting/logging/package-diag-boot.py --policy-append`, at boot time
+only. Nothing here is flashed and none of it is shippable; the vendor
+partition is read-only and dm-verity protected, so for the port these are
+the only way to adjust what the stock vendor policy enforces without
+rebuilding a ROM. Each file's SHA256 is recorded in the matching
+`package-run<N>.json` as `policy_append_sha256`.
+
+[README.md](README.md) records what each one did.
