@@ -1,0 +1,28 @@
+{
+  "image": "/tmp/opencode/boot-test-vendorqrtr.img",
+  "size": 45799424,
+  "sha256": "0f93c9c2d061395e54a3afdd32a724186ab5638ae4e8d60dcde0eb4e3f7bbd88",
+  "kernel_payload_sha256": "c4e5e2551dae907ed06a7707a8bdbbda03aa0c957f80db09461e5f23f63c9f4b",
+  "kernel_size": 20272986,
+  "ramdisk_size": 25523419,
+  "ramdisk_sha256": "7678eee08d9a42f887d03ffd2d345a5eb2a2502da1836fdf6e2a5d224399edec",
+  "cpio_records": 696,
+  "init_sha256": "4f310e13cf28521b166757784d27c17693f1522db9c3178acdaa8f95a310436e",
+  "firmware": [
+    "lib/firmware/wcnss.b00",
+    "lib/firmware/wcnss.b01",
+    "lib/firmware/wcnss.b02",
+    "lib/firmware/wcnss.b04",
+    "lib/firmware/wcnss.b06",
+    "lib/firmware/wcnss.b09",
+    "lib/firmware/wcnss.b10",
+    "lib/firmware/wcnss.b11",
+    "lib/firmware/wcnss.b12",
+    "lib/firmware/wcnss.mdt",
+    "lib/firmware/wlan/prima/WCNSS_qcom_wlan_nv.bin"
+  ],
+  "debuggable": false,
+  "policy_append_sha256": "7272f2e3e814be611e673d2917c86ecce1ac0bd7b7940cf4e32de9170962cf41",
+  "cmdline": "androidboot.hardware=qcom loop.max_part=7 androidboot.boot_devices=soc@0/7824900.mmc buildvariant=user ignore_loglevel printk.time=1 androidboot.force_normal_boot=1 rcupdate.rcu_cpu_stall_timeout=10 softlockup_panic=1 hung_task_panic=1 printk.devkmsg=on androidboot.bootdevice=../.. console=ttynull ramoops.reset_capture=1 pstore.backend=ramoops firmware_class.path=/lib/firmware,/vendor/firmware mdss_mdp_cold_boot=1 panic=60",
+  "base_image": "../ack-kgsl-artifacts/boot-run258.img"
+}
