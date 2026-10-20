@@ -1,5 +1,15 @@
 # QRTR name service and the vendor crash loops — 2026-10-20
 
+> **run302 status (2026-10-20 16:20):** the overlay described here was
+> built into the boot image (`init-run302`, ramdisk `/init` sha
+> `86ff42b5…`) but did not install.  The ROM's health-check action and the
+> vendor service definitions were still active.  The cause is the guard
+> call's position at the end of the pre-policy sequence, not a stale
+> initramfs: `flags_health_check.rc` lives in `/system/etc/init`, which
+> init parses before the vendor files and before the late guard steps.
+> The call is now moved next to the early-logcat overlay.  Evidence and
+> the post-fix checks: [run302-overlay-not-installed-20261020.md](run302-overlay-not-installed-20261020.md).
+
 ## What the phone was doing
 
 The running image was `6.12.93-4k-g15c6948f88d9` (the pre-fix image;
@@ -141,8 +151,11 @@ path is up.  Keep it stopped until that bring-up.
 ## The overlay
 
 `scripts/initramfs-diag/init.c` appends these definitions to the
-filtered `flags_health_check.rc` (parsed after the vendor init files, so
-`override` replaces the vendor services before `class_start`):
+filtered `flags_health_check.rc`.  That file is in `/system/etc/init`, and
+AOSP init imports `/system/etc/init` before `/vendor/etc/init`
+(alphabetically within each directory).  The system-side `override`
+definitions are therefore the ones init keeps; the later vendor
+definitions for the same names are duplicates and are ignored:
 
 * `vendor.qrtr-ns` with `NET_BIND_SERVICE NET_ADMIN`, `override`;
 * `vendor.per_mgr` and `qcamerasvr` with `disabled`, `override`;
@@ -155,6 +168,12 @@ The policy allow is in `porting/policy/port-genfs-kgsl.cil`, the same
 fragment that carries the KGSL genfscon.
 
 ## Verification after the next flash
+
+**run302 did not pass these checks.**  The overlay was in the image but the
+guard installed it too late; see
+[run302-overlay-not-installed-20261020.md](run302-overlay-not-installed-20261020.md)
+for the evidence and the ordering fix.  The checks below apply to the next
+build.
 
 1. `getprop init.svc.vendor.qrtr-ns` is `running`; `dmesg` has no
    `qrtr-ns: bind control socket: Permission denied` and no
