@@ -183,9 +183,10 @@ detail, and it also says what the library does with the answer:
 
 ## What the port answers, and why
 
-The implementation is staged, not in the tree, so that the next boot
-tests the `GETINFO` fix alone:
-`porting/staged/fastrpc-ioctl17-get-dsp-info.patch`.
+The implementation is in the tree, in `drivers/misc/fastrpc.c`: number 17 is
+decoded, the twelve byte struct is `struct caf_ioctl_capability`, and the
+old number 16 keeps its own name, `GET_DSP_CAPABILITIES`, because it is
+the array form and this is the single attribute form.
 
 | attribute | the port's answer | why |
 |---|---|---|
