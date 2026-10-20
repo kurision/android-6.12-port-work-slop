@@ -38,9 +38,11 @@ AudioFlinger speaks that one.
 * **The tree's own APR** (`drivers/soc/qcom/apr.c`, `CONFIG_QCOM_APR`). It is
   CAF's later client for the same protocol and defines the same names. Its
   only user in this tree was the AVD stack, which is off.
-* **The compress and listen service PCM platforms.** They are staged, not
-  built: CAF's compress parameter layout and the ROM's AudioFlinger disagree,
-  and that is a userspace ABI decision, not a kernel one.
+* The **compress (offload), the listen service and the VoIP** PCM platforms
+  are not built, and their links are not in the card. The compress one is
+  staged but not built: CAF's compress parameter layout and the ROM's
+  AudioFlinger disagree, and that is a userspace ABI decision, not a kernel
+  one. The VoIP one is left out for the same reason as the compress one.
 * **The tree's AVD stack** (`sound/soc/qcom/qdsp6/`). It is off. It is CAF's
   later generation and cannot coexist with the 4.19 one: `q6asm_cmd`,
   `q6asm_read`, `q6asm_run` and `apr_send_pkt` are defined by both.
@@ -84,6 +86,19 @@ to the DSP.
   global under the same two names; they are file local now.
 * The MDF's teardown used the ARM IOMMU mapping this kernel no longer has; it
   uses the domain API.
+* **This kernel's ASoC matches a link's codec by its component, not by its
+  DAI.** A link's codec entry has to carry the name of the codec's component
+  or its device node; an entry with only a DAI name is refused
+  (`ASoC: Neither Component name/of_node are set`), and the card is then
+  never registered. CAF only had to name the DAI, so every link in the
+  machine driver had to be given a component: the dummy codec by its name
+  (`snd-soc-dummy`), the two CDC codecs by their device node, taken from the
+  tree by the names the tree gives them.
+* A link whose **platform** is missing defers the whole card
+  (`-EPROBE_DEFER`), so the links that named the compress, the listen
+  service and the VoIP platforms were taken out: those platforms are not
+  built. The tree carries the digital CDC, the first codec of the primary
+  MI2S links, which it did not have before.
 
 ## Not proven
 
