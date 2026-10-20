@@ -123,19 +123,97 @@ The library tolerates the failure for attributes 22 and 25 (it sets a flag
 and carries on), and reports it for anything else, which is why the phone
 says "failed to get attribute 257 for domain 0".
 
-## What is open
+## The header that answers it
 
-* **ioctl 17**: `{domain, attribute}` in, `{value}` out. The upstream driver
-  has the same shape — `fastrpc_ioctl_capability` is `domain`,
-  `attribute_id`, `capability` — and the port's CAF `GET_DSP_INFO` already
-  maps onto it. But upstream rejects an attribute id above
-  `FASTRPC_MAX_DSP_ATTRIBUTES`, and the library asks for 257, so a straight
-  mapping is not enough: the meaning of that attribute is needed first.
-* **The five commands with no header.** The vendor library issues 19
-  commands, and 17 to 21 exist in no CAF header in the donor. Their
+CAF's 2022 and later `adsprpc_shared.h` has the command, and the attribute
+with it. The donor's copy is the 2020 one and stops at number 16; the
+newer header is in the public CAF trees, and it is a different numbering
+for the same driver:
+
+```c
+#define FASTRPC_IOCTL_GET_DSP_INFO \
+		_IOWR('R', 17, struct fastrpc_ioctl_capability)
+
+struct fastrpc_ioctl_capability {
+	uint32_t domain;
+	uint32_t attribute_ID;
+	uint32_t capability;
+};
+
+#define FASTRPC_MAX_DSP_ATTRIBUTES	(256)
+#define FASTRPC_MAX_ATTRIBUTES		(258)
+```
+
+So **number 17 is `GET_DSP_INFO`**: one attribute, the domain, the
+attribute id, and the capability the kernel answers with. The ids below
+256 are the DSP's own attributes and are answered by querying the DSP; the
+ids above it are the kernel's own capabilities, and CAF answers them from
+a table rather than from the DSP:
+
+```c
+#define PERF_CAPABILITY_SUPPORT	(1 << 1)
+#define KERNEL_ERROR_CODE_V1_SUPPORT	1
+#define USERSPACE_ALLOCATION_SUPPORT	1
+#define DSPSIGNAL_SUPPORT		1
+
+static uint32_t kernel_capabilities[FASTRPC_MAX_ATTRIBUTES -
+					FASTRPC_MAX_DSP_ATTRIBUTES] = {
+	PERF_CAPABILITY_SUPPORT,	/* 256 */
+	KERNEL_ERROR_CODE_V1_SUPPORT,	/* 257 */
+	USERSPACE_ALLOCATION_SUPPORT,	/* 258 */
+	DSPSIGNAL_SUPPORT		/* 259 */
+};
+```
+
+**Attribute 257 is "the driver has the second generation of the error
+codes".** The port's own file already had the command as an unknown
+twelve byte payload, and the value it builds — `0xc00c5211` — is this
+command's encoding, byte for byte.
+
+The disassembly of the shipped library agrees with the header in every
+detail, and it also says what the library does with the answer:
+
+* the payload is `{domain, attribute}` and the value comes back at offset
+  8, which is this struct's third field;
+* the answer is cached in a global that is initialised to `-1`, and every
+  API entry point queries it once, on first use, and then reads the
+  cached value — so the library asks once per process, not once per call;
+* the library also asks for attributes 256 and 128, and compares both
+  answers with `2`, which is `PERF_CAPABILITY_SUPPORT`.
+
+## What the port answers, and why
+
+The implementation is staged, not in the tree, so that the next boot
+tests the `GETINFO` fix alone:
+`porting/staged/fastrpc-ioctl17-get-dsp-info.patch`.
+
+| attribute | the port's answer | why |
+|---|---|---|
+| 256, perf | 0 | CAF's value is a bit mask and the client compares it with 2, CAF's second generation of the perf counters. This driver has upstream's perf counters, and answering 2 would send the client down an invoke path this driver does not have. |
+| 257, error codes | 1 | The driver does not translate the DSP's errors: the invoke returns the DSP's own value, here and in the donor, so the client sees the DSP's error. The DSP is the ROM's own firmware and the ROM's own driver answers 1 for it, so the client is told what it is told on the ROM it ships with. |
+| 258, userspace allocation | 1 | The userspace allocates the memory the DSP asks for. This driver has `FASTRPC_IOCTL_ALLOC_DMA_BUFF` for that, and its CAF control answers `kalloc_support` with 1. |
+| 259, signalling | 0 | CAF's lightweight driver based signalling, the `dspsignal` ioctls 23 to 27. This driver does not have them. |
+| below 256 | the DSP's own answer | the same query the upstream ioctl makes, through `fastrpc_get_dsp_info()` |
+
+An id that is neither below 256 nor one of the four is refused with
+`EOVERFLOW`, which is what CAF does.
+
+**Not verified:** nothing has run this. The port's copy of the file
+compiles clean with the kernel's own flags, and the command's encoding is
+asserted against the value recovered from the shipped library, but the
+answers above are reasoned, not measured.
+
+## What is still open
+
+* **The four commands with no header.** The vendor library issues 19
+  commands, and 18 to 21 exist in no CAF header in the donor — their
   semantics have to come from the Qualcomm release that introduced them.
-  Until they are known, refusing them by number is the honest answer, and
-  the kernel log names the one the library actually reaches.
+  The port refuses them by number, which is the honest answer, and the
+  kernel log names the one the library actually reaches.
+* **Whether the DSP answers attribute 128 at all.** The library asks for
+  it and compares the answer with 2. It is below 256, so it is a DSP
+  attribute and it goes through the DSP query, which needs a DSP that
+  answers the capability query. That is the next thing to find out.
 
 ## How it was measured
 
