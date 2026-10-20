@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 #
 # Pull the WCNSS firmware and NV blob from the attached device into the
-# staging directory that build-kernel.sh packages into lib/firmware/.
+# staging directory. build-kernel.sh packages the wcnss.* files into the
+# ramdisk (the remoteproc requests them before /vendor is mounted) and
+# builds the NV blob into the kernel (wlan0 requests it after switch_root,
+# when the ramdisk is gone and the vendor symlink into persist is not
+# readable by the firmware loader).
 #
 #   usage: pull-wcnss-firmware.sh [destination]
 #
