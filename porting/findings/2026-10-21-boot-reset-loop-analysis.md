@@ -1,5 +1,41 @@
 # The boot reset loop: what the logs say (2026-10-21)
 
+## Status
+
+**The qrtr crash loop is fixed and verified on the device; the reset is
+postponed, not removed.**
+
+`vendor.qrtr-ns` crash-looped for the whole boot because the Treble override
+that gives it `CAP_NET_ADMIN` was installed in the `/system` subcontext and
+init rejected it. The override now lives in the `/vendor` subcontext
+(`/vendor/etc/init/qcrild.rc`), the crash loop is gone, and the 330 s reboot
+request does not happen.
+
+Measured on the flashed test image (`boot-test-vendorqrtr-padded.img`,
+sha256 `78d35fb6e9fd302904c7396169d874d3f691d8d13a1c7dceea7222082555067f`):
+
+| | broken image | fixed image |
+| --- | --- | --- |
+| `vendor.qrtr-ns` | restarts every ~5 s, exits status 1, whole boot | started once at 44.8 s (pid 717), never restarts |
+| `CapEff` of `vendor.qrtr-ns` | `0x400` (NET_BIND_SERVICE only) | `0x1400` (NET_BIND_SERVICE **+ NET_ADMIN**) |
+| reboot request | `sys.powerctl='reboot,bootloader'` at 330.13 s | none at 330 s; the same request at ~1367 s |
+| uptime reached | 330 s | 1373 s, then the same adbd-watchdog reboot |
+
+Two things are now established that were not before:
+
+- **The reboot requester is `adbd`** - AOSP's adb watchdog
+  (`packages/modules/adb/daemon/watchdog.cpp`) fires when no adb client has
+  been connected for the watchdog timeout and executes
+  `execl("/system/bin/reboot", "/system/bin/reboot", "bootloader", nullptr)`.
+  It is not the ROM's rescue party, and not apexd.
+- **The run320 boot's shutdown was a thermal emergency**, not the watchdog:
+  the port's `kernel/reboot.c` forced a poweroff at 1676 s after a Geekbench
+  run, because this port has no working thermal throttle path for the CPU.
+
+Evidence: `porting/artifacts/snapshot60/logs-2026-10-21/fixed-boot-vendorqrtr/`
+(this boot) and `.../run320-boot/` against `porting/artifacts/snapshot60/logs-2026-10-20/`
+(the broken boot).
+
 ## The symptom
 
 The port kernel boots, Android comes up, and then the phone resets itself and
@@ -16,9 +52,9 @@ region, first boot layer:
 ```
   0.161 s  ramoops: DIAG mark prev none (magic 00000000)
   6.19  s  mdss_mdp_probe: mdss version = 0x10100000, bootloader display is off
- 21.4  s  DIAG: bootdevice guard installed read-only f2fs-only fstab and vendor contexts before policy load
- 35.7  s  DIAG dsi_on: done ctrl=0 rc=0 state=0x4 pwr=1 clk_rate=802589760   <- panel on
- 86.0  s  init: processing action (sys.boot_completed=1)
+  21.4  s  DIAG: bootdevice guard installed read-only f2fs-only fstab and vendor contexts before policy load
+  35.7  s  DIAG dsi_on: done ctrl=0 rc=0 state=0x4 pwr=1 clk_rate=802589760   <- panel on
+  86.0  s  init: processing action (sys.boot_completed=1)
 ```
 
 The display handover works, the guard wins its window, and `sys.boot_completed=1`
@@ -54,91 +90,284 @@ vold was SIGKILLed *by* the shutdown that the reboot request started. Its
 that was already in progress. So the vold path is a **second, downstream
 effect**, as the other session concluded — it is not the origin of the reset.
 
-### PID 6086 is the EvoX rescue party, and its parent is init
+### Correction: the ROM's rescue party is NOT the reboot source
 
-The 320-335 s window (`logs-2026-10-20/run317-reboot-window.txt`) shows the
-sequence with nothing else in it:
+The previous revision of this document attributed the reboot to the Evolution X
+rescue party (`server_configurable_flags` -> `/system/bin/reboot bootloader`).
+**That attribution is wrong and is withdrawn.** Two independent facts kill it:
+
+1. **The ROM's rescue path does not reboot.** The decoded ROM sources
+   (`~/Downloads/flags_health_check-decoded.cc`,
+   `disaster_recovery-decoded.cc`, `server_configurable_flags-decoded.cc`)
+   show the whole path:
+
+   ```
+   flags_health_check.rc:  on property:sys.init.updatable_crashing=1
+                               exec - system system -- /system/bin/flags_health_check UPDATABLE_CRASHING
+
+   disaster_recovery.cc:   main() -> ServerConfigurableFlagsReset(UPDATABLE_CRASHING)
+
+   server_configurable_flags.cc:
+                           } else if (reset_mode == UPDATABLE_CRASHING) {
+                             LOG(INFO) << "... updatable crashing detected, resetting flags.";
+                             ResetAllFlags();
+                           }
+   ```
+
+   `ResetAllFlags()` only clears `persist.device_config.*` properties and
+   writes `/data/server_configurable_flags/reset_flags`. There is no reboot in
+   that code path at all.
+
+2. **That action never ran on the port.** Our own init removes the
+   `on property:sys.init.updatable_crashing=1` stanza from
+   `/system/etc/init/flags_health_check.rc`
+   (`scripts/initramfs-diag/init.c:1175`, `filter_flags_health_check_rc()`).
+   Both boot logs confirm it never fired - the only `flags_health_check` exec
+   in the broken boot *and* in the fixed boot is the `BOOT_FAILURE` one:
+
+   ```
+   init: processing action (load_persist_props_action) from (/system/etc/init/flags_health_check.rc:1)
+   init: starting service 'exec 28 (/system/bin/flags_health_check BOOT_FAILURE)'...
+   ```
+
+   There is no `processing action (sys.init.updatable_crashing=1)` line in
+   either log.
+
+So the ROM's flag-reset path was never the origin of the reset. What caused
+the reset is the crash loop itself; *who* asked for the reboot is still
+unattributed (see below).
+
+### What PID 6086 was, and who spawned it
+
+`init` logs the setter of `sys.powerctl` like this (upstream
+`system/core/init/property_service.cpp:561`):
+
+```cpp
+    if (name == "sys.powerctl") {
+        std::string cmdline_path = StringPrintf("proc/%d/cmdline", cr.pid);
+        ...
+        // Since cmdline is null deliminated, .c_str() conveniently gives us just the process path.
+        process_log_string = StringPrintf(" (%s)", process_cmdline.c_str());
+        LOG(INFO) << "Received sys.powerctl='" << value << "' from pid: " << cr.pid << process_log_string;
+```
+
+The `(...)` is `argv[0]` of the setting process. So PID 6086 was a process
+whose `argv[0]` was `/system/bin/reboot`.
+
+Upstream `system/core/reboot/reboot.c` is the whole of that binary:
+
+```c
+    prop_len = snprintf(property_val, sizeof(property_val), "%s,%s", cmd, optarg);
+    ...
+    ret = property_set(ANDROID_RB_PROPERTY, property_val);   // "sys.powerctl" = "reboot,bootloader"
+    ...
+    if (cmd == reboot) {
+        while (1) { pause(); }                                // stay alive until the reboot lands
+    }
+```
+
+It only *requests* the reboot; the decision was made by whoever spawned it.
+That spawner is **not identified yet**. What the log and the device do say
+about it:
+
+- init did **not** track it as a service:
+
+  ```
+  init: Untracked process (pid: 6086 name: (reboot) ppid: 1 pgrp: 6086 state: Z) received SIGKILL
+  ```
+
+  For comparison, init's own exec services *are* tracked and logged with
+  their command line - `init: starting service 'exec 28 (/system/bin/flags_health_check
+  BOOT_FAILURE)'...`. So the spawner was not an `exec` stanza in an rc file.
+  (The message format with `pid/name/ppid/pgrp/state` is the ROM's build of
+  init; upstream AOSP prints `Untracked pid %d`,
+  `system/core/init/sigchld_handler.cpp:97`.)
+
+- `ppid: 1` and `pgrp: 6086`: on Linux an orphan is re-parented to PID 1, so
+  `ppid 1` means the spawner had already exited when init reaped the zombie;
+  `pgrp == pid` means the child was put in a new process group
+  (`setpgid(0,0)`/`setsid`) before the exec. That is the daemonise pattern:
+  fork, put the child in its own process group, exec `/system/bin/reboot
+  bootloader`, let the parent exit.
+
+- No rc file on the device execs the reboot binary:
+
+  ```
+  grep -rn "bin/reboot" /system/etc/init /vendor/etc/init /product/etc/init \
+                         /system_ext/etc/init /apex --include=*.rc
+  -> (nothing)
+  ```
+
+- Not apexd: upstream apexd only reboots after a **successful** revert, and
+  the revert failed (see below).
+- Not the AOSP Java framework: neither `RecoverySystem.java` nor
+  `RescueParty.java` execs the reboot binary, and a Java caller that sets
+  `sys.powerctl` itself would appear in the log with the system_server pid.
+
+**The spawner is `adbd`, and it is AOSP's adb watchdog.** A device-wide search
+for the string `bin/reboot` over `/system`, `/vendor`, `/system_ext`,
+`/product`, `/odm` and `/apex` returns exactly one file:
 
 ```
- 325.760  init: starting service 'vendor.qrtr-ns'...
- 325.807  init: Service 'vendor.qrtr-ns' (pid 6070) exited with status 1
- 325.809  init: process with updatable components 'vendor.qrtr-ns' exited 4 times in 4 minutes
-   ...    (only the hwservicemanager "Could not find 'vendor.qti.data.factory'" line repeats)
- 330.132  init: Received sys.powerctl='reboot,bootloader' from pid: 6086 (/system/bin/reboot)
- 330.135  init: Reboot start, reason: reboot,bootloader, reboot_target: bootloader
+/apex/com.android.adbd/bin/adbd
 ```
 
-The reboot request arrives **4.3 s after the last qrtr-ns crash**, with no
-other actor in between.
-
-`init` itself carries the property name and nothing else:
+and that binary carries the two other strings that belong with it:
 
 ```
-$ strings /system/bin/init | grep updatable_crashing
-sys.init.updatable_crashing_process_name
-sys.init.updatable_crashing
+$ strings adbd | grep -nE "watchdog|bin/reboot|bootloader"
+1043:adbd watchdog expired; rebooting...
+1230:bootloader
+1630:/system/bin/reboot 
+2480:/system/bin/reboot
 ```
 
-and the ROM's **rescue party** library carries the reaction:
+Upstream `packages/modules/adb/daemon/watchdog.cpp` is exactly that:
 
-```
-$ strings /system/lib64/server_configurable_flags.so
- updatable crashing detected, resetting flags.
- attempted boot count reaches threshold, resetting flags.
- attempted boot count is under threshold, skipping reset.
- persist.device_config.attempted_boot_count
-$ strings /system/bin/flags_health_check
-system/server_configurable_flags/disaster_recovery/disaster_recovery.cc
-disable_rescue_party
+```cpp
+static void UpdateWatchdog() {
+    static std::once_flag once;
+    std::call_once(once, []() {
+        signal(SIGALRM, [](int) {
+            LOG(WARNING) << "adbd watchdog expired; rebooting...";
+            execl("/system/bin/reboot", "/system/bin/reboot", "bootloader", nullptr);
+        });
+    });
 ```
 
-`/system/bin/flags_health_check` is the ROM's disaster-recovery entry point
-(it is the `exec` line in the ROM's own `flags_health_check.rc`), and
-`server_configurable_flags.so` is what detects "updatable crashing". So the
-chain is:
+`argv[0]` is `/system/bin/reboot` - the exact string init printed - and the
+`execl` runs in adbd's own process, which is why the reboot process is an
+orphan in its own process group (libsubprocess double-forks and `setsid()`s)
+with `ppid: 1` and `pgrp: 6086`.
+
+The watchdog is armed by `persist.adb.watchdog=1` (or test-harness mode), with
+a default timeout of 600 s (`persist.adb.watchdog.timeout_secs`), and it is
+armed **while no adb client is connected** - `watchdog::Stop()` disarms it
+when a client connects, `watchdog::Start()` re-arms it when the last one
+disconnects. Its purpose is to recover devices that have fallen off the
+network in an automated test lab.
+
+So the chain is:
 
 ```
 vendor.qrtr-ns crash-loops (no CAP_NET_ADMIN)
   -> init sets sys.init.updatable_crashing=1
-  -> the ROM's server_configurable_flags sees "updatable crashing detected"
-  -> the rescue path runs /system/bin/reboot bootloader
-  -> init: Reboot start, reason: reboot,bootloader
+  -> (the ROM's flag-reset path, which we filter out; it does not reboot)
+  -> adbd has no client connected for the watchdog timeout
+  -> adbd: execl("/system/bin/reboot", "/system/bin/reboot", "bootloader")
+  -> init: Received sys.powerctl='reboot,bootloader' from pid: 6086 (/system/bin/reboot)
+  -> init: Reboot start, reason: reboot,bootloader, reboot_target: bootloader
 ```
 
-`/system/bin/reboot` only does one thing: it sets `sys.powerctl`
-(`strings /system/bin/reboot` -> `sys.powerctl`, `usage: %s [-p] [rebootcommand]`).
-That is why it appears as the requester of the property rather than as the
-process that reboots: **the ROM asks for the reboot, init performs it.**
+### The qrtr fix postpones the reboot; it does not remove it
 
-`init` does not fork it as a tracked service, which is consistent with what
-the log shows:
+The fixed image boots Android, the qrtr crash loop is gone, and the 330 s
+reboot does not happen. But the phone still ends up in the bootloader, later.
+
+The logdump partition carries the answer. Our diag init arms a ramoops region
+at boot ("orderly reset capture armed offset=66256896 size=65536") and reads
+the previous boot's reset note; the current boot found one:
 
 ```
-init: Untracked process (pid: 6086 name: (reboot) ppid: 1 pgrp: 6086 state: Z) received SIGKILL
+ACKRESET1 timestamp_ns=1373460489162 action=1 pid=1 comm=init command=bootloader
+...
+[ 1373.466169][    T1] init: Reboot ending, jumping to kernel
+[ 1373.466213][    T1] reboot: DIAG: kernel_restart_prepare enter cmd=bootloader
+[ 1373.469346][    T1] ramoops: DIAG: orderly reset action=1 pid=1 comm=init command=bootloader
 ```
 
-`ppid: 1` and `pgrp: 6086` mean the process was a session leader whose parent
-had already exited and been re-parented to init. Upstream `init` has exactly
-one path that forks a session leader and lets it outlive its parent:
-`InitFatalReboot()` in `system/core/init/reboot_utils.cpp` forks a child that
-sleeps 5 s and then calls `RebootSystem(ANDROID_RB_RESTART2,
-init_fatal_reboot_target)`, with `init_fatal_reboot_target` defaulting to
-`bootloader`. The device's init carries `androidboot.init_fatal_reboot_target`
-and `Reboot start, reason: ` from `system/core/init/reboot_utils.cpp`.
+That is an **orderly reboot to the bootloader at 1373 s**, i.e. 273 s after
+the shutdown sequence started and 6.27 s after the `sys.powerctl` request
+(`init: powerctl_shutdown_time_ms:6274:2`). It is the same adbd-watchdog
+reboot as before, just later in the boot.
 
-**What is still open** is which of the two candidate parents it was:
+Which boot it was, is settled by the service pids in the record, and they
+match the fixed-image boot exactly and differ from both other boots:
 
-- `init`'s own fatal path (`InitFatalReboot`), which does **not** go through
-  `sys.powerctl` - the property path and the fatal path are different code,
-  and the observed event is the property path, so this candidate does not fit
-  what was logged;
-- the ROM's rescue party, which does use `sys.powerctl`.
+| boot | adbd | logd | lmkd | tombstoned | vold |
+| --- | --- | --- | --- | --- | --- |
+| broken (run317) | 913 | 348 | 349 | 419 | 365 |
+| **fixed image** | **921** | **346** | **347** | **417** | **363** |
+| run320 | 915 | 347 | 348 | 419 | 365 |
 
-The evidence favours the rescue party: the request lands 4.3 s after the
-qrtr crash, `/system/bin/reboot` is the requester, and the ROM ships a
-library whose only string about this is "updatable crashing detected". The
-open item is the ROM's `server_configurable_flags` source, which is not in
-the shipped files (only the `.so` is) and is in the Evolution X `cnb` tree.
+The record's tail contains no `vendor.qrtr-ns` line at all, which excludes the
+crash-looping boot.
+
+So the qrtr fix moved the reset from 330 s to ~1367 s; it did not remove it.
+The remaining trigger is the adbd watchdog, which fires when the phone has no
+adb client attached for the timeout. Two ways to confirm the mechanism
+directly, both cheap:
+
+- connect an adb client and keep it connected: the watchdog is disarmed
+  (`watchdog::Stop()`), and the phone survives;
+- `persist.adb.watchdog=0` (or a large `persist.adb.watchdog.timeout_secs`):
+  the watchdog never arms.
+
+Neither property is set on the device today (`persist.adb.watchdog` is empty),
+so the watchdog is armed by the *test-harness* path or by the property being
+set during boot by the ROM. That is the next thing to check, and it is a
+one-property experiment.
+
+### The run320 boot's shutdown was a thermal emergency, not the watchdog
+
+The run320 boot (`6.12.93-4k-gaeb37c4e232f`) was up for 1678 s and then died:
+
+```
+[ 1676.916405] reboot: HARDWARE PROTECTION shutdown (Temperature too high)
+[ 1677.017335] reboot: Hardware protection timed-out. Trying forced poweroff
+[ 1678.063221] reboot: Power down
+```
+
+This is the port's own emergency path, not upstream: `kernel/reboot.c`'s
+`__hw_protection_shutdown()` and `hw_failure_emergency_poweroff_func()`, driven
+by `thermal_zone_device_halt()` in `drivers/thermal/thermal_core.c:392` when a
+**critical** trip point is crossed. The trigger was a Geekbench 7 run.
+
+**Thermal protection on this port does not lower the CPU frequency**, which is
+why a benchmark load cooks the phone instead of throttling it:
+
+- The CPU thermal zones have only two trips: `passive` at **80 C** and
+  `critical` at **100 C** (`arch/arm64/boot/dts/qcom/msm8953.dtsi:1985`).
+  There is no throttle trip in the normal range, so nothing acts between
+  ~45 C and 80 C.
+- The passive trip's cooling map is
+  `cooling-device = <&CPU0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>` - a single
+  entry with no limit at either end, so it maps to no frequency target.
+- The live cooling device list has only two entries:
+  `devfreq-1c00000.gpu` and `cpufreq-cpu0`. The big cluster (cpu4-7) has
+  **no** cpufreq cooling device registered at all: cpu0-3 sit on the single
+  `policy0` (whose `affected_cpus` is `0 1 2 3 4 5 6 7`), while cpu4-7 use
+  the legacy per-cpu cpufreq directories, which register no cooling device.
+
+So the big cores Geekbench loads run at their 2784 MHz maximum with no
+thermal path, the 100 C critical trip fires, and the port's `kernel/reboot.c`
+forces the power off.
+
+### `sys.init.updatable_crashing=1` alone does not reboot
+
+This is a falsification that only the fixed boot could produce, and it
+narrows the trigger considerably.
+
+In the fixed boot, `vendor.bluetooth-1-0-qti` was killed by init seven times
+between 99.4 s and 165.6 s, and init logged the same "updatable components"
+message that the qrtr crash produced:
+
+```
+ 132.149 s  init: process with updatable components 'vendor.bluetooth-1-0-qti' exited 4 times in 4 minutes
+ 157.726 s  init: process with updatable components 'vendor.bluetooth-1-0-qti' exited 4 times in 4 minutes
+ 165.594 s  init: process with updatable components 'vendor.bluetooth-1-0-qti' exited 4 times in 4 minutes
+```
+
+and on the live device `sys.init.updatable_crashing=1` with
+`sys.init.updatable_crashing_process_name=vendor.bluetooth-1-0-qti`.
+
+**No reboot followed.** The fixed boot's kernel log covers 0 - 930.6 s and
+contains zero `Received sys.powerctl` and zero `Reboot start` lines, and the
+device was still up at 1107 s.
+
+So `sys.init.updatable_crashing=1` is *not* the trigger. The trigger is the
+`vendor.qrtr-ns` crash loop specifically - about 58 crashes in five minutes,
+every ~5 s - and it is gone with the override in place.
 
 ### apexd's failed revert is a consequence, not the trigger
 
@@ -153,6 +382,9 @@ there is nothing to revert, and `RevertActiveSessionsAndReboot()` only reboots
 **after** a successful revert. So apexd did not reboot here, and its reboot
 would have been a normal system reboot, not the `bootloader` target that was
 observed. apexd is a bystander in this symptom.
+
+In the fixed boot apexd does not report the bluetooth crash at all, because
+init killed that service (SIGKILL) rather than letting it crash on its own.
 
 ### The Treble override of `vendor.qrtr-ns` is rejected, and it always was
 
@@ -170,7 +402,7 @@ The check compares the **subcontext** of the two definitions, so a `/system`
 file cannot override a `/vendor` service. **None** of the three overrides in
 the system-side file ever applied, in any image built so far.
 
-The result is visible immediately afterwards:
+The result was visible immediately afterwards:
 
 ```
 init: Service 'vendor.qrtr-ns' (pid 708) exited with status 1
@@ -178,7 +410,7 @@ init: Service 'vendor.qrtr-ns' (pid 1106) exited with status 1
 ...  (every ~5 s, for the whole boot)
 ```
 
-`vendor.qrtr-ns` crash-loops from 37 s to the end of the boot. 6.12's
+`vendor.qrtr-ns` crash-looped from 37 s to the end of the boot. 6.12's
 `qrtr_port_assign()` (`net/qrtr/af_qrtr.c:736`) needs `CAP_NET_ADMIN` for a
 specified port below `QRTR_MIN_EPH_SOCKET`, and the check is upstream, not new
 in 6.12 (present in v5.15 `net/qrtr/qrtr.c` and v6.0 `net/qrtr/af_qrtr.c`).
@@ -199,10 +431,7 @@ apexd: Revert failed : Revert requested, when there are no active sessions.
 ```
 
 The revert fails (there are no active APEX sessions), so **apexd does not
-reboot**. But `apexd` has `android_reboot` and `Rebooting device` in its
-strings, and it also has `Failed to reboot device` and `Device did not reboot
-within 120 seconds`. Whether the Android 17 build turns the failed revert into
-a reboot is the open item.
+reboot**.
 
 ### The reset happens on a boot that completed
 
@@ -261,7 +490,7 @@ This is the crash the port's own pstore recorded on the failed boot
 `readl_relaxed`. The UART is not accessible at that moment, and the early
 console is what touches it.
 
-### 2. Move the qrtr override into the vendor subcontext (implemented, not yet booted)
+### 2. Move the qrtr override into the vendor subcontext (done, verified on device)
 
 `scripts/initramfs-diag/init.c` replaces the system-side `flags_health_check.rc`
 override with `guard_vendor_qrtr()`, which appends the override to
@@ -276,23 +505,27 @@ The parse order from the device's own init makes this work
 ```
 
 The override is in the same subcontext as the original definition and is
-parsed after it, which is what the Treble check requires.
+parsed after it, which is what the Treble check requires. On the device:
 
-**No packaged image contains this fix.** Every image from run303 to run316
-carries the same `init` binary, `fc919bb425620e098f025d3e2383b73374c87b9a68fc5fa8932a2ac3770292e9`,
-which is the broken one. The fix has never been built or booted.
+```
+$ grep -A6 "service vendor.qrtr-ns" /vendor/etc/init/qcrild.rc
+service vendor.qrtr-ns /vendor/bin/qrtr-ns -f
+    class core
+    user vendor_qrtr
+    group vendor_qrtr
+    capabilities NET_BIND_SERVICE NET_ADMIN
+    override
 
-Test image built for it (no kernel rebuild needed - the fix is in the init
-binary and the command line):
+$ grep -E "^(Name|CapEff|CapPrm|CapBnd)" /proc/$(pidof qrtr-ns)/status
+Name:	qrtr-ns
+CapPrm:	0000000000001400
+CapEff:	0000000000001400
+CapBnd:	0000000000001400
+```
 
-| | |
-| --- | --- |
-| image | `../ack-kgsl-artifacts/boot-test-vendorqrtr.img` |
-| sha256 | `0f93c9c2d061395e54a3afdd32a724186ab5638ae4e8d60dcde0eb4e3f7bbd88` |
-| init | `4f310e13cf28521b166757784d27c17693f1522db9c3178acdaa8f95a310436e` |
-| kernel | `c4e5e2551dae907ed06a7707a8bdbbda03aa0c957f80db09461e5f23f63c9f4b` (identical to run304) |
-| ramdisk | 696 records, the same set as run304; **only `init` differs** |
-| cmdline | no `earlycon`, no `console=ttyMSM0,115200` |
+No kernel rebuild was needed for this: the fix is in the init binary. The
+test image differs from run304 in exactly one ramdisk record (`init`) and in
+the command line (no `earlycon`, no `console=ttyMSM0,115200`).
 
 ### 3. The vold reboot path is not the origin
 
@@ -301,26 +534,45 @@ already started. Fixing vold will remove the message, not the reset.
 
 ## Still open
 
-- **The ROM's `server_configurable_flags` / `disaster_recovery` source.** The
-  rescue party is identified from the shipped `.so` strings, but the code that
-  decides to run `/system/bin/reboot bootloader` is in the Evolution X `cnb`
-  tree (`system/server_configurable_flags/`), not in the shipped files. It is
-  the one artifact that would close the chain end to end. It matters because
-  the fix is now clear: the crash loop must stop, and the crash loop stops
-  when `vendor.qrtr-ns` gets `CAP_NET_ADMIN`.
+- **Why the adb watchdog is armed on this device.** `persist.adb.watchdog` is
+  empty and `persist.sys.test_harness` is empty on the phone, yet the
+  watchdog fired (the 330 s reboot in the broken boot and the 1367 s reboot in
+  the fixed boot). Either the ROM sets one of them during boot, or the
+  watchdog arms through the `persist.adb.watchdog.timeout_secs` monitor path
+  (`daemon/watchdog.cpp` arms with `alarm(g_watchdog_timeout_seconds)`, and
+  the timeout is only set by that monitor callback). The next experiment is
+  one property: set `persist.adb.watchdog=0` (or keep an adb client attached
+  for the whole boot) and see whether the 1367 s reboot disappears.
 - **The upstream QRTR introducing commit.** The check is upstream and old
   (`bdabad3e363d`, "net: Add Qualcomm IPC router", 2016, and the same in CAF
   4.19), so the fix belongs in the init/service definition, not the kernel.
   The kernel side is settled.
+- **No CPU thermal throttling on this port.** The CPU zones trip only at
+  80 C (passive, mapped to `THERMAL_NO_LIMIT`) and 100 C (critical), and only
+  `policy0` registers a cpufreq cooling device, so the big cluster has no
+  thermal path at all. A Geekbench run therefore reaches the 100 C critical
+  trip and the port's `kernel/reboot.c` forces a poweroff. Fixing this needs
+  real trip points and a cooling map that maps to the cpufreq cooling
+  devices - a kernel/DT change, not an init change.
+- **`vendor.bluetooth-1-0-qti` crash-loops** (init SIGKILLs it every ~10 s
+  until it settles). It sets `sys.init.updatable_crashing=1` but does not
+  reboot the phone - see above. It is a separate defect.
+- **`qrtr_ns_worker: failed to send del client cmd` spam** continues in the
+  fixed boot (once per second). The name service is alive; the clients are
+  not. Separate defect, not related to the reset.
+- **The logdump recorder stops at ~930 s per boot** (`DIAG: EOF Android kmsg
+  dump complete`), so the window in which the 1367 s reboot happened is not
+  in the captured log. The reset note in the ramoops region is what closed it.
 
 ## Evidence files
 
 | File | What |
 | --- | --- |
-| `run317-logdump.bin` | the boot that reached `sys.boot_completed=1` and was reset at 330 s |
-| `run317-kernel-log.txt` | that boot's kernel log as text |
-| `run317-reboot-window.txt` | the 329.9-330.3 s window, verbatim |
-| `run318-logdump.bin` | the same boot, later, still running (qrtr-ns still crash-looping) |
-| `failed-boot-ramoops-console-0.log` | the failed boot's console (the 7.25 s UART abort) |
-| `failed-boot-ramoops-dmesg-0.log` | the failed boot's dmesg (the abort) |
-| `failed-boot-ramoops-dmesg-1.log` | the failed boot's panic record |
+| `logs-2026-10-20/run317-logdump.bin` | the boot that reached `sys.boot_completed=1` and was reset at 330 s |
+| `logs-2026-10-20/run317-kernel-log.txt` | that boot's kernel log as text |
+| `logs-2026-10-20/run317-reboot-window.txt` | the 329.9-330.3 s window, verbatim |
+| `logs-2026-10-20/run318-logdump.bin` | the same boot, later, still running (qrtr-ns still crash-looping) |
+| `logs-2026-10-20/failed-boot-ramoops-console-0.log` | the failed boot's console (the 7.25 s UART abort) |
+| `logs-2026-10-20/failed-boot-ramoops-dmesg-0.log` | the failed boot's dmesg (the abort) |
+| `logs-2026-10-20/failed-boot-ramoops-dmesg-1.log` | the failed boot's panic record |
+| `logs-2026-10-21/fixed-boot-vendorqrtr/` | the fixed boot: 0-930 s kernel log, dmesg, boot properties, no reboot |
