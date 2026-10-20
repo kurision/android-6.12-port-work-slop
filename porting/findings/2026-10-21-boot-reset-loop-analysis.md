@@ -54,28 +54,105 @@ vold was SIGKILLed *by* the shutdown that the reboot request started. Its
 that was already in progress. So the vold path is a **second, downstream
 effect**, as the other session concluded — it is not the origin of the reset.
 
-### PID 6086's parent is still unknown, but its shape is known
+### PID 6086 is the EvoX rescue party, and its parent is init
+
+The 320-335 s window (`logs-2026-10-20/run317-reboot-window.txt`) shows the
+sequence with nothing else in it:
+
+```
+ 325.760  init: starting service 'vendor.qrtr-ns'...
+ 325.807  init: Service 'vendor.qrtr-ns' (pid 6070) exited with status 1
+ 325.809  init: process with updatable components 'vendor.qrtr-ns' exited 4 times in 4 minutes
+   ...    (only the hwservicemanager "Could not find 'vendor.qti.data.factory'" line repeats)
+ 330.132  init: Received sys.powerctl='reboot,bootloader' from pid: 6086 (/system/bin/reboot)
+ 330.135  init: Reboot start, reason: reboot,bootloader, reboot_target: bootloader
+```
+
+The reboot request arrives **4.3 s after the last qrtr-ns crash**, with no
+other actor in between.
+
+`init` itself carries the property name and nothing else:
+
+```
+$ strings /system/bin/init | grep updatable_crashing
+sys.init.updatable_crashing_process_name
+sys.init.updatable_crashing
+```
+
+and the ROM's **rescue party** library carries the reaction:
+
+```
+$ strings /system/lib64/server_configurable_flags.so
+ updatable crashing detected, resetting flags.
+ attempted boot count reaches threshold, resetting flags.
+ attempted boot count is under threshold, skipping reset.
+ persist.device_config.attempted_boot_count
+$ strings /system/bin/flags_health_check
+system/server_configurable_flags/disaster_recovery/disaster_recovery.cc
+disable_rescue_party
+```
+
+`/system/bin/flags_health_check` is the ROM's disaster-recovery entry point
+(it is the `exec` line in the ROM's own `flags_health_check.rc`), and
+`server_configurable_flags.so` is what detects "updatable crashing". So the
+chain is:
+
+```
+vendor.qrtr-ns crash-loops (no CAP_NET_ADMIN)
+  -> init sets sys.init.updatable_crashing=1
+  -> the ROM's server_configurable_flags sees "updatable crashing detected"
+  -> the rescue path runs /system/bin/reboot bootloader
+  -> init: Reboot start, reason: reboot,bootloader
+```
+
+`/system/bin/reboot` only does one thing: it sets `sys.powerctl`
+(`strings /system/bin/reboot` -> `sys.powerctl`, `usage: %s [-p] [rebootcommand]`).
+That is why it appears as the requester of the property rather than as the
+process that reboots: **the ROM asks for the reboot, init performs it.**
+
+`init` does not fork it as a tracked service, which is consistent with what
+the log shows:
 
 ```
 init: Untracked process (pid: 6086 name: (reboot) ppid: 1 pgrp: 6086 state: Z) received SIGKILL
 ```
 
-- `ppid: 1` — its parent was init (pid 1): it was a **direct child of init**,
-  and init does not track it as a service. `init` only execs
-  `/system/bin/reboot` through a `service`/`exec` line in an rc file, and a
-  tracked one would have been named.
-- `pgrp: 6086` — it was in its own process group, i.e. it called `setsid()`.
-- `/system/bin/reboot` itself only does one thing: it sets `sys.powerctl`
-  (`strings /system/bin/reboot` -> `sys.powerctl`, `usage: %s [-p] [rebootcommand]`).
+`ppid: 1` and `pgrp: 6086` mean the process was a session leader whose parent
+had already exited and been re-parented to init. Upstream `init` has exactly
+one path that forks a session leader and lets it outlive its parent:
+`InitFatalReboot()` in `system/core/init/reboot_utils.cpp` forks a child that
+sleeps 5 s and then calls `RebootSystem(ANDROID_RB_RESTART2,
+init_fatal_reboot_target)`, with `init_fatal_reboot_target` defaulting to
+`bootloader`. The device's init carries `androidboot.init_fatal_reboot_target`
+and `Reboot start, reason: ` from `system/core/init/reboot_utils.cpp`.
 
-So an unnamed, session-leading child of init ran `/system/bin/reboot
-bootloader`. No ROM binary on the device contains the string
-`/system/bin/reboot` or `reboot bootloader`
-(`grep -ral` over `/system/lib64`, `/vendor/lib64`, `/system/bin`, `/vendor/bin`,
-`/system_ext/lib64` -> no hit), and no rc file execs it
-(`grep -rn "bin/reboot"` over every init directory -> no hit). That is why the
-ROM source is needed: the caller is either a native binary that resolves the
-path at runtime, or a code path not visible in the shipped files.
+**What is still open** is which of the two candidate parents it was:
+
+- `init`'s own fatal path (`InitFatalReboot`), which does **not** go through
+  `sys.powerctl` - the property path and the fatal path are different code,
+  and the observed event is the property path, so this candidate does not fit
+  what was logged;
+- the ROM's rescue party, which does use `sys.powerctl`.
+
+The evidence favours the rescue party: the request lands 4.3 s after the
+qrtr crash, `/system/bin/reboot` is the requester, and the ROM ships a
+library whose only string about this is "updatable crashing detected". The
+open item is the ROM's `server_configurable_flags` source, which is not in
+the shipped files (only the `.so` is) and is in the Evolution X `cnb` tree.
+
+### apexd's failed revert is a consequence, not the trigger
+
+```
+apexd: Native process 'vendor.qrtr-ns' is crashing. Attempting a revert
+apexd: Revert failed : Revert requested, when there are no active sessions.
+```
+
+This matches upstream `apexd.cpp` exactly: `RevertActiveSessions()` returns
+`Error() << "Revert requested, when there are no active sessions."` when
+there is nothing to revert, and `RevertActiveSessionsAndReboot()` only reboots
+**after** a successful revert. So apexd did not reboot here, and its reboot
+would have been a normal system reboot, not the `bootloader` target that was
+observed. apexd is a bystander in this symptom.
 
 ### The Treble override of `vendor.qrtr-ns` is rejected, and it always was
 
@@ -130,8 +207,10 @@ a reboot is the open item.
 ### The reset happens on a boot that completed
 
 The reboot request at 330.13 s is **4.4 minutes after `sys.boot_completed=1`**.
-Whatever asks for it is not reacting to an incomplete boot. Combined with
-`persist.sys.boot.reason.history`:
+Whatever asks for it is not reacting to an incomplete boot - it is reacting to
+the qrtr crash loop, which by then has been running for five minutes.
+
+`persist.sys.boot.reason.history` shows the same shape across boots:
 
 ```
 bootloader,4028
@@ -141,8 +220,30 @@ bootloader,2219
 reboot,shell,469
 ```
 
-four consecutive boots ended in the **bootloader** target, with the one before
-them a shell reboot. The port's own boots are the ones ending in `bootloader`.
+Four consecutive boots ended with the reason `bootloader`, the one before them
+a shell reboot. The port's own boots are the ones ending in `bootloader`.
+
+### The ROM's rescue party also has a boot-attempt counter
+
+`server_configurable_flags.so` carries:
+
+```
+ attempted boot count reaches threshold, resetting flags.
+ attempted boot count is under threshold, skipping reset.
+ persist.device_config.attempted_boot_count
+```
+
+and the ROM's `flags_health_check.rc` resets that counter on
+`sys.boot_completed=1`:
+
+```
+on property:sys.boot_completed=1
+    setprop persist.device_config.attempted_boot_count 0
+```
+
+so the counter is about *failed* boots. It is not what produced the reboot
+here (this boot completed), but it is the ROM's second line of defence, and it
+means a boot that never completes is counted, not ignored.
 
 ## Fixes
 
@@ -200,13 +301,17 @@ already started. Fixing vold will remove the message, not the reset.
 
 ## Still open
 
-- **Parent and argv of PID 6086.** An unnamed, session-leading direct child of
-  init ran `/system/bin/reboot bootloader`. Needs the ROM's init/native source
-  (Evolution X `cnb` branch) or an `execve` trace.
-- **The Android 17 `apexd` path** from a failed `RevertActiveSessions()` to
-  `sys.powerctl=reboot,bootloader`.
-- **The upstream QRTR introducing commit** and the CAF 4.19 equivalent, to
-  decide whether the fix belongs in the kernel or in the init.
+- **The ROM's `server_configurable_flags` / `disaster_recovery` source.** The
+  rescue party is identified from the shipped `.so` strings, but the code that
+  decides to run `/system/bin/reboot bootloader` is in the Evolution X `cnb`
+  tree (`system/server_configurable_flags/`), not in the shipped files. It is
+  the one artifact that would close the chain end to end. It matters because
+  the fix is now clear: the crash loop must stop, and the crash loop stops
+  when `vendor.qrtr-ns` gets `CAP_NET_ADMIN`.
+- **The upstream QRTR introducing commit.** The check is upstream and old
+  (`bdabad3e363d`, "net: Add Qualcomm IPC router", 2016, and the same in CAF
+  4.19), so the fix belongs in the init/service definition, not the kernel.
+  The kernel side is settled.
 
 ## Evidence files
 
@@ -216,7 +321,6 @@ already started. Fixing vold will remove the message, not the reset.
 | `run317-kernel-log.txt` | that boot's kernel log as text |
 | `run317-reboot-window.txt` | the 329.9-330.3 s window, verbatim |
 | `run318-logdump.bin` | the same boot, later, still running (qrtr-ns still crash-looping) |
-| `run315/316-logdump.bin` | earlier pulls of the same partition |
 | `failed-boot-ramoops-console-0.log` | the failed boot's console (the 7.25 s UART abort) |
 | `failed-boot-ramoops-dmesg-0.log` | the failed boot's dmesg (the abort) |
 | `failed-boot-ramoops-dmesg-1.log` | the failed boot's panic record |
