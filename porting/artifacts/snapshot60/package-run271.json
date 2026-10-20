@@ -1,0 +1,16 @@
+{
+  "image": "/home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/boot-run271.img",
+  "size": 43687936,
+  "sha256": "57d0284d82cb821372392c184fc885508cd461c70bd2558750634e644b7c9930",
+  "kernel_payload_sha256": "db3acee2392c1f1625e2f2e364609e31551c0b7ff1a47aff2b045d3625b40b4b",
+  "kernel_size": 20117850,
+  "ramdisk_size": 23564514,
+  "ramdisk_sha256": "2187f92f345d07db53597a0a6686f0688377e37ebfd25a63a4379e66323a49ab",
+  "cpio_records": 683,
+  "init_sha256": "eb142703da05c165559e7718e3f886c0e45eccdd3fdedf8d459fd294614efca6",
+  "firmware": [],
+  "debuggable": false,
+  "policy_append_sha256": null,
+  "cmdline": "androidboot.hardware=qcom loop.max_part=7 androidboot.boot_devices=soc@0/7824900.mmc buildvariant=user ignore_loglevel printk.time=1 androidboot.force_normal_boot=1 rcupdate.rcu_cpu_stall_timeout=10 softlockup_panic=1 hung_task_panic=1 printk.devkmsg=on androidboot.bootdevice=../.. console=ttynull ramoops.reset_capture=1 pstore.backend=ramoops firmware_class.path=/lib/firmware,/vendor/firmware mdss_mdp_cold_boot=1 panic=60 earlycon console=ttyMSM0,115200 initcall_blacklist=apcc_msm8953_driver_init",
+  "base_image": "/home/kurision/development/kernel/ack-kgsl/porting/artifacts/snapshot60/boot-run258.img"
+}

@@ -1,0 +1,16 @@
+{
+  "image": "boot-run263.img",
+  "size": 43685888,
+  "sha256": "6b008c81b57f4099d24ae521dec84eab10d43d21000fb730062294df3c76a054",
+  "kernel_payload_sha256": "59eb2793a5f7993002f544864f18e46250f51395f1eec8b69b802374bfe33d15",
+  "kernel_size": 20116798,
+  "ramdisk_size": 23564514,
+  "ramdisk_sha256": "2187f92f345d07db53597a0a6686f0688377e37ebfd25a63a4379e66323a49ab",
+  "cpio_records": 683,
+  "init_sha256": "eb142703da05c165559e7718e3f886c0e45eccdd3fdedf8d459fd294614efca6",
+  "firmware": [],
+  "debuggable": false,
+  "policy_append_sha256": null,
+  "cmdline": "androidboot.hardware=qcom loop.max_part=7 androidboot.boot_devices=soc@0/7824900.mmc buildvariant=user ignore_loglevel printk.time=1 androidboot.force_normal_boot=1 rcupdate.rcu_cpu_stall_timeout=10 softlockup_panic=1 hung_task_panic=1 printk.devkmsg=on androidboot.bootdevice=../.. console=ttynull ramoops.reset_capture=1 pstore.backend=ramoops firmware_class.path=/lib/firmware,/vendor/firmware mdss_mdp_cold_boot=1 panic=60 earlycon console=ttyMSM0,115200",
+  "base_image": "boot-run258.img"
+}
