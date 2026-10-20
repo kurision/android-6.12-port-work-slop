@@ -14,6 +14,7 @@ being RAM-booted every time, and it has **root**.
 | 279 | `boot-run279.img` `8b6d9733f66a3e8c7ba207a9b398f516f002a2469f7cf3aef2f715bf10b16270` | the run267 kernel (the kgsl timeline and reboot-path diagnostics), flashed to `boot_b` |
 | 281 | `boot-run281.img` `22babb28d4f6c5d421da071d63d90915c850c6fc298907a8e88373918eb42541` | run279 plus **KernelSU-Next v3.4.2 built into the kernel** |
 | 282 | `boot-run282.img` | run281 plus the diag init that relabels the sysfs nodes (section 5) |
+| 283 | `boot-run283.img` `205527e9852e8799fce693c788233379ac87608ae7bce488144a583f6ef71ccd` | the relabel moved in front of the guard; **it hangs the phone** (section 6) and was reverted on the device back to run282 |
 
 Flashing is `fastboot flash boot_b <image padded to 64 MiB>`; the device's
 bootloader is unlocked (`androidboot.verifiedbootstate=orange`), and
@@ -201,7 +202,79 @@ the **adb shell can read the GPU state without root**, so the port's poller
 can capture `gpu_busy_percentage`, `clock_mhz`, `dispatch/inflight` and the
 rest as the `shell` user.
 
-## 6. What is still not proven
+## 6. run283: a sixteen-second delay in the guard hangs the phone
+
+Moving the relabel to the top of `install_android_guard()` - so that it
+would run before the guard chroots into the ROM's root - hung the phone
+on the first boot. It came up on a dim screen with no adb and no USB at
+all, and needed a forced power-off to be recovered.
+
+The cause is in the boot timeline, which the logdump partition records
+for every boot. The good boot (run282) says:
+
+```
+ 8.90 s  DIAG: Android init exec succeeded
+24.44 s  DIAG: bootdevice guard installed read-only f2fs-only fstab and
+         vendor contexts before policy load
+25.79 s  init: Opening SELinux policy
+25.86 s  init: Using userdebug system sepolicy /debug_ramdisk/...
+28.80 s  init: Loading SELinux policy
+29.64 s  KernelSU: initialize_fake_status ... policyload=1, enforcing=1
+```
+
+**The guard has a 1.35 second window.** It has to install the read-only
+fstab and the vendor contexts *before* the ROM's init opens the policy,
+because `guard_pre_policy()` refuses to run once a policy is loaded: the
+check is that the calling process still has the pre-policy "kernel"
+context, and a loaded policy turns that into `u:r:kernel:s0`, which the
+check explicitly rejects.
+
+The relabel loop in run283 sat in front of the guard for sixteen seconds
+(t eight passes of two seconds). That put the guard's install at about
+40 s, roughly fourteen seconds *after* the ROM's init opened the policy.
+The guard then failed with `EPERM`, exited with "alias not released",
+and the ROM's init waited for a boot device that nobody was going to
+release. A dim screen, no userspace, no adb, no USB - the symptom
+exactly.
+
+**So the guard must not be delayed by any amount.** The relabel has to
+run in a process of its own, in parallel, and the guard must not wait for
+it.
+
+### 6.1 Why the relabel never worked anyway
+
+The same capture shows why the relabel was a no-op in run282:
+
+```
+34.36 s  DIAG: wakeup stats relabelled ret=-1
+34.36 s  DIAG: kgsl sysfs relabelled ret=-1
+```
+
+`ret=-1` is the walk failing to open its directory at all. By the time
+the relabel ran, the guard had chrooted into the ROM's root and joined
+the ROM's init's mount namespace, and the ROM's `/sys` is not mounted
+yet at that point (Android's init mounts it in its second stage). The
+kernel's sysfs - the one with the wakeup statistics and the kgsl's
+attributes on it - is only visible in the initramfs's own mount
+namespace, before the switch.
+
+That also explains the label check that started this: the kgsl's
+`idle_timer` was still `u:object_r:sysfs:s0` after the run282 boot. The
+walk never found it.
+
+**⇒ The relabel has to run in a process that stays in the initramds's
+mount namespace**, and it has to run before the ROM's init loads its
+policy - the manual relabel from an adb root shell worked after the
+policy was loaded, so the label itself is not the problem, but the
+initramds's context before the policy load is the safe place to be.
+
+**⇒ The shape of the fix**: fork a dedicated relabel child in
+`launch_android()`, before the ROM's init is exec'd, so that it runs
+concurrently with the whole boot in the initramds's namespace with the
+kernel's sysfs mounted, and it must not delay the guard by even a
+millisecond. The guard stays exactly where it is.
+
+## 7. What is still not proven
 
 * **Why the GPU stops retiring.** The debugfs shows the retired count
   frozen, and the instrument is on the right path now
