@@ -150,3 +150,62 @@ the msm8952/q6 DAPM routes references it.
 
 checkpatch --strict and the API pattern scan are clean. Build and boot
 verification pending.
+
+## run337: the codec-less fix works and exposes an id collision
+
+run337 (`6.12.93-4k-g8b3cb50d93a8 #43`) got past the channel-map check and
+failed one link later:
+
+```
+ASoC: Both Component name/of_node are set for VoiceMMode1
+snd_soc_register_card failed (-22)
+```
+
+The front-end `VoiceMMode1` link's codec had both a name (`snd-soc-dummy`)
+and an `of_node`. A kprobe on `snd_soc_register_card` read link index 21 from
+the live card (`/sys/kernel/tracing/kprobe_events`, `links = *(card + 352)`,
+`link = links + 21 * 224`):
+
+```
+lname="VoiceMMode1" nc=1 np=1 nu=1
+cname="snd-soc-dummy" cof=0xffffff80fe026328 cdai="snd-soc-dummy-dai"
+pname=(fault) pof=0xffffff80fe0257e8 pdai=(fault)
+uname=(fault) uof=0x0 udai="VoiceMMode1"
+```
+
+`cof` is a device node, so the dummy codec was not left alone. `(fault)` is
+the probe's string fetch of a NULL `name`/`dai_name`; the platform and CPU
+are correct (platform name cleared, CPU matched by DAI name alone).
+
+`msm8952_populate_dai_link_component_of_node()` resolves the real CDC codecs
+when `dai_link[i].id` is one of the three MI2S backend ids. The front-end and
+backend ids are separate anonymous enums and collide numerically:
+
+```
+MSM_FRONTEND_DAI_VOICEMMODE1      46
+MSM_BACKEND_DAI_TERTIARY_MI2S_TX  46
+```
+
+so the CDC block also ran on the front-end VoiceMMode1 link. It set
+`codecs[DIG_CDC].of_node` on the one-element inline dummy codec and then wrote
+`codecs[ANA_CDC]` (index 1) past the end of that array. The same collision
+exposes `Circuit-Switch Voice`: `MSM_FRONTEND_DAI_CS_VOICE = 39` equals
+`MSM_BACKEND_DAI_QUATERNARY_MI2S_RX`; the tfa98xx block is inert on tissot
+because the DT has no `ext_pa_tfa98xx`, but the guard is needed anyway.
+
+## Fix: restrict the CDC lookup to backends
+
+Both codec blocks now require `dai_link[i].no_pcm`. Front ends are
+`dynamic = 1` PCM links and every backend sets `no_pcm = 1`, so the numeric
+collision can no longer select a front end. This also removes the
+out-of-bounds `codecs[ANA_CDC]` write.
+
+checkpatch --strict and `git diff --check` are clean. Build and boot pending;
+the next boot must show no `Both Component name/of_node` error and the card
+must appear in `/proc/asound/cards`.
+
+Not fixed here: the `INT_DIG_SND_CARD` variant's `msm_int_dig_be_dai` links
+carry no codecs, so the fallback gives them the shared name-bearing dummy and
+the digital-codec branch then sets `of_node` on it. Tissot uses
+`INT_SND_CARD`, so that path is not exercised; the dig links need explicit
+name-less codec arrays before that variant can bind.
