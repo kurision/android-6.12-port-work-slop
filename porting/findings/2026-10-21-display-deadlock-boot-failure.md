@@ -71,35 +71,115 @@ So: `android.hardware` (the display HAL) opens the framebuffer at 49.66 s,
 the DSI link **times out without an ACK** in the same millisecond, and the
 commit path never comes back.
 
-## The deadlock
+## The mechanism: not settled, and the two readings that fit
+
+Two readings fit the evidence, and they are not the same bug.
+
+### Reading A: a lock interaction in the interrupt-enable path
+
+The interrupt is armed under two locks:
 
 ```c
 /* mdss_mdp_irq_enable(), process context */
-	spin_lock_irqsave(&mdp_lock, irq_flags);
+	spin_lock_irqsave(&mdp_lock, irq_flags);         /* lock 1, mdss_mdp.c */
 	...
-	writel_relaxed(irq.irq_mask, mdata->mdp_base + reg.clr_off);
-	writel_relaxed(mdata->mdp_irq_mask[irq.reg_idx],
-			mdata->mdp_base + reg.en_off);
-	mdata->mdss_util->enable_irq(&mdss_mdp_hw);   /* the HW IRQ is enabled here */
+	mdata->mdss_util->enable_irq(&mdss_mdp_hw);       /* -> mdss_enable_irq() */
 	spin_unlock_irqrestore(&mdp_lock, irq_flags);
 
-/* mdss_irq_handler(), interrupt context */
-	if (intr & MDSS_INTR_MDP) {
-		spin_lock(&mdp_lock);                  /* the handler takes the same lock */
-		mdata->mdss_util->irq_dispatch(MDSS_HW_MDP, irq, ptr);
-		spin_unlock(&mdp_lock);
+/* mdss_enable_irq(), mdss_util.c */
+	spin_lock_irqsave(&mdss_lock, irq_flags);         /* lock 2 */
+	...
+		enable_irq(hw->irq_info->irq);              /* the GIC line is armed here */
+	spin_unlock_irqrestore(&mdss_lock, irq_flags);
 ```
 
-The hardware interrupt is enabled while the lock its own handler takes is
-held, and the interrupt is delivered to whichever CPU the GIC picks. Whether
-this deadlocks depends on the interrupt arriving in that window - which is
-why it is intermittent, and why it is triggered by the DSI timeout: the
-timeout is what makes the interrupt arrive right then.
-
-Both functions are **byte-identical to the CAF 4.19 donor**
+and the handler takes `mdp_lock` (lock 1) in `mdss_irq_handler()`. Both
+functions are **byte-identical to the CAF 4.19 donor**
 (`../oc-test/drivers/video/fbdev/msm/`): the port did not introduce this
 pattern, it inherited it. CAF does not hit it because its panel does not time
 out at the moment the framebuffer is opened.
+
+What does *not* follow from this, though: with `spin_lock_irqsave` on CPU0
+the interrupt cannot be handled on CPU0, it can only be delivered to another
+CPU, whose handler then spins on `mdp_lock` until CPU0 releases it. Nothing
+in the shown critical section sleeps or waits for the handler, so on its own
+this is a latency and hard-lockup hazard, not a deadlock.
+
+### Reading B: interrupt starvation from an already-asserted source
+
+The DSI error latches are already set **before** the interface interrupt is
+armed:
+
+```
+ 49.665  mdss_dsi_fifo_status: status=44441000
+ 49.665  mdss_dsi_ack_err_status: status=10000000
+ 49.665  mdss_dsi_timeout_status: status=1
+```
+
+(`mdss_dsi_ack_err_status()` and `mdss_dsi_timeout_status()` are the error
+handlers; they do write the status back to clear it, so the handler ran.)
+Arming a level-triggered source whose error condition is already asserted,
+and whose clearing happens in the handler, can turn into an interrupt storm:
+the GIC re-asserts the line after every EOI. The task then never gets
+scheduled, the soft lockup detector fires, and the reported stack is the
+task's frozen context - the instruction right after `spin_unlock_irqrestore`
+cleared `PSTATE.I` - which is exactly the `pc`/`lr` pair in the report.
+
+This reading also explains the intermittency better: a DSI link that
+sometimes ACKs and sometimes does not is a marginal link, not a deterministic
+lock-order bug. A deterministic bug would fail every boot.
+
+### What would settle it
+
+* `softlockup_all_cpu_backtrace=1` and `hardlockup_all_cpu_backtrace=1`:
+  where the *other* seven CPUs are. In `queued_spin_lock_slowpath` it is a
+  lock (reading A); in `mdss_irq_handler` or the DSI handler it is an
+  interrupt storm (reading B); in `console_unlock`/`vprintk` it is printk
+  re-entrancy on the framebuffer console - which is this very display
+  driver, and the port's own DIAG printk runs in the commit path.
+* A per-source interrupt counter, printed once from process context: a storm
+  identifies itself, and names the block (MDP or DSI0) that re-asserts.
+* `CONFIG_IRQ_TIME_ACCOUNTING` on, before reading "0% hardirq" in the
+  utilization dump; without it, hardirq time is counted as system time.
+* Lockdep (`CONFIG_PROVE_LOCKING`) to state any `mdp_lock`/`mdss_lock`
+  inversion explicitly. Note that two different locks are called `mdp_lock`
+  (one in `mdss_mdp.c`, one per DSI controller in `mdss_dsi_host.c`), so
+  read lockdep by class address, not by name.
+* A/B boots, each a repackage and a flash: mask the DSI error/ack/timeout
+  sources until after the first commit; arm the interface interrupt outside
+  the locks; remove the port's DIAG printk from the display and IRQ paths.
+  Each of those moves one mechanism out of the picture.
+
+
+## Why the phone reboots and tries again
+
+The panic path explains the loop. `panic=60` is on the command line, so the
+kernel does not reset immediately:
+
+```
+ 88.269  pstore: backend (ramoops) writing error (-28)
+ 88.269  Rebooting in 60 seconds..
+```
+
+So the phone sits at the splash for a minute after the panic (the panel
+handover never completed, so the splash is what is on screen), then resets,
+the bootloader starts it again, and the next attempt may or may not take the
+same path. That is the "rebooting and trying again" behaviour, and it is
+why an image can be good for half an hour and then panic:
+
+* `boot-test-vendorqrtr` (kernel `gc6104317ff23`) ran 26 minutes fine in the
+  fixed-boot evidence and then panicked at 84 s in the display path on a
+  later boot of the **same image**;
+* `persist.sys.boot.reason.history` shows the same shape:
+  `kernel_panic,oomdlockup:_hung_tasks,7999` - a boot that ran 7999 s and
+  then died the same way.
+
+The trigger is a race in the panel's DSI link, not a property of the image.
+What changes the odds between images is the display path's code: `run322`
+and the merged audio images carry the newer WLED/backlight work
+(`d3998f3ec`, `c0e9c6487`), while the images that ran for hours are the
+older display code.
+
 
 ## What follows from this
 
@@ -107,13 +187,14 @@ out at the moment the framebuffer is opened.
   because the audio images fail every time, but a main-tree image without
   any audio fails the same way, and the failure is in the display path.
 * The **panel's DSI link failing to ACK at the display bring-up** is the
-  thing to fix. The port's own diagnostics already print the three status
-  registers that show it (`mdss_dsi_fifo_status`, `mdss_dsi_ack_err_status`,
+  thing to fix. The port's own diagnostics print the three status registers
+  that show it (`mdss_dsi_fifo_status`, `mdss_dsi_ack_err_status`,
   `mdss_dsi_timeout_status`), and `status=1` on the timeout register says
   the link timed out in the same millisecond the framebuffer was opened.
-* The inherited CAF race is worth fixing on its own account: enabling an
-  interrupt under the lock its handler takes is a deadlock waiting for the
-  right interrupt routing, whatever the panel does.
+* The interrupt-enable path is worth hardening either way: arming a
+  level-triggered source whose error condition is already asserted, under
+  two locks whose handler also takes one of them, is fragile whatever the
+  panel does.
 
 ## How the evidence was recovered
 
