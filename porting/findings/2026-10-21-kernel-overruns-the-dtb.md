@@ -98,10 +98,20 @@ No CAF code is in either.
 ## Making room for the audio stack
 
 To bring the CAF audio stack back, the kernel has to lose at least 3604480
-bytes of `image_size`, plus a margin. What the debug options in the port's
-configuration cost:
+bytes of `image_size`, plus a margin. What two of the debug options in the
+port's configuration cost, each turned off alone from the CAF-audio
+configuration (`image_size` 57606144):
 
-(Measurements pending.)
+| Turned off | `image_size` | Saved | Still over by |
+|---|---|---|---|
+| `CONFIG_UBSAN` | 56557568 | 1048576 | 2555904 |
+| `CONFIG_KALLSYMS_ALL` | 55443456 | 2162688 | 1441792 |
+
+`FTRACE`, `SLUB_DEBUG`, `KFENCE` and `DEBUG_INFO_BTF` were not measured:
+the run was stopped. The debug options stay on while the port is in
+bring-up. The audio stack is being made loadable modules instead, which
+takes its 3.6 MB out of `image_size` altogether: `msm-pcm-routing-v2.o`
+alone is 2.3 MB (1.0 MB code, 0.46 MB data, 0.81 MB `.bss`).
 
 ## How the layout was captured
 
