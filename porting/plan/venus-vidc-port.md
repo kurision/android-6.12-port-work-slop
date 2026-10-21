@@ -1,3 +1,9 @@
+> **2026-10-22:** superseded for sequencing by
+> [2026-10-22-video-and-audio-port.md](2026-10-22-video-and-audio-port.md).
+> Route B is confirmed by a donor-kernel measurement (the ROM uses
+> `OMX.qcom.video.decoder.avc` on the 4.19 kernel). Correction: upstream
+> Venus is a *stateful* V4L2 m2m driver, not a stateless one.
+
 # Plan: hardware video codec (Venus) for tissot
 
 Goal: give the ROM a working hardware video **decoder and encoder**, which
