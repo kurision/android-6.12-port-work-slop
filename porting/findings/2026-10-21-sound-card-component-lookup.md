@@ -103,3 +103,50 @@ dev-id 5), matching the donor's `msm-audio-lpass.dtsi` and the port's
    `/sys/kernel/debug/asoc/dais`.
 4. If the card binds but playback fails, the next layer is q6/APR/DSP
    (`msm-pcm-routing` DAPM and the q6 AFE ports), not component lookup.
+
+## run336: the lookup is fixed, a later check rejects codec-less links
+
+run336 booted (`6.12.93-4k-gf86715c44f2d-dirty #42`), Android reached
+`sys.boot_completed=1`, and the AUXPCM fix worked:
+`soc@0:qcom,msm-auxpcm-dev` is now in the component list. The card still did
+not bind. The ring buffer had wrapped past the boot-time probe, so the probe
+was run by hand (`echo c051000.sound >
+/sys/bus/platform/drivers/msm8952-asoc-wcd/bind`):
+
+```
+[  134.645492] msm8952-asoc-wcd c051000.sound: msm8952_asoc_machine_probe:of read string qcom,msm-ext-pa i 0 ret 0
+[  134.645556] msm8952-asoc-wcd c051000.sound: Headset is using internal micbias
+[  134.646011] msm8952-asoc-wcd c051000.sound: unexpected dai_link->ch_maps[0] index (cpu(0/1) codec(0/0))
+[  134.646196] msm8952-asoc-wcd c051000.sound: snd_soc_register_card failed (-22)
+[  134.646218] msm8952-asoc-wcd c051000.sound: probe with driver msm8952-asoc-wcd failed with error -22
+```
+
+`-22` is `-EINVAL`, not a deferral. The error is from
+`snd_soc_compensate_channel_connection_map()` (`sound/soc/soc-core.c:1116`):
+a link with `num_cpus = 1` and `num_codecs = 0` picks the 1-codec default map,
+whose entry has `codec = 0`, and `0 >= num_codecs` fails. The same code is in
+upstream v6.12 through v6.16, so this core does not support a link with no
+codec.
+
+The donor names a codec on all these links: `msm-stub-codec.1`
+(`msm-stub-rx`/`msm-stub-tx`) on the DSP backends and `snd-soc-dummy` on the
+front ends and on the quin/quat links. The port's conversion to the
+`.cpus`/`.codecs` API kept the front-end dummy codec but dropped the codec from
+21 backend links, so they reached the core with `num_codecs = 0`.
+
+## Fix for the codec-less links
+
+Give every link that has no codec the framework's exported
+`snd_soc_dummy_dlc` (`include/sound/soc.h:987`, used the same way by the AMD
+ACP, FSL and Atmel machine drivers).
+`msm8952_populate_dai_link_component_of_node()` now sets
+`.codecs = &snd_soc_dummy_dlc` and `.num_codecs = 1` when the link has none.
+The three links with the real CDC codecs (primary MI2S RX, tertiary MI2S TX,
+senary MI2S TX) and the front ends are left alone.
+
+This is the same substitution the port already made for the donor's stub codec
+on the front ends: the stub codec does not exist in this tree and nothing in
+the msm8952/q6 DAPM routes references it.
+
+checkpatch --strict and the API pattern scan are clean. Build and boot
+verification pending.
