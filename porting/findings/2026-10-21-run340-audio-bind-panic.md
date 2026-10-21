@@ -91,3 +91,100 @@ No build, olddefconfig, Sparse, flash or phone boot was requested or run.
 The next requested build must resolve legacy MBHC enabled and include
 `wcd-mbhc-legacy.o`; runtime card registration and safe teardown remain
 unverified. Do not treat the source checks as proof that sound works.
+
+## Live card enumeration after edits
+
+At the user's next online check, adb returned:
+
+```
+Linux localhost 6.12.93-4k-g8e7f57886c76-dirty #51 SMP PREEMPT Wed Oct 21 22:55:57 +0545 2026 aarch64 Toybox
+62.11 347.08
+ 0 [msm8953sndcardm]: msm8953-snd-car - msm8953-snd-card-mtp
+                      msm8953-snd-card-mtp
+```
+
+`/proc/asound/pcm` listed devices 00-00 through 00-24, including duplex
+MultiMedia1/2, VoiceMMode1/2 and `Senary_mi2s Capture multicodec-18`.
+`getprop sys.boot_completed` returned empty. This is a transcription of the
+first command's output, not a saved raw capture. The running banner uses the
+older HEAD plus dirty edits, not the committed fix hash; exact image/module
+provenance has not been verified.
+
+USB disappeared before the follow-up evidence commands. Files in
+`porting/artifacts/snapshot60/audio-online-20261021-230119/` contain only
+`adb: no devices/emulators found`, not kernel logs. Card enumeration was
+observed once; sustained boot, SELinux state, absence of new kernel errors
+and playback/capture operation remain unverified. USB loss alone does not
+establish a reset.
+
+### Next live check: boot completed
+
+Evidence: `porting/artifacts/snapshot60/audio-reboot-20261021-230250/`.
+`status.txt` again lists card 0, enforcing SELinux and kernel #51 at 77 s.
+The later `boot-state.txt` records uptime 112.95 s, `sys.boot_completed=1`,
+system_server and both audio services running. Both boot-reason properties
+report `reboot,checkpoint_commit_failed`; that is a reported reason, not a
+verified underlying cause. AOSP associates checkpoint commit with userdata
+checkpoint handling before BootComplete:
+https://source.android.com/docs/core/ota/user-data-checkpoint
+
+Live dmesg (131295 bytes), logcat (474503 bytes) and an exact 64 MiB logdump
+were saved. Logdump SHA256:
+`c6683f264c3a3a5240f65837673dffd54e123407655f6ba509d54b6c4162decd`.
+CRC-verified snapshot slots seq145/146 sample uptime ~100 s and recover no
+panic/oops dmesg records. Absence of a recovered record does not prove the
+previous boot did not panic. The diagnostic prefix retains a mixed/stale
+tail (including uptime 181 s beyond this capture's uptime); its old vold
+shutdown lines cannot alone identify the preceding reset. No storage or
+checkpoint state was changed. Playback/capture operation remains untested.
+
+### Freeze and subsequent boot
+
+The user reported a freeze and reboot. The freeze-time shell timed out, then
+exec-out returned `error: closed`; evidence attempts are in
+`audio-freeze-20261021-230500/` under the snapshot directory.
+
+On the next connection, `audio-postfreeze-20261021-230617/status.txt` records
+kernel #51, uptime 58.32 s, new boot ID
+`b186c436-3be0-4d62-8c0a-546c2930b9d3`, enforcing SELinux, card 0 registered,
+and an empty boot-completed property. Dmesg, logcat and the exact 64 MiB
+logdump were captured. CRC-verified snapshots sample this boot at ~61 s;
+no valid panic/oops dump was recovered. The connection disappeared again
+before a later status check; this alone does not establish another reset.
+
+`reset-decoded.txt` contains an orderly reset by PID 1 at 76.2 s with
+command `Checkpoint commit failed`. However, its entire 64 KiB ACKRESET1
+region is byte-identical to the earlier 23:02 pull (SHA256
+`01fe0fd6d2612a7a06117752800d7f5b582266ba59e5fc3d21fb906f786254c0`).
+It is evidence for an earlier reset, NOT fresh proof of the subsequent freeze
+or reboot. ACKPATH1 decoding rejects the previous marker page's identity.
+The cause of the user-reported freeze remains unverified.
+
+## App-launch freeze: dma_buf_vunmap BUG on PCM close (kernel #53)
+
+Reproduced live with `dmesg -w` streamed to the host:
+`snapshot60/app-launch-watch-20261021-234713/dmesg-stream.txt`. On an app
+launch at 272.2 s, `MSM8x16 Media9: ASoC: no backend DAIs enabled`, then
+`__q6asm_cmd: DSP returned error[ADSP_EFAILED] opcode 68557`, then on close
+`kernel BUG at drivers/dma-buf/dma-buf.c:2359!` (`BUG_ON(!iosys_map_is_equal)`)
+via `msm_pcm_close` → `q6asm_audio_client_buf_free_contiguous` →
+`msm_audio_ion_free` → `dma_buf_vunmap`. USB dropped ~25 s later. The KGSL
+retired counts were still advancing in `kgsl-poll.txt` and the stall watcher
+never fired; the GPU is not implicated in this freeze.
+
+Cause: `msm_audio_ion_unmap_kernel()` kept the 4.19 call
+`dma_buf_vunmap(dma_buf, vaddr)`. On 6.12 the second argument is a
+`struct iosys_map *`; the `void *` converted silently, so the kernel compared
+`vmap_ptr` with the first bytes of the audio buffer. Both calls also used
+the variants that require `dmabuf->resv` held (upstream dynamic locking
+series, https://lkml.iu.edu/2210.2/01464.html), the same mistake fixed for
+qseecom in 13a9c029e. Fix: store the `struct iosys_map` and use
+`dma_buf_vmap_unlocked`/`dma_buf_vunmap_unlocked`.
+
+The BUG fires with `list_mutex` held, so later audio calls block; that this
+is what produces the freeze-then-reset is inference, unverified. The reset
+mechanism itself was not captured. The fix is not built or boot-tested.
+The Media9 routing and ADSP_EFAILED remain separate open problems: the fix
+only stops the close path from crashing; it does not make playback work.
+`mdss_fb.c`/`mdss_mdp_splash_logo.c` call locked vmap/vunmap and should be
+reviewed for the same locking problem.
