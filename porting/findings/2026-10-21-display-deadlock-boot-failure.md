@@ -3,6 +3,56 @@
 **Date:** 2026-10-21 · **Branch:** `main` · **Evidence:** the pstore records of the
 failing boot, recovered from `/sys/fs/pstore` of the next boot
 
+## Corrections (later on 2026-10-21)
+
+This finding conflates two failures. Read these before the rest.
+
+* **It is not why the audio images, or anything after run322, fail to
+  boot.** Those kernels are 3.6 MB too large and overrun their own DTB; they
+  die before any log exists and never reset. See
+  [2026-10-21-kernel-overruns-the-dtb.md](2026-10-21-kernel-overruns-the-dtb.md).
+  What this finding describes is the *other* failure: an intermittent lockup
+  on kernels that fit (#18, run322), about 50 s in, which panics and resets
+  itself.
+* **The panic record is real** and is in
+  `porting/artifacts/snapshot60/logs-2026-10-21/display-panic/` (kernel
+  `gc6104317ff23 #18`). The excerpts below were transcribed by hand: the
+  real trace reads `vfs_open+0x28/0x4c`, and the `59.659` line is a separate
+  RCU stall report at the same place (`console-ramoops-0.clean.txt:3739`).
+* **"All eight CPUs at 100% system" is wrong.** The utilization block is
+  five 4 s samples of CPU0 alone (`kernel/watchdog.c:420-429`). The other
+  CPUs kept running: T216 logs a DIAG line every 2 s through the stall.
+* **"0% hardirq" does mean something.** `CONFIG_IRQ_TIME_ACCOUNTING=y` is
+  already on and live (`sched_clock` runs at 19.2 MHz, above the 1 MHz
+  threshold in `kernel/time/sched_clock.c:232`). With the DSI error handlers
+  printing exactly once, this argues against reading B (an interrupt storm
+  on CPU0).
+* **The DSI timeout is not the trigger.** The same
+  `mdss_dsi_timeout_status: status=1` follows the display HAL's fb open in
+  boots that come up (`logs-2026-10-21/fixed-boot-vendorqrtr/logdump-text.txt:3801`,
+  `run322-recon-082839`, both run322 hang-test resets). Bit 0 is outside the
+  BTA/LP_RX mask CAF uses (`mdss_dsi_host.c:3235`), so it is not an ACK
+  timeout, and the prints are CAF's own `pr_err`, not the port's DIAG.
+* **What does differ:** in every boot that comes up, the first kickoff logs
+  `DIAG dsi_on: ctrl=0 cold bring-up`, `dsi_on: done` and
+  `kickoff post-commit`, and the DSI error handler runs a second time
+  followed by `mdss_mdp_video_intf_recovery`. In the panic boot none of these
+  appears: the thread stopped in `mdss_mdp_video_display()` before panel-on.
+* **Unsourced:** the `kernel_panic,oomdlockup:_hung_tasks` boot reason and
+  the `7999` history entry appear in no artifact; AOSP `bootstat` would
+  produce `kernel_panic,softlockup:_hung_tasks` for this panic. The
+  vendorqrtr capture's own history is `bootloader,73`.
+* **The WLED/backlight work does not change the odds.** The panic boot (#18)
+  predates `d3998f3ec`, and reverting it (run325) left the later images
+  failing; they fail on size.
+* **The recovery procedure at the end does not work as written.** At boot,
+  pstore copies a valid previous buffer out to `/sys/fs/pstore` and then
+  resets the zone (`fs/pstore/ram_core.c:542-566`), so a raw read of
+  `/sys/kernel/ramoops_raw` only ever holds the current boot. The previous
+  boot's records survive only a warm reset (a panic reboot); after a forced
+  long-press reset or a detour through recovery, pstore was empty every
+  time.
+
 ## The symptom, restated
 
 The port's phone stops at the boot splash, sometimes needs two or three power

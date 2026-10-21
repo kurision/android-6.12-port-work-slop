@@ -1,5 +1,10 @@
 # The CAF 4.19 audio stack is in main; the boot hang is not yet explained
 
+> **Explained later on 2026-10-21:** the hang is the stack's size, not its
+> code. The audio kernels' `image_size` reaches past the DTB the bootloader
+> places at `0x13400000`. See
+> [2026-10-21-kernel-overruns-the-dtb.md](2026-10-21-kernel-overruns-the-dtb.md).
+
 **Date:** 2026-10-21 · **Branch:** `main` (merge `94f5ed1b9`) · **Donor:** `ack-audio`
 (CAF 4.19, from `../oc-test`)
 

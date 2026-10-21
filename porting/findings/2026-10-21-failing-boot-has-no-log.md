@@ -8,6 +8,30 @@ because **every channel that should carry the log of a failing boot is
 empty**. This writes down why each one is empty, with the measurements, and
 what does work.
 
+## Corrections (later on 2026-10-21)
+
+* **Why the audio images leave nothing:** their kernels are 3.6 MB too large
+  and overrun their own DTB, so they die before a console or a ramoops zone
+  exists. See
+  [2026-10-21-kernel-overruns-the-dtb.md](2026-10-21-kernel-overruns-the-dtb.md).
+* **There are two failures, not one that audio makes more likely.** Every
+  image over the size limit fails every time, with no log and no reset.
+  Images that fit (#18, run322) fail now and then with a display lockup
+  about 50 s in, which panics and resets itself
+  ([2026-10-21-display-deadlock-boot-failure.md](2026-10-21-display-deadlock-boot-failure.md)).
+* **"The console zone holds about 190 s" is wrong:** it held about 500 KB
+  after 38 s of boot (`logs-2026-10-21/brightness-revert-125129/`). More
+  importantly, at boot pstore copies a valid previous buffer to
+  `/sys/fs/pstore` and then resets the zone (`fs/pstore/ram_core.c:542-566`),
+  so reading `/sys/kernel/ramoops_raw` early, the protocol in "What does
+  work", never recovers the previous boot. Read `/sys/fs/pstore` instead.
+  It holds the previous boot only after a warm reset (a panic reboot); after
+  a long-press reset or a detour through recovery it was empty every time.
+* **The "failing boot's window" below is not from a failing boot.** The
+  lines quoted come from a boot that worked; no failing boot of an
+  oversized kernel has logged anything. The clock dependency cycles and the
+  qseecom heaps are present in good boots too, and nothing points at them.
+
 ## The symptom is not audio-specific
 
 The `ack-audio` stack in `main` was blamed first, because with the CAF 4.19
