@@ -30,7 +30,8 @@ Two things are now established that were not before:
   It is not the ROM's rescue party, and not apexd.
 - **The run320 boot's shutdown was a thermal emergency**, not the watchdog:
   the port's `kernel/reboot.c` forced a poweroff at 1676 s after a Geekbench
-  run, because this port has no working thermal throttle path for the CPU.
+  run. The original explanation of the cooling-device topology below was
+  incorrect; source review found CPU sensor-to-cooling-device binding gaps.
 
 Evidence: `porting/artifacts/snapshot60/logs-2026-10-21/fixed-boot-vendorqrtr/`
 (this boot) and `.../run320-boot/` against `porting/artifacts/snapshot60/logs-2026-10-20/`
@@ -318,30 +319,79 @@ The run320 boot (`6.12.93-4k-gaeb37c4e232f`) was up for 1678 s and then died:
 [ 1678.063221] reboot: Power down
 ```
 
-This is the port's own emergency path, not upstream: `kernel/reboot.c`'s
+This is the kernel's thermal emergency path, not adbd: `kernel/reboot.c`'s
 `__hw_protection_shutdown()` and `hw_failure_emergency_poweroff_func()`, driven
 by `thermal_zone_device_halt()` in `drivers/thermal/thermal_core.c:392` when a
 **critical** trip point is crossed. The trigger was a Geekbench 7 run.
 
-**Thermal protection on this port does not lower the CPU frequency**, which is
-why a benchmark load cooks the phone instead of throttling it:
+**Correction from source review (2026-10-21):** this is not evidence that CPU
+throttling never worked. Commit `e04d51ef506e` and
+`porting/artifacts/snapshot60/run304-thermal-stress.log` record cooling state 4
+and both CPU frequency readings capped at 2304 MHz, with a peak of 91.6 C.
 
-- The CPU thermal zones have only two trips: `passive` at **80 C** and
-  `critical` at **100 C** (`arch/arm64/boot/dts/qcom/msm8953.dtsi:1985`).
-  There is no throttle trip in the normal range, so nothing acts between
-  ~45 C and 80 C.
-- The passive trip's cooling map is
-  `cooling-device = <&CPU0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>` - a single
-  entry with no limit at either end, so it maps to no frequency target.
-- The live cooling device list has only two entries:
-  `devfreq-1c00000.gpu` and `cpufreq-cpu0`. The big cluster (cpu4-7) has
-  **no** cpufreq cooling device registered at all: cpu0-3 sit on the single
-  `policy0` (whose `affected_cpus` is `0 1 2 3 4 5 6 7`), while cpu4-7 use
-  the legacy per-cpu cpufreq directories, which register no cooling device.
+- All eight Cortex-A53 CPUs deliberately share one CPUFreq policy and coupled
+  APCC clock transaction (`msm8953-cpu.dtsi`). One cooling device is expected;
+  per-CPU cpufreq directories do not establish independent policies.
+- `THERMAL_NO_LIMIT` means the full supported state range, not no throttling
+  (`drivers/thermal/thermal_core.c`, `thermal_bind_cdev_to_trip()`).
+- The source-level mismatch is that CPU1-7 zones reference CPU1-7, while the
+  shared cooling device registers on CPU0. `of_cpufreq_cooling_register()`
+  selects the policy CPU node; `thermal_of_get_cooling_spec()` requires exact
+  DT-node equality. Those seven maps cannot bind to the reported CPU0 device.
+  CPU0's sensor can still throttle the whole policy. Confirm live zone `cdev*`
+  links before treating this mismatch as the cause of run320's shutdown.
 
-So the big cores Geekbench loads run at their 2784 MHz maximum with no
-thermal path, the 100 C critical trip fires, and the port's `kernel/reboot.c`
-forces the power off.
+The Tissot OC include now maps every CPU sensor to CPU0, with these initial,
+**runtime-unverified** mitigation settings:
+
+| CPU temperature | Action | Release |
+| --- | --- | --- |
+| 80 C | At least cooling state 8 (2016 MHz); step_wise may cool further | Below 78 C |
+| 88 C | State 18 (480 MHz), conservative maximum-cooling backstop | Below 86 C |
+| 100 C | Existing critical shutdown, unchanged | Not a performance control |
+
+States are direct indices into the descending 19-entry OPP table, not CAF's
+`THERMAL_MAX_LIMIT` arithmetic. The 88 C threshold is from donor
+`oc-test/arch/arm64/boot/dts/vendor/qcom/mi8953/tissot/oc.dtsi`; 50 ms passive
+and 100 ms normal polling come from its `msm8953-thermal.dtsi`
+`deca-cpu-max-step` zone. The 80 C threshold and 2 C hysteresis are retained
+from this port. Maximum cooling at 88 C is a conservative new policy, **not**
+a claim of identical donor behaviour or calibrated thermal safety. GPU trips
+remain 70/90 C. Other MSM8953 boards are unaffected.
+
+The requested optimization target is balanced sustained performance: remove OC
+headroom promptly, then let the governor adapt in the 80-88 C band. Do not
+relax the 88 C backstop until repeated bounded measurements establish which
+less restrictive cap actually arrests heating. No device was connected over
+ADB during this change, so sustainable frequency and prevention of another
+shutdown remain unverified.
+
+Host verification: preprocess the board with `cpp`, check it with `dtc`, then
+run `python3 porting/tests/test_cpu_thermal_maps.py <dtb>` and validate with
+`dt-validate -s Documentation/devicetree/bindings/thermal/thermal-zones.yaml
+-l thermal-zones <dtb>`. This checks all eight maps, OPP/state correspondence,
+sensor IDs, polling, trip links and unchanged critical temperatures; it is not
+a kernel build or runtime test.
+
+These host checks passed. The regression check also rejects the HEAD baseline
+and a DTB with CPU7 deliberately remapped to its own CPU node. DTC emitted the
+same 14 diagnostic lines as the HEAD baseline, with no new diagnostics; focused
+thermal-zone schema validation and strict checkpatch passed. AOSP's
+[`android16-6.12` thermal_of.c](https://android.googlesource.com/kernel/common/+/refs/heads/android16-6.12/drivers/thermal/thermal_of.c)
+was cross-checked online and has the same exact-node matching requirement.
+No kernel build, boot, load test or HAL change was performed.
+
+Before a requested boot/test, follow `porting/REFERENCE-boot-testing.md` and use
+the actual known-good base image. Verify the live DT, shared policy CPU mask,
+all eight zones' `cdev*` links and trip associations. Record temperatures,
+cooling states, policy limits and actual frequency under short bounded loads
+and through cooldown; stop before critical temperatures and on continued
+heating despite maximum cooling. Validate hot-sensor response and repeatable
+recovery before attempting Geekbench. Do not emulate critical temperatures or
+disable protection. Audit the ROM's thermal-engine/HAL naming and controls
+separately; a HAL must not be the only thermal safety path. See also
+[AOSP thermal mitigation](https://source.android.com/docs/core/power/thermal-mitigation)
+and [upstream CPUFreq cooling](https://github.com/torvalds/linux/blob/master/drivers/thermal/cpufreq_cooling.c).
 
 ### `sys.init.updatable_crashing=1` alone does not reboot
 
@@ -547,13 +597,11 @@ already started. Fixing vold will remove the message, not the reset.
   (`bdabad3e363d`, "net: Add Qualcomm IPC router", 2016, and the same in CAF
   4.19), so the fix belongs in the init/service definition, not the kernel.
   The kernel side is settled.
-- **No CPU thermal throttling on this port.** The CPU zones trip only at
-  80 C (passive, mapped to `THERMAL_NO_LIMIT`) and 100 C (critical), and only
-  `policy0` registers a cpufreq cooling device, so the big cluster has no
-  thermal path at all. A Geekbench run therefore reaches the 100 C critical
-  trip and the port's `kernel/reboot.c` forces a poweroff. Fixing this needs
-  real trip points and a cooling map that maps to the cpufreq cooling
-  devices - a kernel/DT change, not an init change.
+- **CPU sensor cooling-map gaps.** The single shared CPU policy is intentional,
+  and `THERMAL_NO_LIMIT` permits throttling. CPU1-7 maps instead reference
+  nodes without the shared cooling device. The Tissot OC include now fixes
+  those bindings and adds stronger staged mitigation; runtime verification
+  and balanced-performance calibration are still outstanding (see above).
 - **`vendor.bluetooth-1-0-qti` crash-loops** (init SIGKILLs it every ~10 s
   until it settles). It sets `sys.init.updatable_crashing=1` but does not
   reboot the phone - see above. It is a separate defect.
