@@ -34,7 +34,7 @@ bytes to the `userdebug_plat_sepolicy.cil` record and re-parses the cpio it
 built, so a fragment that did not land is a build failure, not a boot
 surprise.
 
-## port-genfs-kgsl.cil — KGSL attributes for the Power HAL
+## port-genfs-kgsl.cil — KGSL attributes and the Bluetooth qipcrtr allow
 
 **Applied by `build-kernel.sh` from this change on; not booted yet.**
 
@@ -52,6 +52,13 @@ never changes) and relabels the files only when the `genfscon` did not
 land. A boot with this fragment should log `kgsl sysfs labelled by
 policy`; a boot without it still logs the older `kgsl sysfs relabelled`
 count.
+
+The same file also carries the Bluetooth fix: the observed
+`hal_bluetooth_qti` denial on `qipcrtr_socket` `create`
+(`run333d-155756/live-kmsg.txt:468`). Only `create` is granted; if the
+HAL goes on to connect or send, the next boot's AVC will name the peer and
+the remaining rules. The change and its limits are in
+[findings/2026-10-21-bt-modem-bringup.md](../findings/2026-10-21-bt-modem-bringup.md).
 
 ## harness-genfs.cil — battery/charging power_supply labels
 
