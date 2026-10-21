@@ -212,6 +212,45 @@ set=1` can the ADSP/WCNSS rebind and the MSS `start` be tested.
   unverified and is not explained by the start, which never ran. The next
   work is the firmware-path credential/permission problem, then the start.
 
+## Run337 modem variants: corrected display diagnosis
+
+The first variant (`run337+modem`, #44, evidence tag run338) reached the
+path write and MSS start. Its ADSP unbind succeeded, but bind used the
+now-disappeared `device/driver` symlink and returned ENOENT. Removing the
+rebinds was necessary, but **did not fix the flashing display**. The earlier
+claim that the rebind caused the SurfaceFlinger restart loop was premature.
+
+The second variant (`run337+modem2`, #46, evidence tag run339) keeps ADSP and
+WCNSS running. Its modem start still fails: `run339-logdump.log:3335` shows
+MBA firmware EACCES; `:3350–3352` records kernel-domain `dac_read_search`
+and `dac_override` denials. The vfat firmware mount uses `uid=1000,gid=1000,
+fmask=0337,dmask=0227`: files are 0440 and directories 0550. A firmware-file
+SELinux read allow alone is insufficient. AOSP `private/kernel.te`
+explicitly forbids kernel DAC bypass capabilities and recommends fixing
+Unix permissions instead. A live read-only remount returned success but
+did **not** change the masks or modes; no permission fix is verified yet.
+
+The display failure has a separate, reproduced mechanism: replacing the
+entire custom firmware list with `/vendor/firmware_mnt/image` removed
+`/vendor/firmware`, where `a530_pm4.fw` actually resides. KGSL firmware
+requests failed, `/dev/kgsl-3d0` was missing, and SurfaceFlinger repeatedly
+aborted with `no suitable EGLConfig found`. Restoring the list live to
+`/lib/firmware,/vendor/firmware,/vendor/firmware_mnt/image` brought back the
+KGSL device and a responding SurfaceFlinger (PID 8935 remained stable across
+subsequent checks). See `snapshot60/run339-live-path-recovery.txt`.
+
+The build wrapper and initramfs worker now both preserve that full list.
+The updated init compiled statically and shell syntax/diff checks passed.
+No image containing this latest path correction has been built or flashed;
+the live correction will be lost on reboot. Modem remains offline, and
+`sys.boot_completed` was still unset during the last check.
+
+Online cross-checks: Linux firmware search-path documentation and AOSP
+`platform/system/sepolicy/private/kernel.te`. In this tree,
+`drivers/base/firmware_loader/main.c:976–981` overrides the requester's
+credentials with init-task credentials; a root `su` read therefore does not
+prove `request_firmware()` can read the file.
+
 ## References
 
 - Donor driver and DTS: `../../kernel_xiaomi_msm8953/drivers/char/msm_smd_pkt.c`,
