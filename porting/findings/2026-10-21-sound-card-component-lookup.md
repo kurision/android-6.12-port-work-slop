@@ -193,16 +193,29 @@ exposes `Circuit-Switch Voice`: `MSM_FRONTEND_DAI_CS_VOICE = 39` equals
 `MSM_BACKEND_DAI_QUATERNARY_MI2S_RX`; the tfa98xx block is inert on tissot
 because the DT has no `ext_pa_tfa98xx`, but the guard is needed anyway.
 
-## Fix: restrict the CDC lookup to backends
+## Fix: match the CDC links by codec array
 
-Both codec blocks now require `dai_link[i].no_pcm`. Front ends are
-`dynamic = 1` PCM links and every backend sets `no_pcm = 1`, so the numeric
-collision can no longer select a front end. This also removes the
-out-of-bounds `codecs[ANA_CDC]` write.
+The first attempt required `dai_link[i].no_pcm`. It fixed VoiceMMode1 but
+skipped the senary MI2S TX link (run `6.12.93-4k-gc5e5fa5e0f2b #47`):
+
+```
+ASoC: Neither Component name/of_node are set for SENARY_MI2S_TX
+snd_soc_register_card failed (-22)
+```
+
+That link is a hostless capture link and does not set `no_pcm`, so the
+back-end filter was the wrong discriminator. The three links that need the
+CDC codecs are exactly the ones whose `.codecs` is `dlc_rx1`, `dlc_tx1` or
+`dlc_vifeed`; match on the array identity instead. Numeric ids can still
+collide, and a front-end dummy codec is a one-element array.
+
+This keeps the real CDC codecs on the three MI2S links (including the
+no-`no_pcm` senary link), avoids the out-of-bounds `codecs[ANA_CDC]` write,
+and leaves every front end and codec-less backend on the dummy.
 
 checkpatch --strict and `git diff --check` are clean. Build and boot pending;
-the next boot must show no `Both Component name/of_node` error and the card
-must appear in `/proc/asound/cards`.
+the next boot must show no `Both Component`/`Neither Component` error and the
+card must appear in `/proc/asound/cards`.
 
 Not fixed here: the `INT_DIG_SND_CARD` variant's `msm_int_dig_be_dai` links
 carry no codecs, so the fallback gives them the shared name-bearing dummy and
