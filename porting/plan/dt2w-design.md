@@ -1,6 +1,7 @@
 # Double tap to wake (DT2W) for tissot on 6.12: design
 
-**Date:** 2026-10-21 · **Status:** design only, nothing implemented ·
+**Date:** 2026-10-21 · **Status:** implemented and verified on hardware
+(run334a, kernel `#38`) ·
 **ROM:** Evolution X · **Donor:** `../oc-test` (4.19)
 
 Read `AGENTS.md` and the kernel development skill (`drivers.md`,
@@ -33,9 +34,14 @@ From the phone's own files:
 | `hal_power_default` may open/read/write it | `vendor_sepolicy.cil:18173,18176` (also `hal_lineage_touch_default`, 18164/18167) |
 | The wake key: `KEY_WAKEUP` (143) | `Generic.kl` maps 143 to `WAKEUP`; PhoneWindowManager wakes on it |
 
-So the kernel must provide exactly that sysctl directory and file, a
-`0`/`1` integer, and wake the phone with `KEY_WAKEUP`. No ROM change is
-needed.
+The implementation supplies that sysctl directory and file, a `0`/`1`
+integer, and reports `KEY_WAKEUP`. A read-only `adb shell 'ps -AZ'` check
+on 2026-10-21 showed the running
+`android.hardware.power-service.lineage-libperfmgr` as UID root in
+`hal_power_default`; mode 0644 therefore permits its DAC write. Verified on
+run334a: the node is labelled `u:object_r:proc_touchpanel:s0`, and the
+toggle's writes (`0`, then `1`) reached the handler with no `libperfmgr`
+failure. No ROM change is needed.
 
 ## What the donor did, and why it is not the model
 
@@ -62,7 +68,8 @@ the 4.19 kernel either. There is no proven path on this phone to copy.
 
 The controller (FocalTech, driven here by upstream `edt-ft5x06` as
 `edt,edt-ft5406` at I2C `0x38`, `arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts:195`)
-can detect a double tap itself in a low-power mode and interrupt only then.
+may support firmware detection of a double tap in a low-power mode. This
+is not yet verified on this phone's installed firmware.
 The protocol, from LineageOS's `ft5435` driver for this panel family
 (`HQ_D2_XiaoMi_FT5435_*` firmware;
 [LineageOS android_kernel_xiaomi_msm8953 lineage-20, `drivers/input/touchscreen/ft5435/ft5435_ts.c`](https://github.com/LineageOS/android_kernel_xiaomi_msm8953/tree/lineage-20/drivers/input/touchscreen/ft5435)),
@@ -107,8 +114,9 @@ touchscreen@38 {
 };
 ```
 
-(A port-local property. If it is ever upstreamed it needs a binding
-change; for now document it in the driver.)
+A downstream property, documented in the local binding. It requires
+`reset-gpios` and must not be combined with `wakeup-source`. Probe also
+requires generic FocalTech protocol, FB_NOTIFY, PROC_SYSCTL and PM_SLEEP.
 
 ### Driver state (`struct edt_ft5x06_ts_data`)
 
@@ -116,17 +124,21 @@ change; for now document it in the driver.)
 * `bool gesture_active` - the controller is in gesture mode now.
 * `struct notifier_block fb_notif` and a `struct work_struct` for the
   transitions.
-* A module-level `static int edt_dt2w_enable` (0/1) backing the sysctl.
-  One touchscreen per phone; a single global is acceptable here, document
-  it.
+* Per-device `dt2w_enable` and sysctl table/header. The fixed ROM path
+  assumes one gesture-capable touchscreen per phone.
+* `state_lock` protects `display_off`, the screen-off-latched
+  `gesture_requested`, and `pm_blocked`. Hardware state is changed only
+  by the single worker or by PM/cleanup after draining that worker.
 
 ### The switch: the ROM's path
 
 `register_sysctl("dev/xiaomi_msm8953_touchscreen", table)` with one entry,
 `enable_dt2w`, mode `0644`, `proc_dointvec_minmax` clamped to 0..1,
 registered in probe only when `gesture_wakeup` is set, unregistered on
-remove. A change takes effect at the next screen-off (do not enter or
-leave gesture mode from the sysctl handler).
+teardown. A wrapper parses through a temporary integer and publishes with
+WRITE_ONCE; the notifier samples with READ_ONCE. A change takes effect at
+the next screen-off, not directly from the sysctl handler. ABI documentation:
+`Documentation/ABI/testing/procfs-xiaomi-msm8953-touchscreen`.
 
 ### The trigger: screen off and on
 
@@ -136,9 +148,12 @@ successful blank (`drivers/video/fbdev/core/fbmem.c:359-360`), Android's
 `drivers/video/fbdev/msm/mdss_dsi_status.c:187` already consumes it.
 Register an fb client (`fb_register_client()`, `CONFIG_FB_NOTIFY=y`):
 
-* `FB_BLANK_POWERDOWN` and `edt_dt2w_enable` and `gesture_wakeup`: queue
-  the "enter" work.
-* `FB_BLANK_UNBLANK` and `gesture_active`: queue the "leave" work.
+* Filter to the primary framebuffer (`info->node == 0`).
+* Both powerdown and unblank record the latest desired display state and
+  queue the same work item, unless system PM has blocked it.
+* Sample the switch only on an on-to-off transition, not duplicate blanks.
+* Never gate unblank on `gesture_active`: entry may still be queued.
+  A notification during work requeues that work to reconcile the new state.
 
 Do the I2C in a work item, not in the notifier: `fb_blank()` runs with
 `console_lock()` and the fb lock held, and "enter" can take up to
@@ -158,39 +173,50 @@ Today, unless `device_may_wakeup()`, suspend hibernates the controller
 and (in `EDT_PMODE_POWEROFF`) cuts its supplies; resume powers it back and
 re-toggles reset. With gesture mode active that would kill the gesture:
 
-* suspend: if `gesture_active`, return 0 before the hibernate / power-off
-  path (the IRQ is already a wake source from "enter").
-* resume: if `gesture_active`, return 0 (the fb unblank "leave" work does
-  the reset).
+* Suspend gates enqueueing under `state_lock`, drains the worker without
+  holding its locks, then reconciles intent before the I2C adapter suspends.
+  Preserve power if gesture mode is active; otherwise use ordinary power-off.
+* Resume preserves active gesture mode, or restores ordinary controller
+  power, before opening the gate and requeueing reconciliation. Background
+  resumes with the display still off therefore keep gesture mode active.
 
 Do **not** call `device_init_wakeup(dev, true)` unconditionally: with
 `device_may_wakeup()` true, the existing suspend path keeps the
-controller fully scanning and IRQ-wake for every suspend, so any touch in
-a pocket would wake the phone even with DT2W off. Enable the wake source
-in "enter" (`device_wakeup_enable()` plus `enable_irq_wake()`) and drop it
-in "leave".
+controller fully scanning. Wakeup capability is established in probe but
+initially disabled. Enable the wake source in "enter"
+(`device_wakeup_enable()` plus `enable_irq_wake()`), check both return
+values, and drop it in "leave". For gesture-capable panels, the gesture
+state rather than externally writable `power/wakeup` selects the PM path.
 
 ### Locking and ordering
 
-* Serialise enter/leave/ISR with the driver's existing `tsdata->mutex`
-  or a dedicated mutex; the ISR is threaded, so it may sleep.
-* "leave" must not run concurrently with "enter": use one ordered
-  workqueue or cancel the other work first.
-* Release held keys (`key_state = 0`, as suspend already does) and all
-  touch slots before entering gesture mode.
+* Disable/drain the IRQ before taking `tsdata->mutex` for transitions.
+  The ISR does not acquire that mutex. Existing factory-mode IRQ draining
+  therefore cannot deadlock against a mutex-taking ISR.
+* One work item serializes enter/leave; PM blocks enqueueing and drains it.
+* Emit key-up events and release every touch slot, followed by input sync,
+  before entering gesture mode. Merely clearing key_state is not a release.
+* On failed entry, reset and restore configured register parameters before
+  falling back to ordinary suspend. Leave also resets and restores them.
+* Devres teardown unregisters the sysctl/notifier, drains work, disables the
+  IRQ, and unwinds wake state before devres releases the IRQ and supplies.
 
-## What must be verified before trusting it
+## What was verified (and what was not)
 
-1. **That tissot's controller honours `0xD0`.** LineageOS's driver is for
-   the FT5435 panels on this family; the port's `edt-ft5x06` reports the
-   model it identified in its probe log. Read `0xD0` back after "enter"
-   (step 3 does) and log the result. If it never reads `1`, the firmware
-   lacks gesture support and this design does not apply.
-2. That `FB_EVENT_BLANK` actually fires on screen off/on with the Evo X
-   display HAL (log it in the notifier on the first build).
-3. That the controller reports normal touches again after "leave" (if
-   not, try the `0x8C = 0x01` write LineageOS does).
-4. Power: measure suspend current with DT2W on and off.
+1. **Tissot's controller honours `0xD0`.** Verified on run334a: entry
+   read `0xD0 = 1` back from the firmware, and a real double tap produced
+   gesture ID `0x24` and woke the display in two consecutive cycles.
+2. **`FB_EVENT_BLANK` fires with the Evo X display HAL.** Verified on the
+   previous kernel with kprobes: `composer@2.1-se` calls `fb_blank()` ->
+   `mdss_fb_blank()` -> `fb_notifier_call_chain()` on both screen off and
+   on.
+3. **Normal touches after "leave".** The user used the screen normally
+   after the wake cycles, but no log evidence was recorded; the fallback
+   remains the LineageOS `0x8C = 0x01` write if input is ever dead after
+   the screen comes on.
+4. **Power:** suspend current with DT2W on and off was not measured.
+5. **Deep-suspend wake:** not proven. The captured wake cycles were
+   display off/on close together; suspend residency was not traced.
 
 ## Test plan
 
@@ -201,11 +227,51 @@ in "leave".
    `ls -Z` it (expect `proc_touchpanel`). The libperfmgr
    `enable_dt2w` failure line must be gone from logcat.
 3. Toggle Settings > Display > Double tap to wake; the value must follow.
-4. Screen off, wait for suspend (`dumpsys power`, or watch
-   `/sys/power/wakeup_count`), double tap: the screen must wake. A single
+4. Screen off, confirm system suspend with kernel PM trace/log evidence
+   (wakeup_count and dumpsys power alone do not prove residency), then
+   double tap: the screen must wake. A single
    tap or a swipe must not.
 5. DT2W off: screen off, tap: must not wake.
 6. Screen on: touch and the three capacitive keys must work normally.
+7. Repeat rapid off/on transitions, including on while entry is pending,
+   background resumes with the screen off, and repeated suspend cycles.
+8. Exercise I2C entry errors, IRQ-wake enable failure, and driver unbind/bind
+   when safe; verify cleanup and normal input recovery.
+
+Before building, run `python3 porting/tests/test_dt2w_contracts.py`, scoped
+checkpatch and the kernel API scanner. The Python checks guard source-level
+ordering/ABI only; they do not execute the driver or prove concurrency.
+
+### Implementation checks (2026-10-21)
+
+* Six source-contract tests passed in `porting/tests/test_dt2w_contracts.py`.
+* Strict checkpatch on the driver diff: no errors, warnings or checks.
+* Kernel API pattern scanner: no advisory findings in the driver.
+* `dt-doc-validate` on the edited binding passed. This is schema validation,
+  not `dt_binding_check` example compilation or board `dtbs_check`.
+* Scoped `git diff --check` passed.
+* Read-only `/proc/403/status` confirmed the power HAL's effective UID 0.
+* `W=1` object build of `edt-ft5x06.o` is warning-free. Sparse is not
+  installed in this environment, so `C=1` was not run.
+
+### Hardware verification (run334a, 2026-10-21)
+
+Flashed `boot-run334a.img` (kernel `#38`, sha256
+`b910920e2f386223f826df8e3805451a6ae7f500d74910dfa1bd413edd0144ea`) to
+`boot_b`. Full evidence in
+`porting/findings/2026-10-21-dt2w-hardware.md`.
+
+* Trigger path proven on the previous kernel with kprobes: the composer
+  calls `fb_blank()` -> `mdss_fb_blank()` -> `fb_notifier_call_chain()`.
+* Node: `-rw-r--r-- 1 root root u:object_r:proc_touchpanel:s0 enable_dt2w`,
+  default `0`, live DT node has `edt,gesture-wakeup`.
+* Screen off: `primary display off`, then `gesture mode enabled, D0=1`.
+* Double tap: `double tap gesture`, then `primary display on`; two
+  consecutive cycles.
+* ROM toggle: `enable_dt2w=0` then `enable_dt2w=1` from the HAL, no
+  `libperfmgr` failure, so DAC and SELinux both admit the write.
+* Not proven: deep-suspend wake, suspend current, and touch recovery after
+  leave with log evidence. See the findings file.
 
 ## Not in scope
 
@@ -213,4 +279,9 @@ in "leave".
   work: Evo X labels `/devices/platform/soc/soc:qcom,cpu-cpu-ddr-bw/devfreq`,
   but this kernel's SoC node is `soc@0`, so the device would appear under
   `/devices/platform/soc@0/` and miss that label.
-* Other gestures (the masks enable them; only `0x24` is acted on).
+* Other gestures (the masks enable them; only `0x24` reports a key).
+  Ignoring their IDs does not prevent their IRQs from waking the system.
+
+Protocol cross-check: the LineageOS ft5435 source linked above. PM semantics:
+[upstream suspend/interrupt documentation](https://docs.kernel.org/power/suspend-and-interrupts.html)
+and the target tree's `drivers/base/power/wakeup.c` / `kernel/irq/manage.c`.
