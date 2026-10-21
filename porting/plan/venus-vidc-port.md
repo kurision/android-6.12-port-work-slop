@@ -82,40 +82,67 @@ to add the CAF ABI.
 
 ## 4. Sequencing
 
-### Step 1 — Route A: upstream Venus for msm8953 (target: `/dev/video0` decodes H.264)
+### Step 1 — Route A: upstream Venus for msm8953 — **DONE (commit c5e5fa5e0)**
 
-1. `drivers/media/platform/qcom/venus/core.c`: add `msm8953_res`
-   (freq table, reg presets, `clks = {"core","iface","bus"}`,
-   `vcodec0_clks = {"vcodec0_core"}`, `hfi_version` — the msm8953 Venus
-   is the 1.x/2.x class, so `HFI_VERSION_1XX` like msm8916/msm8939, or
-   3xx as the donor's DT claims; **this must be settled on the device**,
-   see step 1.4) and the `qcom,msm8953-venus` compatible.
-2. DT (new `msm8953-venus.dtsi`, included from the tissot DT): the node
-   from the pmos reference (`porting/artifacts/tissot-live.dts:2284-2340`),
-   re-expressed in the port's model: `power-domains = <&gcc VENUS_GDSC>`,
-   `clocks = <&gcc GCC_VENUS0_VCODEC0_CLK>, <&gcc GCC_VENUS0_AHB_CLK>,
-   <&gcc GCC_VENUS0_AXI_CLK>`, `iommus = <&apps_iommu 0x16>`,
-   `memory-region = <&venus_mem>`, the `video-decoder`/`video-encoder`
-   children, and the `operating-points-v2` table (114/228/310/360/400/465
-   MHz, matching `vcodec0_clk_src`'s freq table).
-3. Interconnect: the port's `drivers/interconnect/qcom/msm8953.c` needs the
-   Venus master/slave pairs ("video-mem", "cpu-cfg") that the pmos DT
-   references (`interconnects = <0x3e 0x02 0x01 ... 0x3f 0x20 0x01>`).
-4. Firmware: **not in the ROM** — `/vendor/firmware` has the GPU blobs,
-   `cpp_firmware_v1_*.fw` and `wlan/`, but no `venus.*`. The stock 4.19
-   DT's `pil-venus` node (`qcom,firmware-name = "venus"`) and the CAF
-   `subsystem_get_with_fwname("venus", ...)` path decide the file name;
-   the `cpp_firmware_v1_*.fw` set in the ROM is the prime candidate
-   (8 versions) and must be confirmed against the stock DT/firmware.
-5. Ramdisk: add the firmware the same way the GPU firmware was added
-   (`porting/tools/build-kernel.sh --firmware-dir`, proven for the GPU).
-6. Config: `CONFIG_VIDEO_QCOM_VENUS=y` (+ `CONFIG_QCOM_MDT_LOADER`).
+The plumbing is proven on the device:
 
-**Verification for step 1** (per the kernel skill's matrix): the device
-must show `/dev/video0`, `v4l2-ctl --list-formats-out` must enumerate
-H.264, a `v4l2-ctl --stream-mmap` decode must produce a correct frame,
-`dmesg` must show the Venus IRQ firing and no SMMU fault, and the GPU/
-display paths must be unchanged (`dmesg` diff against the current run).
+* `CONFIG_VIDEO_QCOM_VENUS=y`, the `qcom,msm8953-venus` node in
+  `msm8953-xiaomi-tissot-venus.dtsi`, and `msm8953_res` in
+  `drivers/media/platform/qcom/venus/core.c`;
+* the ROM's firmware (`venus.mdt` + `venus.b00..b04`, a split ELF on the
+  firmware_mnt partition) is pulled by
+  `porting/tools/pull-venus-firmware.sh` and staged into the ramdisk
+  (`--firmware-dir` now takes more than one tree);
+* on the phone: `/dev/video0` = `qcom-venus-decoder`, `/dev/video1` =
+  `qcom-venus-encoder`, the firmware loaded, the HFI handshake
+  completed (`/sys/kernel/debug/venus/fw_level` = 0x18, read from the
+  firmware's response), and no errors in `dmesg`.
+
+So the clocks, the two power domains, the SMMU context bank, the
+firmware load and the HFI version (3.x, as the CAF donor's DT says) all
+work on this port. The HFI version was the one genuinely uncertain
+item, and the firmware's own "Venus332" string agrees with the donor.
+
+What this does **not** do: the upstream driver speaks the standard V4L2
+stateless API and the ROM has no plugin for it, so the ROM's apps still
+use the software decoder. The `msm8953-venus` node is also not what the
+stock 4.19 kernel used (see `porting/artifacts/tissot-live.dts:2284`,
+which carries a postmarketOS-local binding), so the DT shape here is
+this port's, not the ROM's.
+
+### What step 1 changed, and what it did not
+
+1. `drivers/media/platform/qcom/venus/core.c`: `msm8953_res` - the
+   register presets of the Venus 1.8 register map (the same three the
+   msm8916/msm8939 entries use) with the **HFI 3.x** protocol the CAF
+   donor's DT asks for (`qcom,hfi-version = "3xx"`) and the device's
+   firmware agrees with (it identifies itself as "Venus332"), the GCC
+   `vcodec0_clk_src` rate list, and the donor's encoder/decoder
+   bandwidth tables.
+2. DT (`msm8953-xiaomi-tissot-venus.dtsi`): the node at 0x1d00000 with
+   the core/iface/bus clocks, the SMMU stream 0x16, the Venus memory
+   region and the VENUS_GDSC domain, the decoder and encoder children
+   on VENUS_CORE0_GDSC with the vcodec0_core clock, and the
+   `operating-points-v2` table the driver sets the core rate through.
+3. No "interconnects" property: this tree has no ICC providers for the
+   Venus paths, and `of_icc_get()` returns NULL for a missing property,
+   which the driver reads as "no bandwidth constraints". The port's
+   `drivers/interconnect/qcom/msm8953.c` does carry `mas_venus` and
+   `slv_venus_cfg`, so the paths can be added later if the bandwidth
+   governor turns out to matter.
+4. Firmware: it **is** on the device, but not in /vendor - the ROM
+   keeps it on the firmware_mnt partition as `venus.mdt` plus
+   `venus.b00..b04` (a split ELF, which is why the MDT loader's ELF
+   path is the one that reads it). The driver probes long before
+   /vendor is mounted, so the files are staged into the ramdisk.
+5. Config: `CONFIG_VIDEO_QCOM_VENUS=y` (+ `CONFIG_QCOM_MDT_LOADER`).
+
+**Verification done**: the device shows `/dev/video0` and `/dev/video1`
+(the decoder and the encoder), the firmware loaded, the HFI handshake
+completed (`/sys/kernel/debug/venus/fw_level` = 0x18) and `dmesg` has no
+Venus errors. Not done yet: an actual frame through the device - there
+is no V4L2 client on the ROM (no `v4l2-ctl`, and the ROM's media stack
+has no C2 V4L2 plugin), so the decode path itself is untested.
 
 ### Step 2 — Route B: the CAF vidc_3x port
 

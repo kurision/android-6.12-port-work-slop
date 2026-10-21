@@ -26,8 +26,8 @@ cannot.
 | 9 | **MDSS writeback / virtual display** | `CONFIG_FB_MSM_MDSS_WRITEBACK=y` (donor), fb1 "writeback panel" for virtual displays | **not set** (the code `mdss_wb.c` is in the tree but unbuilt) | no fb1 virtual display → no screen recording / casting path that needs WFD | one config line + the DT for fb1; the plan calls it phase 4 |
 | 10 | **DSI command status** | `CONFIG_FB_MSM_MDSS_DSI_CTRL_STATUS=y` | **not set** | no panel command-status readback (diagnostics only) | config only |
 | 11 | **MDSS xlog register dump** | `CONFIG_FB_MSM_MDSS_XLOG_DEBUG=y` + the DT's `qcom,regs-dump-mdp` ranges | config **not set** and the DT ranges were **deliberately dropped** | cannot read SSPP/DSPP/DSI registers from userspace | deliberate: the plan says "XLOG off at first" because MDP register access hangs the bus on this port when the MDSS domain is down (`17fa25c0c`, `925a863db`). The port's own `DIAG123` print covers the SSPP/CTL words it needs; extend that instead of re-registering the donor's dump list |
-| 12 | **WLAN** | `CONFIG_WCNSS_CORE`, `CONFIG_WCNSS_CORE_PRONTO` | replaced by upstream `CONFIG_WCN36XX=y` | none — Wi-Fi works | done, different implementation |
-| 13 | **Bluetooth power / BTFM** | `CONFIG_MSM_BT_POWER`, `CONFIG_BTFM_SLIM_WCN3990` | `drivers/bluetooth/btqcomsmd.c` (upstream) | none | done, different implementation |
+| 12 | **WLAN** | `CONFIG_WCNSS_CORE`, `CONFIG_WCNSS_CORE_PRONTO` | replaced by upstream `CONFIG_WCN36XX=y` | none — Wi-Fi works | done, different implementation (fixed 2026-10-21) |
+| 13 | **Bluetooth power / BTFM** | `CONFIG_MSM_BT_POWER`, `CONFIG_BTFM_SLIM_WCN3990` | `drivers/bluetooth/btqcomsmd.c` (upstream) | none | done, different implementation (fixed 2026-10-21) |
 | 14 | **Touch** | `CONFIG_TOUCHSCREEN_*` (vendor) | upstream Focaltech `edt_ft5x06` + the port's own DT node | none — touch works | done, different implementation |
 | 15 | **KGSL / GPU** | CAF `kgsl` | port's CAF KGSL port | none — 3D/EGL work | done |
 | 16 | **Display** | CAF MDSS fbdev | port's CAF MDSS fbdev port | none — panel, HWC, rotator work | done |
