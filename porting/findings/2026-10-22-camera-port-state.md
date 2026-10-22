@@ -198,10 +198,12 @@ What the translation needs, checked against this tree:
   `CPP_CLK_SRC`, `CAMSS_TOP_AHB_CLK_SRC`
   (`include/dt-bindings/clock/qcom,gcc-msm8953.h`).
 * **the rails**: the camera's four rails are the pm8953's `l2` (the
-  digital), `l6` (the io), `l17` (the af) and `l22` (the analog), and
-  they have to carry the names the camera asks for: "cam_vdig",
-  "cam_vio", "cam_vaf" and "cam_vana" (the camera's power sequence
-  names them in the device tree's "qcom,cam-vreg-name").
+  digital), `l6` (the io), `l17` (the af) and `l22` (the analog), the
+  ones the port's board file already has.  The camera asks for them by
+  the name of the supply property of its own node ("cam_vana-supply"
+  and the "qcom,cam-vreg-name" property that goes with it), which is
+  how `regulator_get()` finds them: the name is the property's, not the
+  regulator's, so the pm8953's rails keep their own names.
 * **the power domains of the VFE**: the camera asks for the VFE's
   supply as a *regulator* ("vfe0-vdd-supply", "vfe1-vdd-supply" with
   the names "vfe0-vdd" and "vfe1-vdd"), but this tree has the two
@@ -215,6 +217,10 @@ What the translation needs, checked against this tree:
   ("cam_sensor_mclk0_default" and the rest); this tree's pinctrl
   driver has the same pins under its own names, and the port's board
   file has to give them the camera's names.
-* **the SMMU**: the camera's context banks are on the apps SMMU; the
-  port's stream for the camera is the one the upstream CAMSS driver
-  uses.
+* **the SMMU**: the port's `apps_iommu` already has the VFE's context
+  bank (`iommu-ctx@14000`, the stream `0x14`); the camera's other two
+  banks - the JPEG's (`0x1800`) and the CPP's (`0x1c00`) - have to be
+  added, and the camera's SMMU node describes them the way the donor
+  does ("qcom,msm-cam-smmu" with its "qcom,msm-cam-smmu-cb" children,
+  the label of the bank and its dma address pool).  The donor's stream
+  numbers are the context banks' offsets, so they carry over.
