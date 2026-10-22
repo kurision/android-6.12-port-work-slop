@@ -233,18 +233,50 @@ its DTB at 0x13400000, and a kernel that reaches it overwrites its own
 device tree and dies before it has a console: no log, no reset -
 porting/findings/2026-10-21-kernel-overruns-the-dtb.md).
 
-Without the camera the port's image had 655 360 bytes of headroom.  The
-camera needs 917 504 bytes more, so it did not fit.  The ISP of the
-generations this board does not have (the 4.4 and the 4.6) is left out
-of the build - this board's VFE is the 4.0 (the camera nodes say
-"qcom,vfe40"), and the 4.0 uses the 4.7's interrupt handling, so that
-one stays.  The face detection stays: the ROM's daemon has a device for
-it.
+The budget is 54 001 664 bytes.  The measured images, all built from
+this tree in the `out/` of this worktree:
 
-The result is 128 072 bytes of headroom, which is little.  Anything
-else that grows the kernel has to pay for itself, and the face
-detection is the first thing to look at if the image has to make room
-again.
+| image | KASAN | `image_size` | headroom |
+| --- | --- | --- | --- |
+| the donor, 4.19 production (`../oc-test/out-oc`) | no | 45 039 616 | +8 962 048 |
+| the donor, 4.19 with LTO (`../oc-test/out-lto`) | no | 49 635 328 | +4 366 336 |
+| the port, no camera (`run358`) | yes | 53 346 304 | +655 360 |
+| the port, the camera's first milestone | yes | 53 477 376 | +524 288 |
+| the port, the full camera | yes | 54 263 808 | -262 144 |
+| the port, the full camera, no KASAN | no | 45 088 768 | +8 912 896 |
+
+Two findings from those numbers.
+
+The first milestone - the CCI and the sensors, the ROM's daemon finding
+a sensor over I2C - costs **143 072 bytes** and fits with KASAN on.  The
+rest of the camera's 917 504 bytes is the VFE, the ISPIF, the CPP and
+the face detection, none of which the device tree describes yet.
+
+KASAN costs **9 175 040 bytes** (8.75 MB, 16.9% of the built image).  It
+is the whole of the difference between the donor's 4.19 kernel and this
+port: without it the port's full-camera image is 45 088 768 bytes,
+49 152 bytes away from the donor's 45 039 616 - the 4.19-versus-6.12
+gap is not what does not fit, the port's debugging configuration is.
+`SLUB_DEBUG` and `DEBUG_INFO_BTF` were turned off in the same
+measurement and are not what accounts for it (`DEBUG_INFO_BTF` does not
+reach the `Image` at all).
+
+What follows from that:
+
+- The first milestone is built with KASAN on.  Nothing is traded for it.
+- The full camera does not fit with KASAN on.  The parts without device
+  tree nodes (the VFE, the ISPIF, the CPP, the face detection, which
+  runs on the CPP's hardware) are left out of the link by their own
+  symbols, `MSM_CAMERA_VFE` and `MSM_CAMERA_CPP`; their sources are in
+  the tree.  An earlier idea - that the camera's ~900 KB was mostly
+  KASAN's redzones - was wrong and is not the reason for the split.
+- If the full camera has to share an image with KASAN, the room has to
+  come from about 300 KB of trims (the face detection is 22 193 bytes of
+  text; the ISP generations are already down to the 4.0 and the 4.7).
+  The alternative is a non-KASAN configuration for the camera's boot
+  cycles, which costs the diagnostics that found the audio port's
+  `msm_audio_ion` freeze.  That trade is the maintainer's to make; the
+  port's `porting/tools/kernel.config` is unchanged.
 
 ## The build script's size check reads the image on disk
 
