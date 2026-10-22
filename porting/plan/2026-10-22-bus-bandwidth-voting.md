@@ -155,3 +155,32 @@ Same conditions each time (screen on, untouched 2 min; then screen off
 
 This is what decides whether missing DDR votes contributed to the CPU
 sitting at 2784000 kHz and to the video lag; do not claim it before.
+
+## 7. Status and donor deviations (2026-10-22, after the C1-C5 review)
+
+The donor (`../oc-test`) is the reference, not the specification: where
+it lost a CAF feature or carries a bug, this port records it and adds
+the feature on 6.12.
+
+| Donor behaviour | Evidence | This port |
+|---|---|---|
+| CPU DDR vote held at the top OPP whenever the CPU is active (`cpu-cpu-ddr-bw`, governor `performance`) | `676e1fda9e3a` (2023 third-party change) replaced CAF's `qcom,cpubw` + `governor = "cpufreq"` + `cpu-to-dev-map`; the kept memlat/bwmon monitors point at `performance` nodes and never drive them | CAF's mapping restored as `opp-peak-kBps` on the CPU OPPs + CPU `interconnects` (`6f844d075`); devbw node on `powersave` as the power HAL's boost floor, peak-only vote (`b2134864e`) |
+| ROM `init.qcom.post_boot.sh` (msm8953 branch) configures `soc:qcom,cpubw` + `bw_hwmon` | the donor renamed the node, so the script's globs match nothing | not reproduced either; would need the bwmon2 port (below) and a node of that name |
+| OPP comments say 769 ... 7104 MB/s | the donor's own `MHZ_TO_MBPS` gives 762 ... 7095 (device `available_frequencies`) | comments corrected in `b2134864e` |
+| power HAL boost 9887 rejected (`value > max_freq`) | donor baseline logcat: `Failed to write ... with value: 9887, fd: 13` | 6.12 clamps it to the top OPP |
+| MDP bus voting compiled out unless `CONFIG_QCOM_BUS_SCALING` | donor sets it in `msm8953-perf_defconfig:579`; no Kconfig defines it here | guards removed (`410c96756`); verified on #62, the MDP votes 1.1-1.5 GB/s with the screen on |
+| vidc_3x `alloc_dma_mem()` returns 0 after releasing the buffer when the iova is truncated, and leaks the mapping | `msm_smem.c:471-474` in the donor | fixed in `62176b8ec` |
+| Venus crash: `subsystem_crashed()` only sets `do_ramdump_on_put` | `subsystem_restart.c:1287` | recovery is the driver's own release + reload, unchanged; the crash ramdump is not provided |
+
+Still missing, candidates to add:
+
+* **bwmon2** (`qcom,bimc-bwmon2` at 0x408000, IRQ 183; donor
+  `bimc-bwmon.c` + `governor_bw_hwmon.c`): measured CPU traffic on top
+  of the frequency mapping, which CAF used via post_boot. Upstream
+  `icc-bwmon.c` supports v4/v5 only. Decide on the section 6
+  measurements with the mapping in place.
+* **Venus crash ramdump.**
+
+Measure section 6 again on the build that carries `6f844d075` and
+`b2134864e`: the CPU's DDR request should follow `scaling_cur_freq`
+instead of sitting at 7439646 kB/s.
