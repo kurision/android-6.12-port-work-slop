@@ -245,3 +245,28 @@ The result is 128 072 bytes of headroom, which is little.  Anything
 else that grows the kernel has to pay for itself, and the face
 detection is the first thing to look at if the image has to make room
 again.
+
+## The build script's size check reads the image on disk
+
+The script measures the `image_size` of `out/arch/arm64/boot/Image` and
+refuses a kernel that reaches the bootloader's device tree.  That
+measurement is of the file, not of the build that just ran: if the tree
+has not changed, `make Image.gz` does not relink, and the check reads
+the image of the previous build.
+
+That happened here: the image with the ISP of the other chips trimmed
+out was built by hand, the script ran afterwards without relinking
+anything, and the check failed on the *old* image - 393 216 bytes
+bigger than the one in the tree.  The check was right about the number
+it read and wrong about the tree.
+
+The lesson for the next build: after a configuration change, the image
+has to be relinked before the size is read, and the number to believe is
+the one the script prints in the same run that produced the image.
+
+## The run labels of this worktree
+
+The builds of this worktree are labelled `run<number>camera`, so they
+do not collide with the runs of the main tree (the artefacts live in
+this worktree's own `porting/artifacts/snapshot60/`, but the labels are
+what the two trees have in common).
