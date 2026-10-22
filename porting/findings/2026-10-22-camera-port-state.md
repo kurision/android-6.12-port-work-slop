@@ -45,11 +45,27 @@ them, so the three handlers come back to `struct v4l2_ioctl_ops`, the
 core takes the driver's handler when it has one (as 4.19 did) and
 falls back to the selection interface otherwise.
 
+## The build test of 2026-10-22
+
+`bash porting/tools/build-kernel.sh run358` in this worktree: the
+kernel, the device tree, the ramdisk's init and the image are built and
+packaged, and the script verifies the embedded configuration. The
+camera is **off** in the port's configuration, so this run proves that
+the changes to the shared tree (the crop ioctls of the v4l2 core, the
+CAF pixel formats of `videodev2.h`, the new user space headers) do not
+break the port's build. The device tree check reports the usual
+"failed to match any schema" for the port's own vendor nodes, which
+are not new.
+
+The same build with the camera enabled stops in
+`drivers/media/platform/msm/camera/`: the camera's own objects do not
+compile yet, and the classes that are left are below.
+
 ## The tree does not build yet
 
 The last compile of `drivers/media/platform/msm/camera/` (the build log
-is `/tmp/opencode/cam18.log` of the session, not in the repository)
-ends with 46 diagnostics in these classes:
+is `/tmp/opencode/cam25.log` of the session, not in the repository)
+ends with 27 diagnostics in these classes:
 
 1. **the legacy `of_gpio` API** (`of_gpio_count()`, `of_get_gpio()` in
    `sensor/cci/msm_cci.c` and `sensor/eeprom/msm_eeprom.c`): upstream
@@ -95,9 +111,17 @@ The classes that are still open, with the files that carry them:
 * **`sensor/eeprom/msm_eeprom.c:1263`**: an array of 16 bytes is
   assigned to an `int`; the donor's code relied on the implicit
   truncation.
-* **`sensor/flash/msm_flash.c`**: the torch led index
-  (`msm_torch_led_num`) is gone with the per-board block that declared
-  it.
+* **`sensor/flash/msm_flash.c`** and **`sensor/flash/msm_frontflash.c`**:
+  the torch led index and the brightness variable of the other phones'
+  blocks are gone with the blocks themselves, and the two functions
+  that read the gpio table of the flash need the device of their own
+  control structure.
+* **`sensor/eeprom/msm_eeprom.c`**: the id table the probe takes the
+  board information from is declared later in the file, and the
+  assignment of the sixteen bytes of the module id to an `int` relies
+  on the implicit truncation the compiler rejects now.
+* **`sensor/flash/msm_led_i2c_trigger.c`**: the same device that the
+  gpio helper needs.
 
 The classes above are the next commits (C3 to C9 of the plan). The
 device tree (C10) and the configuration switch-over (C11) come after
