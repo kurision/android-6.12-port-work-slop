@@ -62,7 +62,13 @@ Two shims came with it:
   not in 6.12. The firmware load is done the way this port's own upstream
   Venus driver does it (`request_firmware()` + `qcom_mdt_load()` into the
   reserved memory the device tree names + `qcom_scm_pas_auth_and_reset()`),
-  and the subsystem restart notification is a no-op.
+  and the subsystem restart notification is a no-op. That does not
+  cost crash recovery: on SYS_ERROR the driver releases the core
+  (`__unload_fw()` -> `msm_subsystem_put()` -> `qcom_scm_pas_shutdown()`)
+  and the next session reloads the firmware (`__load_fw()` ->
+  `msm_subsystem_get_with_fwname()`). The donor's `subsystem_crashed()`
+  only set `do_ramdump_on_put` (`../oc-test/drivers/soc/qcom/subsystem_restart.c:1287`),
+  so only the crash ramdump is lost. Not exercised on hardware.
 * `include/soc/qcom/boot_stats.h`: the CAF boot statistics driver is not
   in this tree, and the video codec only calls `boot_stats_init()` once.
 
