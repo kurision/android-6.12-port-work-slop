@@ -61,11 +61,36 @@ The same build with the camera enabled stops in
 `drivers/media/platform/msm/camera/`: the camera's own objects do not
 compile yet, and the classes that are left are below.
 
+## The camera compiles
+
+The camera's own objects compile without an error or a warning, and the
+kernel builds with `CONFIG_MSMB_CAMERA_LEGACY=y` turned on
+(`/tmp/opencode/build-cam2.log` of the session): the driver, the
+governors, the JPEG encoder, the face detection and the sensor
+framework are all in the image.
+
+The last round of conversions:
+
+* the legacy `of_gpio` helpers are gone in 6.12, so the camera reads
+  the numbers of the gpios a node names through the descriptor API
+  (`msm_camera_gpio_count()` and `msm_camera_gpio_number()` in
+  `msm_sd.h`);
+* the variable length arrays of the I2C and the SPI helpers are not
+  allowed in the kernel, so the buffers are of a fixed size or
+  allocated;
+* this tree's I2C driver has the old probe signature, so the matched
+  device id is asked for with `i2c_get_match_data()`;
+* the RPM regulator of the sensor's miscellaneous rail is the standard
+  regulator API, and the AHB vote takes the nominal vote when the
+  operating point carries a voltage instead of a corner, because this
+  tree has no regulator corners;
+* `of_pwm_get()` is `devm_pwm_get()`, the SPI chip select is an array,
+  and the per-board blocks of the flash that this phone does not take
+  are gone.
+
 ## The tree does not build yet
 
-The last compile of `drivers/media/platform/msm/camera/` (the build log
-is `/tmp/opencode/cam25.log` of the session, not in the repository)
-ends with 27 diagnostics in these classes:
+The state before that last round, for the record:
 
 1. **the legacy `of_gpio` API** (`of_gpio_count()`, `of_get_gpio()` in
    `sensor/cci/msm_cci.c` and `sensor/eeprom/msm_eeprom.c`): upstream
@@ -148,3 +173,48 @@ them, and the boot test (B5 of the video plan's numbering) after that.
   events are still usable.
 * The camera's crop API is back, but whether the ROM's daemon uses it
   is unverified.
+
+## The device tree is the next task
+
+The donor's two files are `../oc-test/arch/arm64/boot/dts/vendor/qcom/
+msm8953-camera.dtsi` (the SoC part: the CAMSS node, the three
+CSIPHYs, the three CSIDs, the ISPIF, the two VFEs, the JPEG encoder,
+the CPP, the SMMU and the CCI) and `../oc-test/arch/arm64/boot/dts/
+vendor/qcom/mi8953/tissot/camera.dtsi` (the board part: the six
+EEPROMs of the module variants, the two actuators, the LED flash and
+the three `qcom,camera@N` nodes).
+
+What the translation needs, checked against this tree:
+
+* **the clocks**: the port's GCC has every clock of the camera with
+  its own names - `GCC_CAMSS_AHB_CLK`, `GCC_CAMSS_ISPIF_AHB_CLK`,
+  `GCC_CAMSS_CSI0PHYTIMER_CLK`, `GCC_CAMSS_CSI0PHY_CLK`,
+  `GCC_CAMSS_CSI0_CLK`, `GCC_CAMSS_CSI0PIX_CLK`,
+  `GCC_CAMSS_CSI0RDI_CLK`, `GCC_CAMSS_CSI0_AHB_CLK`,
+  `GCC_CAMSS_CSI_VFE0_CLK`, `GCC_CAMSS_VFE0_CLK`,
+  `GCC_CAMSS_VFE0_AHB_CLK`, `GCC_CAMSS_VFE0_AXI_CLK`, `GCC_CPP_CLK`,
+  `GCC_CAMSS_JPEG0_CLK`, `GCC_CAMSS_MCLK0_CLK` and the sources
+  `CSI0PHYTIMER_CLK_SRC`, `CSI0_CLK_SRC`, `VFE0_CLK_SRC`,
+  `CPP_CLK_SRC`, `CAMSS_TOP_AHB_CLK_SRC`
+  (`include/dt-bindings/clock/qcom,gcc-msm8953.h`).
+* **the rails**: the camera's four rails are the pm8953's `l2` (the
+  digital), `l6` (the io), `l17` (the af) and `l22` (the analog), and
+  they have to carry the names the camera asks for: "cam_vdig",
+  "cam_vio", "cam_vaf" and "cam_vana" (the camera's power sequence
+  names them in the device tree's "qcom,cam-vreg-name").
+* **the power domains of the VFE**: the camera asks for the VFE's
+  supply as a *regulator* ("vfe0-vdd-supply", "vfe1-vdd-supply" with
+  the names "vfe0-vdd" and "vfe1-vdd"), but this tree has the two
+  VFE GDSCs as power domains
+  (`include/dt-bindings/clock/qcom,gcc-msm8953.h`: `VFE0_GDSC`,
+  `VFE1_GDSC`).  The upstream `qcom-genpd-regulator` driver, which
+  describes a power domain as a regulator, is **not** in this tree and
+  has to be added.
+* **the pinctrl**: the donor's camera nodes ask for the mclk pins and
+  the sensors' reset and standby pins by name
+  ("cam_sensor_mclk0_default" and the rest); this tree's pinctrl
+  driver has the same pins under its own names, and the port's board
+  file has to give them the camera's names.
+* **the SMMU**: the camera's context banks are on the apps SMMU; the
+  port's stream for the camera is the one the upstream CAMSS driver
+  uses.
