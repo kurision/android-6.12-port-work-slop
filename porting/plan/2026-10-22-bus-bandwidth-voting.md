@@ -184,3 +184,13 @@ Still missing, candidates to add:
 Measure section 6 again on the build that carries `6f844d075` and
 `b2134864e`: the CPU's DDR request should follow `scaling_cur_freq`
 instead of sitting at 7439646 kB/s.
+
+**C5 reverted (`6616a9e08`).** `icc_sync_state` took WLAN and Bluetooth
+down from run347 (run346 without it associated on wlan0). Before C5
+comes back, these masters need a vote, each verified on a boot:
+
+* the crypto engine for PAS authentication (scm `interconnects` as on
+  qcm2290/sm6115, but only with a guard for SCM users that run before
+  the scm probe; see the x1e80100 thread, lkml 2603.1/11523);
+* WCNSS/Pronto runtime traffic (no node in the msm8953 graph);
+* SDCC, USB, BLSP, IPA.
