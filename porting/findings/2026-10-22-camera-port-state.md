@@ -224,3 +224,24 @@ What the translation needs, checked against this tree:
   does ("qcom,msm-cam-smmu" with its "qcom,msm-cam-smmu-cb" children,
   the label of the bank and its dma address pool).  The donor's stream
   numbers are the context banks' offsets, so they carry over.
+
+## The kernel has to fit under the bootloader's limit
+
+The build script refuses an image whose `image_size` reaches past the
+bootloader's own device tree (the LK puts the kernel at 0x10080000 and
+its DTB at 0x13400000, and a kernel that reaches it overwrites its own
+device tree and dies before it has a console: no log, no reset -
+porting/findings/2026-10-21-kernel-overruns-the-dtb.md).
+
+Without the camera the port's image had 655 360 bytes of headroom.  The
+camera needs 917 504 bytes more, so it did not fit.  The ISP of the
+generations this board does not have (the 4.4 and the 4.6) is left out
+of the build - this board's VFE is the 4.0 (the camera nodes say
+"qcom,vfe40"), and the 4.0 uses the 4.7's interrupt handling, so that
+one stays.  The face detection stays: the ROM's daemon has a device for
+it.
+
+The result is 128 072 bytes of headroom, which is little.  Anything
+else that grows the kernel has to pay for itself, and the face
+detection is the first thing to look at if the image has to make room
+again.
