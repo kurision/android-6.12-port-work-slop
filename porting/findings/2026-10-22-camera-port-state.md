@@ -48,8 +48,8 @@ falls back to the selection interface otherwise.
 ## The tree does not build yet
 
 The last compile of `drivers/media/platform/msm/camera/` (the build log
-is `/tmp/opencode/cam10.log` of the session, not in the repository)
-ends with 80 distinct diagnostics in these classes:
+is `/tmp/opencode/cam18.log` of the session, not in the repository)
+ends with 46 diagnostics in these classes:
 
 1. **the legacy `of_gpio` API** (`of_gpio_count()`, `of_get_gpio()` in
    `sensor/cci/msm_cci.c` and `sensor/eeprom/msm_eeprom.c`): upstream
@@ -76,6 +76,28 @@ ends with 80 distinct diagnostics in these classes:
 7. **the remaining pointer and format diagnostics**: the CFI and the
    bounds checker classes the video port met in `044d3f406` and
    `b8123d808` (the handler types and the one-element arrays).
+
+The classes that are still open, with the files that carry them:
+
+* **the legacy `of_gpio` API** (`of_gpio_count()`, `of_get_gpio()`):
+  `sensor/cci/msm_cci.c` (the CCI's own gpio table) and
+  `sensor/eeprom/msm_eeprom.c` (the EEPROM's). Upstream removed the
+  helpers in 6.2; the donor's device tree gives the plain gpio numbers
+  in a "gpios" property (`qcom,gpio-tbl-num`, `-flags` and `-label`
+  next to it), so the conversion has to read that property and resolve
+  the numbers. The port's device tree (C10) can use the descriptor
+  form the kernel expects.
+* **the I2C and the SPI probe signatures**: this tree's `struct
+  i2c_driver` still has the 4.19 signature (the `probe_new` split of
+  6.3 was undone upstream), so the donor's probes are right; the
+  bodies that use the `id` argument (`sensor/eeprom/msm_eeprom.c`,
+  `sensor/flash/adp1660.c`) have to get the device id another way.
+* **`sensor/eeprom/msm_eeprom.c:1263`**: an array of 16 bytes is
+  assigned to an `int`; the donor's code relied on the implicit
+  truncation.
+* **`sensor/flash/msm_flash.c`**: the torch led index
+  (`msm_torch_led_num`) is gone with the per-board block that declared
+  it.
 
 The classes above are the next commits (C3 to C9 of the plan). The
 device tree (C10) and the configuration switch-over (C11) come after
