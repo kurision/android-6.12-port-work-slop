@@ -1,0 +1,31 @@
+donor: /home/kurision/development/kernel/oc-test
+port:  /home/kurision/development/kernel/ack-kgsl
+OK   include/uapi/media/msm_vidc.h            identical to the donor
+OK   include/uapi/media/msm_media_info.h      identical to the donor
+OK   include/uapi/media/msm_vidc_private.h    identical to the donor
+OK   include/uapi/media/msm_vidc_utils.h      identical to the donor
+OK   include/uapi/linux/videodev2.h           227 CAF values
+       collision:    V4L2_MSM_BUF_FLAG_MBAFF = 0x00000200 is also V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF
+       collision:    V4L2_PIX_FMT_SDE_ABGR_1555 = v4l2_fourcc('A', 'B', '1', '5') is also V4L2_PIX_FMT_ABGR555
+       collision:    V4L2_PIX_FMT_SDE_ABGR_2101010 = v4l2_fourcc('R', 'A', '3', '0') is also V4L2_PIX_FMT_RGBA1010102
+       collision:    V4L2_PIX_FMT_SDE_ABGR_4444 = v4l2_fourcc('A', 'B', '1', '2') is also V4L2_PIX_FMT_ABGR444
+       collision:    V4L2_PIX_FMT_SDE_ABGR_8888 = v4l2_fourcc('R', 'A', '2', '4') is also V4L2_PIX_FMT_BGRA32
+       collision:    V4L2_PIX_FMT_SDE_ARGB_2101010 = v4l2_fourcc('A', 'R', '3', '0') is also V4L2_PIX_FMT_ARGB2101010
+       collision:    V4L2_PIX_FMT_SDE_BGRA_5551 = v4l2_fourcc('B', 'A', '1', '5') is also V4L2_PIX_FMT_BGRA555
+       collision:    V4L2_PIX_FMT_SDE_BGRX_4444 = v4l2_fourcc('B', 'X', '1', '2') is also V4L2_PIX_FMT_BGRX444
+       collision:    V4L2_PIX_FMT_SDE_BGRX_5551 = v4l2_fourcc('B', 'X', '1', '5') is also V4L2_PIX_FMT_BGRX555
+       collision:    V4L2_PIX_FMT_SDE_RGBA_4444 = v4l2_fourcc('R', 'A', '1', '2') is also V4L2_PIX_FMT_RGBA444
+       collision:    V4L2_PIX_FMT_SDE_RGBA_5551 = v4l2_fourcc('R', 'A', '1', '5') is also V4L2_PIX_FMT_RGBA555
+       collision:    V4L2_PIX_FMT_SDE_RGBA_8888 = v4l2_fourcc('A', 'B', '2', '4') is also V4L2_PIX_FMT_RGBA32
+       collision:    V4L2_PIX_FMT_SDE_RGBX_4444 = v4l2_fourcc('R', 'X', '1', '2') is also V4L2_PIX_FMT_RGBX444
+       collision:    V4L2_PIX_FMT_SDE_RGBX_5551 = v4l2_fourcc('R', 'X', '1', '5') is also V4L2_PIX_FMT_RGBX555
+       collision:    V4L2_PIX_FMT_SDE_RGBX_8888 = v4l2_fourcc('X', 'B', '2', '4') is also V4L2_PIX_FMT_RGBX32
+       collision:    V4L2_PIX_FMT_SDE_XBGR_1555 = v4l2_fourcc('X', 'B', '1', '5') is also V4L2_PIX_FMT_XBGR555
+       collision:    V4L2_PIX_FMT_SDE_XBGR_2101010 = v4l2_fourcc('R', 'X', '3', '0') is also V4L2_PIX_FMT_RGBX1010102
+       collision:    V4L2_PIX_FMT_SDE_XBGR_4444 = v4l2_fourcc('X', 'B', '1', '2') is also V4L2_PIX_FMT_XBGR444
+       collision:    V4L2_PIX_FMT_SDE_XBGR_8888 = v4l2_fourcc('R', 'X', '2', '4') is also V4L2_PIX_FMT_BGRX32
+       collision:    V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010 = v4l2_fourcc('P', '0', '1', '0') is also V4L2_PIX_FMT_P010
+       collision:    V4L2_QCOM_BUF_DROP_FRAME = 0x00800000 is also V4L2_BUF_FLAG_REQUEST_FD
+OK   include/uapi/linux/v4l2-controls.h       157 CAF values
+
+OK: every CAF value is the donor's
