@@ -241,42 +241,61 @@ this tree in the `out/` of this worktree:
 | the donor, 4.19 production (`../oc-test/out-oc`) | no | 45 039 616 | +8 962 048 |
 | the donor, 4.19 with LTO (`../oc-test/out-lto`) | no | 49 635 328 | +4 366 336 |
 | the port, no camera (`run358`) | yes | 53 346 304 | +655 360 |
-| the port, the camera's first milestone | yes | 53 477 376 | +524 288 |
+| the port, the camera's first milestone (`run367camera`) | yes | 53 870 592 | **+131 072** |
 | the port, the full camera | yes | 54 263 808 | -262 144 |
-| the port, the full camera, no KASAN | no | 45 088 768 | +8 912 896 |
+| the port, the full camera, no KASAN | no | 45 481 984 | +8 519 680 |
+
+The last row is the hand-built one corrected for the trap described
+below: the build measured 45 088 768 with `CONFIG_RUST` silently off,
+and the Rust support is 393 216 bytes of the image.
 
 Two findings from those numbers.
 
 The first milestone - the CCI and the sensors, the ROM's daemon finding
-a sensor over I2C - costs **143 072 bytes** and fits with KASAN on.  The
-rest of the camera's 917 504 bytes is the VFE, the ISPIF, the CPP and
-the face detection, none of which the device tree describes yet.
+a sensor over I2C - costs **524 288 bytes** and fits with KASAN on, with
+128 KB to spare.  The rest of the camera's 917 504 bytes is the VFE, the
+ISPIF, the CPP and the face detection, none of which the device tree
+describes yet.
 
-KASAN costs **9 175 040 bytes** (8.75 MB, 16.9% of the built image).  It
+KASAN costs **8 781 824 bytes** (8.4 MB, 16.2% of the built image).  It
 is the whole of the difference between the donor's 4.19 kernel and this
-port: without it the port's full-camera image is 45 088 768 bytes,
-49 152 bytes away from the donor's 45 039 616 - the 4.19-versus-6.12
-gap is not what does not fit, the port's debugging configuration is.
-`SLUB_DEBUG` and `DEBUG_INFO_BTF` were turned off in the same
-measurement and are not what accounts for it (`DEBUG_INFO_BTF` does not
-reach the `Image` at all).
+port: without it the port's full-camera image is within 442 368 bytes of
+the donor's 45 039 616 - the 4.19-versus-6.12 gap is not what does not
+fit, the port's debugging configuration is.  `SLUB_DEBUG` and
+`DEBUG_INFO_BTF` were turned off in the same measurement and are not
+what accounts for it (`DEBUG_INFO_BTF` does not reach the `Image` at
+all).
+
+### A hand build silently disables the Rust support
+
+The hand builds of this session (`make -C . O=out ... Image.gz`, without
+the script's `make rustavailable`) let `olddefconfig` resolve
+`RUST_IS_AVAILABLE=n`, which turns `CONFIG_RUST` and `ASHMEM` off: the
+image comes out **393 216 bytes smaller** than the same tree built by
+`porting/tools/build-kernel.sh`.  That constant sat behind two wrong
+conclusions in this session - an image reported as fitting that did not,
+and a camera cost of 143 072 bytes that was really 524 288.  Compare
+`grep CONFIG_RUST= ` in the hand-built `out/.config` and in the
+script's `$RUN-embedded.config` before believing any hand-built size;
+better still, only believe sizes printed by the script.
 
 What follows from that:
 
-- The first milestone is built with KASAN on.  Nothing is traded for it.
+- The first milestone is built with KASAN on, and 128 KB is not much:
+  the next addition pays for itself or gets its own symbol.
 - The full camera does not fit with KASAN on.  The parts without device
   tree nodes (the VFE, the ISPIF, the CPP, the face detection, which
   runs on the CPP's hardware) are left out of the link by their own
   symbols, `MSM_CAMERA_VFE` and `MSM_CAMERA_CPP`; their sources are in
   the tree.  An earlier idea - that the camera's ~900 KB was mostly
   KASAN's redzones - was wrong and is not the reason for the split.
-- If the full camera has to share an image with KASAN, the room has to
-  come from about 300 KB of trims (the face detection is 22 193 bytes of
-  text; the ISP generations are already down to the 4.0 and the 4.7).
-  The alternative is a non-KASAN configuration for the camera's boot
-  cycles, which costs the diagnostics that found the audio port's
-  `msm_audio_ion` freeze.  That trade is the maintainer's to make; the
-  port's `porting/tools/kernel.config` is unchanged.
+- Trimming cannot buy the 262 144 bytes the full camera is over: the
+  VFE, the ISPIF, the CPP and the face detection together are 393 216
+  bytes, so cutting 262 144 of them removes most of the pipeline.  The
+  choice is therefore a configuration one - a non-KASAN build for the
+  camera's boot cycles, which costs the diagnostics that found the audio
+  port's `msm_audio_ion` freeze - and it is the maintainer's to make.
+  The port's `porting/tools/kernel.config` is unchanged.
 
 ## The build script's size check reads the image on disk
 
