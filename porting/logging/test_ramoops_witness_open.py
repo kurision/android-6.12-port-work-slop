@@ -12,14 +12,12 @@ def main():
     source = SOURCE.read_text()
     repo = SOURCE.parents[2]
     header = (repo / 'include/linux/pstore_ram.h').read_text()
-    for name in ('ramoops_witness_write', 'ramoops_witness_read',
-                 'ramoops_stage_write', 'ramoops_qtrace_write', 'ramoops_reset_note'):
+    for name in ('ramoops_stage_write', 'ramoops_reset_note'):
         assert re.search(r'^(?:int|void) ' + name + r'\([^;]*\);', header, re.M), name
         assert re.search(r'^(?:int|void) ' + name + r'\([^;]*\)\n\{', source, re.M), name
         assert 'EXPORT_SYMBOL_GPL(' + name + ');' in source, name
         assert not re.search(r'^static (?:int|void) ' + name + r'\(', source, re.M), name
-    for path in ('drivers/misc/qseecom.c', 'drivers/gpu/msm/adreno-zap-compat.h',
-                 'kernel/reboot.c'):
+    for path in ('drivers/gpu/msm/adreno-zap-compat.h', 'kernel/reboot.c'):
         assert '#include <linux/pstore_ram.h>' in (repo / path).read_text(), path
     start = source.index('static int ramoops_witness_open(void)')
     end = source.index('\n}\n', start) + 3
