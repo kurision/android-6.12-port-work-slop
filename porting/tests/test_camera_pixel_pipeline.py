@@ -328,6 +328,17 @@ int main(void) {
         table = re.search(r"ftbl_cpp_clk_src\[\] = \{(.*?)\n};", gcc_source, re.S)[1]
         self.assertEqual([int(x) for x in re.findall(r"F\((\d+),", table)],
                          [100000000, 200000000, 266670000, 320000000, 400000000, 465000000])
+        # Tissot inherits the QRD sensor base, whose mount angles differ from MTP.
+        donor_dir = ROOT.parent / "oc-test/arch/arm64/boot/dts/vendor/qcom"
+        board = (donor_dir / "tissot-titanium.dts").read_text()
+        self.assertIn('#include "msm8953-camera-sensor-qrd.dtsi"', board)
+        qrd = (donor_dir / "msm8953-camera-sensor-qrd.dtsi").read_text()
+        for slot in range(3):
+            pattern = r"qcom,camera@" + str(slot) + r" \{(.*?)\n\s*};"
+            donor_slot = re.search(pattern, qrd, re.S)[1]
+            port_slot = re.search(pattern, dt, re.S)[1]
+            angle = int(re.search(r"qcom,mount-angle = <(\d+)>;", donor_slot)[1])
+            self.assertIn(f"qcom,mount-angle = <0x{angle:02x}>;", port_slot)
 
     def test_smmu_probe_fault_matrix(self):
         source = (CAM / "common/cam_smmu_api.c").read_text()
