@@ -288,7 +288,46 @@ int main(void) {
         config = (ROOT / "porting/tools/kernel.config").read_text()
         self.assertIn("\nCONFIG_MSM_CAMERA_VFE=y\n", config)
         self.assertIn("\nCONFIG_MSM_CAMERA_CPP=y\n", config)
-        self.assertNotIn('compatible = "qcom,cpp";', dt)
+        context = re.search(r"cpp-context \{(.*?)\n\s*};", dt, re.S)[1]
+        self.assertIn(f"iommus = <{iommu} 0x12>;", context)
+        self.assertIn('label = "cpp";', context)
+        self.assertNotIn("qcom,scratch-buf-support", context)
+        bank = re.search(r"iommu-ctx@12000 \{(.*?)\n\s*};", dt, re.S)[1]
+        self.assertIn('compatible = "qcom,msm-iommu-v1-ns";', bank)
+        self.assertIn("reg = <0x12000 0x1000>;", bank)
+        self.assertIn("interrupts = <0x00 0x6d 0x04>;", bank)
+        body = re.search(r"qcom,cpp@1b04000 \{(.*?)\n\s*};", dt, re.S)[1]
+        self.assertIn('compatible = "qcom,cpp";', body)
+        self.assertIn('status = "okay";', body)
+        self.assertIn("reg = <0x1b04000 0x100 0x1b80000 0x200 0x1b18000 0x18>;", body)
+        self.assertIn('reg-names = "cpp", "cpp_vbif", "cpp_hw";', body)
+        self.assertIn("interrupts = <0x00 0x31 0x04>;", body)
+        self.assertIn(f"power-domains = <{gcc} 0x00>;", body)
+        self.assertIn('power-domain-names = "cpp";', body)
+        self.assertIn(f"resets = <{gcc} 0x00>;", body)
+        self.assertIn('reset-names = "micro_iface_reset";', body)
+        clocks = [27, 112, 29, 75, 76, 77, 111, 72]
+        self.assertIn("clocks = <" + " ".join(f"{gcc} 0x{x:02x}" for x in clocks)
+                      + ">;", body)
+        self.assertIn('clock-names = "camss_ahb_src", "camss_top_ahb_clk", '
+                      '"cpp_core_clk", "camss_vfe_cpp_ahb_clk", '
+                      '"camss_vfe_cpp_axi_clk", "camss_vfe_cpp_clk", '
+                      '"micro_iface_clk", "camss_ahb_clk";', body)
+        donor = (ROOT.parent / "oc-test/arch/arm64/boot/dts/vendor/qcom/"
+                 "msm8953-camera.dtsi").read_text()
+        donor = donor[donor.index("qcom,cpp@1b04000 {"):]
+        for prop in ("qcom,clock-rates", "qcom,min-clock-rate", "qcom,bus-master",
+                     "qcom,src-clock-rates", "qcom,msm-bus,vectors-KBps",
+                     "qcom,stripe-base", "qcom,plane-base", "qcom,stripe-size",
+                     "qcom,plane-size", "qcom,fe-ptr-off", "qcom,we-ptr-off"):
+            def numbers(text):
+                value = re.search(re.escape(prop) + r"\s*=\s*(.*?);", text, re.S)[1]
+                return [int(n, 0) for n in re.findall(r"0x[0-9a-f]+|\d+", value)]
+            self.assertEqual(numbers(body), numbers(donor), prop)
+        gcc_source = (ROOT / "drivers/clk/qcom/gcc-msm8953.c").read_text()
+        table = re.search(r"ftbl_cpp_clk_src\[\] = \{(.*?)\n};", gcc_source, re.S)[1]
+        self.assertEqual([int(x) for x in re.findall(r"F\((\d+),", table)],
+                         [100000000, 200000000, 266670000, 320000000, 400000000, 465000000])
 
     def test_smmu_probe_fault_matrix(self):
         source = (CAM / "common/cam_smmu_api.c").read_text()
