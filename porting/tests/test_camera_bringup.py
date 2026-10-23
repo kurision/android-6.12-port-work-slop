@@ -15,6 +15,74 @@ CAM = ROOT / "drivers/media/platform/msm/camera"
 
 
 class CameraBringup(unittest.TestCase):
+    def test_cci_provider_ready_for_synchronous_children(self):
+        source = (CAM / "sensor/cci/msm_cci.c").read_text()
+        probe = re.search(r"^static int msm_cci_probe\([^;{]*\)\n\{.*?^}",
+                          source, re.M | re.S)[0]
+        block = probe.split("\n\tnew_cci_dev->cci_state = CCI_STATE_DISABLED;", 1)[1]
+        block = "\tnew_cci_dev->cci_state = CCI_STATE_DISABLED;" + block.split(
+            '\n\tCDBG("%s cci subdev', 1)[0]
+        # Model the previous order as a negative control, retaining the real setup.
+        populate = re.search(r"\trc = of_platform_populate.*?\n\t\tpr_err\([^;]+;",
+                             block, re.S)[0]
+        old_block = populate + "\n" + block.replace(populate, "")
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
+#define MASTER_MAX 2
+#define CCI_STATE_DISABLED 0
+#define pr_err(...) (++errors)
+struct v4l2_subdev { int unused; };
+struct device { void *of_node; };
+struct platform_device { struct device dev; };
+struct cci_device {
+    struct { struct v4l2_subdev sd; } msm_sd;
+    int cci_state;
+    void *write_wq[MASTER_MAX];
+};
+static struct v4l2_subdev *g_cci_subdev, *cached;
+static struct cci_device *active;
+static bool child_ready;
+static int workqueues, populate_rc, errors, child_calls;
+static void *create_singlethread_workqueue(const char *name) {
+    assert(!strcmp(name,"msm_cci_wq"));
+    return (void *)(size_t)++workqueues;
+}
+static int of_platform_populate(void *node,void *matches,void *aux,struct device *dev) {
+    ++child_calls;
+    cached=g_cci_subdev;
+    child_ready=cached==&active->msm_sd.sd && active->cci_state==CCI_STATE_DISABLED;
+    for (int i=0;i<MASTER_MAX;i++) child_ready=child_ready && active->write_wq[i];
+    return populate_rc;
+}
+'''
+        harness += "static void corrected(struct platform_device *pdev, struct cci_device *new_cci_dev) {\nint rc, i;\n" + block + "\n}\n"
+        harness += "static void previous(struct platform_device *pdev, struct cci_device *new_cci_dev) {\nint rc, i;\n" + old_block + "\n}\n"
+        harness += r'''
+int main(void) {
+    for (int old=0;old<2;old++) for (int failed_populate=0;failed_populate<2;failed_populate++) {
+        struct platform_device p={0}; struct cci_device c={.cci_state=-1};
+        active=&c; g_cci_subdev=NULL; cached=NULL; child_ready=false;
+        workqueues=errors=child_calls=0; populate_rc=failed_populate ? -ENOMEM : 0;
+        if (old) previous(&p,&c); else corrected(&p,&c);
+        assert(child_calls==1 && workqueues==MASTER_MAX);
+        assert(errors==failed_populate);
+        assert(g_cci_subdev==&c.msm_sd.sd);
+        if (old) assert(!cached && !child_ready);
+        else assert(cached==g_cci_subdev && child_ready);
+    }
+}
+'''
+        with tempfile.TemporaryDirectory() as folder:
+            cfile, exe = Path(folder) / "cci-order.c", Path(folder) / "cci-order"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), "-Wall", "-Werror",
+                            str(cfile), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True, timeout=5)
+
     def test_sensor_slots_have_complete_resources(self):
         source = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
         for slot, mclk in enumerate((0, 2, 1)):
