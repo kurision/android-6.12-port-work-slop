@@ -280,7 +280,7 @@ shutdown RAM dumps. Rebuild diagnostic init on the Mac:
 
 ```sh
 zig cc -target aarch64-linux-musl -Os -static \
-  -DANDROID_CAPTURE -DANDROID_EARLY_LOGCAT -DBOOT_DEADLINE_SECONDS=0 \
+  -DANDROID_CAPTURE -DBOOT_DEADLINE_SECONDS=0 \
   scripts/initramfs-diag/init.c -o /tmp/ack-init-reset-logging
 ```
 
