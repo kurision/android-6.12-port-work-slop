@@ -15,6 +15,54 @@ CAM = ROOT / "drivers/media/platform/msm/camera"
 
 
 class CameraBringup(unittest.TestCase):
+    def test_clock_release_indexes_clock_array(self):
+        source = (CAM / "common/cam_soc_api.c").read_text()
+        functions = "\n".join(re.search(
+            r"^(?:static )?int " + name + r"\([^;{]*\)\n\{.*?^}",
+            source, re.M | re.S)[0] for name in (
+                "msm_camera_put_clk_info_internal", "legacy_msm_camera_put_clk_info_and_rates"))
+        harness = r'''
+#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
+#define CDBG(...) ((void)0)
+struct device { int unused; };
+struct platform_device { struct device dev; };
+struct clk { int unused; };
+struct msm_cam_clk_info { int unused; };
+static int released, freed;
+static void devm_clk_put(struct device *dev,struct clk *p) { assert(p); ++released; }
+static void devm_kfree(struct device *dev,void *p) { if (p) { ++freed; free(p); } }
+'''
+        harness += functions + r'''
+int main(void) {
+    struct platform_device p={0}; struct clk c;
+    for (int rates=0;rates<2;rates++) for (int count=0;count<=9;count++) {
+        struct msm_cam_clk_info *info=calloc(count+1,sizeof(*info));
+        struct clk **clocks=calloc(count+1,sizeof(*clocks));
+        uint32_t **table=calloc(2,sizeof(*table));
+        table[0]=calloc(1,sizeof(**table)); table[1]=calloc(1,sizeof(**table));
+        int expected=0;
+        for (int i=0;i<count;i++) if (i%3) { clocks[i]=&c; ++expected; }
+        released=freed=0;
+        if (rates) {
+            assert(!legacy_msm_camera_put_clk_info_and_rates(&p,&info,&clocks,&table,2,count));
+            assert(!table && freed==5);
+        } else {
+            assert(!msm_camera_put_clk_info_internal(&p.dev,&info,&clocks,count));
+            assert(freed==2); free(table[0]); free(table[1]); free(table);
+        }
+        assert(!info && !clocks && released==expected);
+    }
+}
+'''
+        with tempfile.TemporaryDirectory() as folder:
+            cfile, exe = Path(folder) / "clock-put.c", Path(folder) / "clock-put"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True, timeout=5)
+
     def test_csi_nodes_describe_all_sensor_routes(self):
         source = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
         header = (ROOT / "include/dt-bindings/clock/qcom,gcc-msm8953.h").read_text()
