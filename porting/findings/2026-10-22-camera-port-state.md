@@ -18,7 +18,7 @@ conversions:
 | donor | 6.12 |
 |---|---|
 | `struct timeval` in the event structures | `struct __kernel_v4l2_timeval` (the type the v4l2 core uses; the layout is the donor's kernel-side one) |
-| `struct compat_timeval` in the compat structures | `struct __kernel_old_timeval` (the same 8 bytes) |
+| `struct compat_timeval` in the compat structures | Initially imported as `struct __kernel_old_timeval`, incorrectly 16 bytes on arm64; corrected to 8-byte `struct old_timeval32` on 2026-10-23 |
 | `V4L2_PIX_FMT_SGRBG14` | `MSM_V4L2_PIX_FMT_SGRBG14` (upstream 6.12 defines the same name with another value) |
 | `CSID_MAX` | `MSM_CSID_MAX` (the kernel's `include/linux/clocksource_ids.h` has an enumerator of that name; user space keeps the old name) |
 | `kzfree()` | `kfree()` |
@@ -161,16 +161,20 @@ them, and the boot test (B5 of the video plan's numbering) after that.
   `out/.config` only.
 * The build helper of this worktree is `/tmp/opencode/mkc.sh` (the
   same as the main tree's, with the worktree's path).
-* The `struct compat_timeval` of the camera's compat structures was 8
-  bytes in the donor (`__kernel_old_time_t` plus an `s32`); the
-  replacement keeps that. The event structures were 16 bytes in the
-  donor's 64-bit kernel (`struct timeval` with a 64-bit `tv_sec`);
-  `struct __kernel_v4l2_timeval` is 16 bytes on both 32 and 64 bit,
-  which is what the 32-bit daemon sees now and what the donor's kernel
-  produced. **The 32-bit daemon's own view of these structures is
-  unverified**: it used its own `struct timeval` (8 bytes) where the
-  donor's kernel wrote 16. The boot test has to show that the camera's
-  events are still usable.
+* Correction (2026-10-23): the donor's `struct compat_timeval` has two
+  32-bit fields and occupies 8 bytes. The import's replacement,
+  `struct __kernel_old_timeval`, has native longs and occupies 16 bytes
+  on arm64. It changed buffer-manager ioctl numbers and shifted ISP
+  event and CPP frame fields. The three internal compat headers now use
+  `struct old_timeval32`, matching the donor. Native UAPI timestamps stay
+  `struct __kernel_v4l2_timeval`; the donor's ISP dequeue helper converts
+  native event timestamps to the 32-bit payload before userspace copy.
+  The host reproduction measured `GET_BUF32` as `0xc07056e1` before the
+  correction versus the donor's `0xc06456e1` (112 versus 100 bytes).
+  Evidence: `porting/artifacts/snapshot60/camera-compat-audit-20261023T181111Z/`;
+  upstream definitions: Linux v6.12 `include/vdso/time32.h` and
+  `include/uapi/linux/time_types.h`. This correction is not boot-tested;
+  restoration of camera streaming remains unverified.
 * The camera's crop API is back, but whether the ROM's daemon uses it
   is unverified.
 
