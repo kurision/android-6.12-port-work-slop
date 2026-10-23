@@ -15,6 +15,45 @@ CAM = ROOT / "drivers/media/platform/msm/camera"
 
 
 class CameraBringup(unittest.TestCase):
+    def test_csi_irqs_are_not_enabled_during_probe(self):
+        for kind, probe_name in (("csid", "csid_probe"), ("csiphy", "csiphy_probe")):
+            with self.subTest(kind=kind):
+                source = (CAM / f"sensor/{kind}/msm_{kind}.c").read_text()
+                probe = re.search(r"^static int " + probe_name + r"\([^;{]*\)\n\{.*?^}",
+                                  source, re.M | re.S)[0]
+                request = re.search(r"rc = legacy_msm_camera_register_irq\(.*?;",
+                                    probe, re.S)[0]
+                self.assertNotIn("legacy_msm_camera_enable_irq(", probe)
+                harness = r'''
+#include <assert.h>
+#define IRQF_TRIGGER_RISING 1
+#define IRQF_NO_AUTOEN 0x80000
+struct csi_device { void *irq; };
+static int handler_calls;
+static void msm_csid_irq(void) { ++handler_calls; }
+static void msm_csiphy_irq(void) { ++handler_calls; }
+static int legacy_msm_camera_register_irq(void *pdev, void *irq,
+    void (*handler)(void), int flags, const char *name, void *state)
+{
+    if (!(flags & IRQF_NO_AUTOEN)) handler();
+    return 0;
+}
+int main(void) {
+    struct csi_device dev={0}, *new_csid_dev=&dev, *new_csiphy_dev=&dev;
+    void *pdev=0;
+    int rc;
+'''
+                harness += request + r'''
+    assert(rc==0 && handler_calls==0);
+}
+'''
+                with tempfile.TemporaryDirectory() as folder:
+                    cfile, exe = Path(folder) / "csi-irq.c", Path(folder) / "csi-irq"
+                    cfile.write_text(harness)
+                    subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                                    "-o", str(exe)], check=True)
+                    subprocess.run([str(exe)], check=True, timeout=5)
+
     def test_cci_provider_ready_for_synchronous_children(self):
         source = (CAM / "sensor/cci/msm_cci.c").read_text()
         probe = re.search(r"^static int msm_cci_probe\([^;{]*\)\n\{.*?^}",
