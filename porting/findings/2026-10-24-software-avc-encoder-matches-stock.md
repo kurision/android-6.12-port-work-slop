@@ -38,6 +38,26 @@ is no port regression to fix, and changing VIDC or codec policy to force
 **No kernel change.** Close the handoff's "video encoder selection" item
 as matches-stock.
 
+## Why the hardware encoder is unreachable (2026-10-24, live checks)
+
+The framework's registered encoder list contains only `c2.android.*`
+software encoders; `OMX.qcom.video.encoder.avc` is not in the
+MediaCodecList at all, while the OMX.qcom decoders register and run.
+The `MediaCodecListGenerator` produced a list of exactly **19568 bytes on
+both kernels** (donor `logcat-live.txt:3788`, port `:9954`) - the OMX
+encoders are dropped by the ROM's list build on stock as well. The kernel
+side is complete either way: on the running port, `/dev/video32` is
+`msm_vdec_8974` and `/dev/video33` is `msm_venc_8974`, both answering
+`VIDIOC_QUERYCAP` with M2M MPLANE capabilities (on-device probe,
+`venc-probe`, 2026-10-24 ~01:40 NPT).
+
+Enabling hardware encoding for the user's thermal goal is therefore a
+ROM-side codec-policy change (registering or un-filtering the OMX.qcom
+encoder, or a Codec2 wrapper for it) - outside this kernel tree. The
+kernel's encoder path can be proven independently of the framework with
+a raw V4L2 M2M encode test against `/dev/video33` if that evidence is
+wanted.
+
 Remaining, unverified: the duplicate-timestamp warning on one #43 MP4 has
 no stock counterpart in the capture (no stock recording was pulled), so it
 stays open as a minor observation, not a defect claim.
