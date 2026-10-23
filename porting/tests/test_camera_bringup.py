@@ -380,12 +380,13 @@ int main(void)
 #include <errno.h>
 #include <stddef.h>
 #define CONFIG_COMPAT 1
+#define MSM_CAMERA_SUBDEV_EEPROM 8
 #define CDBG(...) ((void)0)
 #define kfree(p) ((void)0)
 #define legacy_msm_camera_power_down(...) ((void)0)
 struct node { void *fops; } node;
 struct control {
-    struct { struct { int entity; struct node *devnode; } sd; } msm_sd;
+    struct { struct { int entity, grp_id; struct node *devnode; } sd; } msm_sd;
     struct { void *mapdata, *map; } cal_data;
     void *eboard_info;
     struct { void *cci_client; } i2c_client;
@@ -401,6 +402,7 @@ static void media_entity_cleanup(int *entity) { entity_cleanups++; }
 static int legacy_msm_sd_register(void *sd)
 {
     struct control *ctrl = sd;
+    assert(ctrl->msm_sd.sd.grp_id == MSM_CAMERA_SUBDEV_EEPROM);
     registrations++;
     if (!register_result) ctrl->msm_sd.sd.devnode = &node;
     return register_result;
