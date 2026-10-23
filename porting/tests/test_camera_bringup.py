@@ -15,6 +15,44 @@ CAM = ROOT / "drivers/media/platform/msm/camera"
 
 
 class CameraBringup(unittest.TestCase):
+    def test_sensor_slots_have_complete_resources(self):
+        source = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
+        for slot, mclk in enumerate((0, 2, 1)):
+            with self.subTest(slot=slot):
+                node = re.search(r"\bqcom,camera@" + str(slot) + r"\s*{([^}]+)};",
+                                 source, re.S)[1]
+                properties = dict(re.findall(r'([\w,\-]+)\s*=\s*([^;]+);', node))
+                for prop in ("cell-index", "reg", "qcom,csiphy-sd-index", "qcom,csid-sd-index"):
+                    self.assertEqual(properties[prop].strip(), f"<{slot}>")
+                self.assertEqual(properties["compatible"], '"qcom,camera"')
+                self.assertIn(properties["status"], ('"okay"', '"ok"'))
+                self.assertEqual(properties["clock-names"], '"cam_src_clk", "cam_clk"')
+                self.assertEqual(properties["qcom,clock-rates"], '<24000000 0>')
+                self.assertEqual(properties["qcom,gpio-reset"], '<1>')
+                self.assertEqual(properties["pinctrl-names"], '"cam_default", "cam_suspend"')
+                self.assertIn(f'&cam_sensor_mclk{mclk}_default', properties["pinctrl-0"])
+                self.assertIn(f'&cam_sensor_mclk{mclk}_sleep', properties["pinctrl-1"])
+                self.assertIn(f'MCLK{mclk}_CLK_SRC', properties["clocks"])
+                self.assertIn(f'GCC_CAMSS_MCLK{mclk}_CLK', properties["clocks"])
+                names = re.findall(r'"([^"]+)"', properties["qcom,cam-vreg-name"])
+                for name in names:
+                    self.assertIn(name + "-supply", properties)
+                for prop in ("min-voltage", "max-voltage", "op-mode"):
+                    self.assertEqual(len(properties["qcom,cam-vreg-" + prop].strip('<> ').split()),
+                                     len(names))
+
+    def test_camera_clock_sources_match_mclk_branches(self):
+        source = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
+        clocks = re.findall(r'clocks\s*=\s*<&gcc (\w+)>\s*,\s*<&gcc GCC_CAMSS_MCLK([012])_CLK>;',
+                            source)
+        self.assertEqual(len(clocks), 9)  # Six EEPROMs and three sensor slots.
+        for clock, mclk in clocks:
+            self.assertEqual(clock, f"MCLK{mclk}_CLK_SRC")
+        gcc = (ROOT / "drivers/clk/qcom/gcc-msm8953.c").read_text()
+        for mclk in range(3):
+            branch = gcc.split(f'static struct clk_branch gcc_camss_mclk{mclk}_clk =', 1)[1]
+            self.assertIn(f'&mclk{mclk}_clk_src.clkr.hw', branch.split('\n};', 1)[0])
+
     def test_sensor_slot_publication_and_failed_clock_cleanup(self):
         source = (CAM / "sensor/msm_sensor_driver.c").read_text()
         def extract(name):
