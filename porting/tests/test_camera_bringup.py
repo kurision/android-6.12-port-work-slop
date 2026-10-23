@@ -1,0 +1,799 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
+"""Host checks for run368camera's probe and firmware-staging failures."""
+
+import os
+import re
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+CAM = ROOT / "drivers/media/platform/msm/camera"
+
+
+class CameraBringup(unittest.TestCase):
+    def test_eeprom_power_sequence_lengths_match(self):
+        dts = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
+        for match in re.finditer(r"qcom,eeprom@\w+\s*{([^}]+)};", dts, re.S):
+            with self.subTest(node=match[0].split("{", 1)[0]):
+                counts = {}
+                for prop in ("type", "val", "cfg-val", "delay"):
+                    value = re.search(r"qcom,cam-power-seq-" + prop + r"\s*=\s*([^;]+);",
+                                      match[1])[1]
+                    counts[prop] = (len(re.findall(r'"[^"]+"', value))
+                                    if prop in ("type", "val")
+                                    else len(value.strip("<> \t\n").split()))
+                self.assertEqual(len(set(counts.values())), 1, counts)
+
+    def test_power_sequence_parser_and_eeprom_cleanup(self):
+        source = (CAM / "sensor/io/msm_camera_dt_util.c").read_text()
+        parser = re.search(r"^int legacy_msm_camera_get_dt_power_setting_data\(.*?^}",
+                           source, re.M | re.S)[0]
+        source = (CAM / "sensor/eeprom/msm_eeprom.c").read_text()
+        caller = re.search(r"^static int msm_eeprom_get_dt_data\(.*?^}",
+                           source, re.M | re.S)[0]
+        parse_call = caller.split("\tif (e_ctrl->userspace_probe == 0) {", 1)[1]
+        parse_call = "\tif (e_ctrl->userspace_probe == 0) {" + parse_call.split(
+            "\n\tpower_info->gpio_conf =", 1)[0]
+        cleanup = "ERROR2:" + caller.split("ERROR2:", 1)[1]
+        constants = sorted(set(re.findall(r"\b(?:SENSOR_[A-Z0-9_]+|GPIO_OUT_(?:LOW|HIGH))\b",
+                                         parser)))
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#define GFP_KERNEL 0
+#define CDBG(...) ((void)0)
+#define pr_err(...) ((void)0)
+struct device_node { int unused; };
+struct camera_vreg_t { const char *reg_name; };
+struct msm_sensor_power_setting { int seq_type, seq_val; long config_val; uint16_t delay; };
+struct msm_camera_power_ctrl_t {
+    struct msm_sensor_power_setting *power_setting, *power_down_setting;
+    uint16_t power_setting_size, power_down_setting_size;
+    struct camera_vreg_t *cam_vreg;
+    int num_vreg;
+};
+static struct { void *ptr; bool freed; } allocations[8];
+static int allocation_count, attempt, fail_at, malformed, bad_cfg;
+static void *kzalloc(size_t n, int flags)
+{
+    if (++attempt == fail_at) return NULL;
+    void *p = calloc(1, n);
+    assert(p && allocation_count < 8);
+    allocations[allocation_count++].ptr = p;
+    return p;
+}
+static void kfree(void *p)
+{
+    if (!p) return;
+    for (int i = 0; i < allocation_count; i++) {
+        if (allocations[i].ptr == p) {
+            assert(!allocations[i].freed);
+            allocations[i].freed = true;
+            return;
+        }
+    }
+    abort();
+}
+static const char *types[] = {"sensor_gpio", "sensor_gpio", "sensor_vreg",
+    "sensor_vreg", "sensor_vreg", "sensor_vreg", "sensor_clk", "sensor_gpio", "sensor_gpio"};
+static const char *values[] = {"sensor_gpio_reset", "sensor_gpio_standby", "cam_vana",
+    "cam_vdig", "cam_vio", "cam_vaf", "sensor_cam_mclk", "sensor_gpio_reset", "sensor_gpio_standby"};
+static int of_property_count_strings(struct device_node *np, const char *prop)
+{
+    return strstr(prop, "seq-type") ? 9 : 9 - malformed;
+}
+static int of_property_read_string_index(struct device_node *np, const char *prop,
+                                         int index, const char **value)
+{
+    bool type = strstr(prop, "seq-type") != NULL;
+    if (index >= (type ? 9 : 9 - malformed)) return -ENODATA;
+    *value = type ? types[index] : values[index + (malformed && index >= 5)];
+    return 0;
+}
+static int of_property_read_u32_array(struct device_node *np, const char *prop,
+                                      uint32_t *array, int count)
+{
+    if (bad_cfg) return -EINVAL;
+    for (int i = 0; i < count; i++) array[i] = i;
+    return 0;
+}
+'''
+        harness += "enum {" + ",".join(constants) + "};\n" + parser + r'''
+static int parse_eeprom(struct msm_camera_power_ctrl_t *power_info)
+{
+    struct { int userspace_probe; } ctrl = {0}, *e_ctrl = &ctrl;
+    struct device_node node = {0}, *of_node = &node;
+    int rc;
+'''
+        harness += parse_call + "\n    return 0;\n" + cleanup + r'''
+int main(int argc, char **argv)
+{
+    int scenario = atoi(argv[1]);
+    struct msm_camera_power_ctrl_t info = { .num_vreg = 4 };
+    info.cam_vreg = kzalloc(4 * sizeof(*info.cam_vreg), 0);
+    const char *names[] = {"cam_vdig", "cam_vio", "cam_vana", "cam_vaf"};
+    for (int i = 0; i < 4; i++) info.cam_vreg[i].reg_name = names[i];
+    attempt = 0;
+    fail_at = scenario >= 1 && scenario <= 3 ? scenario : 0;
+    malformed = scenario == 4;
+    bad_cfg = scenario == 5;
+    int rc = parse_eeprom(&info);
+    if (!scenario) {
+        assert(rc == 0 && info.power_setting_size == 9 && info.power_down_setting_size == 9);
+        for (int i = 0; i < 9; i++)
+            assert(!memcmp(&info.power_setting[i], &info.power_down_setting[8-i],
+                           sizeof(*info.power_setting)));
+        kfree(info.power_down_setting);
+        kfree(info.power_setting);
+        kfree(info.cam_vreg);
+    } else {
+        assert(rc == (scenario <= 3 ? -ENOMEM : scenario == 4 ? -EILSEQ : -EINVAL));
+        assert(!info.power_setting && !info.power_setting_size);
+    }
+    for (int i = 0; i < allocation_count; i++) {
+        assert(allocations[i].freed);
+        free(allocations[i].ptr);
+    }
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "power-parser.c", Path(tmp) / "power-parser"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            for scenario in range(6):
+                with self.subTest(scenario=scenario):
+                    result = subprocess.run([str(exe), str(scenario)], capture_output=True,
+                                            timeout=5)
+                    self.assertEqual(result.returncode, 0, result.stderr.decode())
+
+    def test_eeprom_waits_for_a_flushed_snapshot(self):
+        ram = (ROOT / "fs/pstore/ram.c").read_text()
+        eeprom = (CAM / "sensor/eeprom/msm_eeprom.c").read_text()
+        self.assertIn("late_initcall(msm_eeprom_init_module);", eeprom)
+        self.assertRegex(ram, r"#define RAMOOPS_PERIODIC_SNAPSHOTS\s+1\b")
+        self.assertIn("static DECLARE_COMPLETION(ramoops_snapshot_ready);", ram)
+        wait = re.search(r"^int ramoops_wait_snapshot_ready\(.*?^}",
+                         ram, re.M | re.S)[0]
+        init = re.search(r"^static int __init msm_eeprom_init_module\(.*?^}",
+                         eeprom, re.M | re.S)[0]
+        thread = ram.split("static int ramoops_snap_thread(", 1)[1]
+        sample = thread.split("ret = ramoops_snap_take(s);", 1)[1]
+        sample = "ret = ramoops_snap_take(s);" + sample.split(
+            "\n\t\t/*\n\t\t * Every tenth", 1)[0]
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#define __init
+#define pr_info(...) ((void)0)
+#define pr_err(...) ((void)0)
+#define CDBG(...) ((void)0)
+#define RAMOOPS_SNAP_MAX_FAILURES 10
+#define msecs_to_jiffies(ms) (ms)
+struct completion { bool done; };
+static struct completion ramoops_snapshot_ready;
+static unsigned int waits, signals, registrations, commit_result;
+static bool camera_legacy_enable = true;
+static int msm_eeprom_platform_driver, msm_eeprom_spi_driver, msm_eeprom_i2c_driver;
+static unsigned long wait_for_completion_timeout(struct completion *c,
+                                                 unsigned long timeout)
+{
+    assert(timeout == 10000);
+    waits++;
+    return c->done ? 1 : 0;
+}
+static void complete_all(struct completion *c)
+{
+    assert(!c->done);
+    c->done = true;
+    signals++;
+}
+static int platform_driver_register(void *driver)
+{
+    assert(ramoops_snapshot_ready.done);
+    registrations++;
+    return 0;
+}
+#define spi_register_driver platform_driver_register
+#define i2c_add_driver platform_driver_register
+struct ramoops_snapper { unsigned int failures; bool warned; } snapshot;
+static int ramoops_snap_take(struct ramoops_snapper *s) { return commit_result; }
+static void sample_once(void)
+{
+    struct ramoops_snapper *s = &snapshot;
+    int ret;
+    for (int attempt = 0; attempt < 1; attempt++) {
+'''
+        harness += sample + "\n    }\n}\n" + wait + "\n" + init + r'''
+int main(void)
+{
+    camera_legacy_enable = false;
+    assert(msm_eeprom_init_module() == -ENODEV && !waits && !registrations);
+    camera_legacy_enable = true;
+    assert(msm_eeprom_init_module() == -ETIMEDOUT && !registrations);
+    commit_result = EIO;
+    sample_once();
+    assert(!signals && !ramoops_snapshot_ready.done);
+    assert(msm_eeprom_init_module() == -ETIMEDOUT && !registrations);
+    commit_result = 0;
+    sample_once();
+    assert(signals == 1 && ramoops_snapshot_ready.done);
+    assert(msm_eeprom_init_module() == 0 && registrations == 3);
+    sample_once();
+    assert(signals == 1);
+    assert(ramoops_wait_snapshot_ready(10000) == 0);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "snapshot-ready.c", Path(tmp) / "snapshot-ready"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            result = subprocess.run([str(exe)], capture_output=True, timeout=5)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+
+    def test_gpio_count_uses_phandle_entries(self):
+        source = (CAM / "msm_sd.h").read_text()
+        function = re.search(r"^static inline int msm_camera_gpio_count\(.*?^}",
+                             source, re.M | re.S)[0]
+        harness = r'''
+#include <assert.h>
+#include <string.h>
+struct device {};
+struct device_node { int count, raw_cells; };
+static int of_property_count_u32_elems(struct device_node *np, const char *p)
+{
+    return np->raw_cells;
+}
+static int of_count_phandle_with_args(struct device_node *np, const char *p,
+                                      const char *cells)
+{
+    assert(!strcmp(p, "gpios") && !strcmp(cells, "#gpio-cells"));
+    return np->count;
+}
+'''
+        harness += function + r'''
+int main(void)
+{
+    struct device_node cases[] = {{4, 12}, {2, 6}, {3, 8}, {0, 0}, {-2, -2}};
+    for (int n = 0; n < 5; n++)
+        assert(msm_camera_gpio_count(0, &cases[n]) ==
+               (cases[n].count > 0 ? cases[n].count : 0));
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "gpio.c", Path(tmp) / "gpio"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            result = subprocess.run([str(exe)], capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+
+    def test_cci_top_ahb_uses_its_own_clock_gate(self):
+        dts = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
+        cci = dts.split("cci: qcom,cci@1b0c000 {", 1)[1]
+        clocks = re.search(r"clocks = (.*?);", cci, re.S)[1]
+        self.assertEqual(re.findall(r"<&gcc (\w+)>", clocks), [
+            "GCC_CAMSS_ISPIF_AHB_CLK", "CCI_CLK_SRC", "GCC_CAMSS_CCI_AHB_CLK",
+            "GCC_CAMSS_CCI_CLK", "GCC_CAMSS_AHB_CLK", "GCC_CAMSS_TOP_AHB_CLK"])
+
+    def test_regulator_failure_stops_power_sequence(self):
+        source = (CAM / "sensor/io/msm_camera_dt_util.c").read_text()
+        power_up = source.split("int legacy_msm_camera_power_up(", 1)[1]
+        power_up = power_up.split("static struct msm_sensor_power_setting*", 1)[0]
+        enable = power_up.split("case SENSOR_VREG:", 1)[1]
+        enable = enable.split("case SENSOR_I2C_MUX:", 1)[0]
+        unwind = power_up.split("power_up_failed:", 1)[1]
+        unwind = unwind.split("case SENSOR_CLK:", 1)[1].split("case SENSOR_GPIO:", 1)[0]
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#define SENSOR_VREG 1
+#define INVALID_VREG 99
+#define CAM_VREG_MAX 8
+#define pr_err(...) ((void)0)
+struct regulator {};
+struct setting { int seq_val; void *data[1]; };
+struct control {
+    void *dev;
+    int num_vreg, cam_vreg[8];
+    void *gpio_conf, *clk_info, *clk_ptr;
+    int clk_info_size;
+};
+static int result, regulator_calls, gpio_calls, clock_disables;
+static void legacy_msm_camera_clk_enable(void *dev, void *info, void *ptr,
+                                        int count, int enable)
+{
+    assert(!enable && count == 2);
+    clock_disables++;
+}
+static int legacy_msm_camera_config_single_vreg(void *dev, int *vreg,
+                                                struct regulator **p, int on)
+{
+    regulator_calls++;
+    return result;
+}
+static int legacy_msm_cam_sensor_handle_reg_gpio(int val, void *conf, int on)
+{
+    gpio_calls++;
+    return 0;
+}
+static int step(struct control *ctrl, struct setting *power_setting)
+{
+    int rc = 0;
+    switch (SENSOR_VREG) {
+    case SENSOR_VREG:
+'''
+        harness += enable + r'''
+    }
+    return 0;
+power_up_failed:
+    return rc;
+}
+static void unwind_clock(struct control *ctrl)
+{
+    switch (0) {
+    case 0:
+'''
+        harness += unwind + r'''
+    }
+}
+int main(void)
+{
+    struct control ctrl = { .num_vreg = 1, .clk_info_size = 2 };
+    struct setting setting = {0};
+    result = -ENODEV;
+    assert(step(&ctrl, &setting) == -ENODEV);
+    assert(regulator_calls == 1 && gpio_calls == 0);
+    result = 0;
+    assert(step(&ctrl, &setting) == 0);
+    assert(regulator_calls == 2 && gpio_calls == 1);
+    unwind_clock(&ctrl);
+    assert(clock_disables == 1);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "power.c", Path(tmp) / "power"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            result = subprocess.run([str(exe)], capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+
+    def test_eeprom_registration_errors_precede_devnode_access(self):
+        source = (CAM / "sensor/eeprom/msm_eeprom.c").read_text()
+        probe = source.split("static int msm_eeprom_platform_probe(", 1)[1]
+        probe = probe.split("static void msm_eeprom_platform_remove(", 1)[0]
+        tail = re.search(r"^[ \t]+(?:rc = )?media_entity_pads_init.*?^}",
+                         probe, re.M | re.S)[0]
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stddef.h>
+#define CONFIG_COMPAT 1
+#define CDBG(...) ((void)0)
+#define kfree(p) ((void)0)
+#define legacy_msm_camera_power_down(...) ((void)0)
+struct node { void *fops; } node;
+struct control {
+    struct { struct { int entity; struct node *devnode; } sd; } msm_sd;
+    struct { void *mapdata, *map; } cal_data;
+    void *eboard_info;
+    struct { void *cci_client; } i2c_client;
+    int is_supported;
+};
+struct platform_device { void *data; };
+static int entity_result, register_result, registrations, entity_cleanups;
+static int media_entity_pads_init(int *entity, int n, void *pads)
+{
+    return entity_result;
+}
+static void media_entity_cleanup(int *entity) { entity_cleanups++; }
+static int legacy_msm_sd_register(void *sd)
+{
+    struct control *ctrl = sd;
+    registrations++;
+    if (!register_result) ctrl->msm_sd.sd.devnode = &node;
+    return register_result;
+}
+static void platform_set_drvdata(struct platform_device *pdev, void *data)
+{
+    pdev->data = data;
+}
+static struct { int (*compat_ioctl32)(void); } msm_eeprom_v4l2_subdev_fops;
+static void legacy_msm_cam_copy_v4l2_subdev_fops(void *fops) {}
+static int msm_eeprom_subdev_fops_ioctl32(void) { return 0; }
+static int finish_probe(struct control *e_ctrl, struct platform_device *pdev)
+{
+    int rc = 0;
+'''
+        harness += tail + r'''
+int main(void)
+{
+    for (int failure = 0; failure < 3; failure++) {
+        struct control ctrl = {0};
+        struct platform_device pdev = { .data = &ctrl.msm_sd.sd };
+        entity_result = failure == 1 ? -ENOMEM : 0;
+        register_result = failure == 2 ? -EIO : 0;
+        registrations = entity_cleanups = 0;
+        assert(finish_probe(&ctrl, &pdev) == (entity_result ?: register_result));
+        assert(registrations == (failure != 1));
+        assert(entity_cleanups == (failure == 2));
+        if (failure) assert(!pdev.data && !ctrl.msm_sd.sd.devnode);
+        else assert(pdev.data && node.fops == &msm_eeprom_v4l2_subdev_fops);
+    }
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "eeprom.c", Path(tmp) / "eeprom"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            result = subprocess.run([str(exe)], capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+
+    def test_subdevice_registration_unwinds_failures(self):
+        source = (CAM / "msm.c").read_text()
+        internal = re.search(r"^static inline int __msm_sd_register_subdev\(.*?^}",
+                             source, re.M | re.S)[0]
+        public = re.search(r"^int legacy_msm_sd_register\(.*?^}",
+                           source, re.M | re.S)[0]
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#define GFP_KERNEL 0
+#define V4L2_SUBDEV_FL_HAS_DEVNODE 1
+#define VFL_TYPE_SUBDEV 1
+#define WARN_ON(x) (x)
+#define strscpy(d, s, n) snprintf(d, n, "%s", s)
+#include <stdio.h>
+struct video_device;
+struct v4l2_subdev {
+    char name[32];
+    int flags, owner;
+    struct video_device *devnode;
+};
+struct video_device {
+    char name[32];
+    void *v4l2_dev, *fops;
+    void (*release)(struct video_device *);
+};
+struct msm_sd_subdev { struct v4l2_subdev sd; };
+static struct { void *dev; } core = { &core }, *msm_v4l2_dev = &core;
+static int ordered_sd_mtx, ordered_sd_list, linked, registered, allocated;
+static int fail_stage, unregisters;
+#define mutex_lock(p) ((void)0)
+#define mutex_unlock(p) ((void)0)
+static void msm_add_sd_in_position(struct msm_sd_subdev *sd, int *list)
+{
+    assert(!linked);
+    linked = 1;
+}
+static int v4l2_device_register_subdev(void *core, struct v4l2_subdev *sd)
+{
+    if (fail_stage == 1) return -ENODEV;
+    registered = 1;
+    return 0;
+}
+static void *kzalloc(size_t n, int flags)
+{
+    if (fail_stage == 2) return NULL;
+    allocated++;
+    return calloc(1, n);
+}
+static void kfree(void *p) { allocated--; free(p); }
+#define video_set_drvdata(v, s) ((void)0)
+#define msm_cam_get_v4l2_subdev_fops_ptr() NULL
+static void msm_sd_unregister_subdev(struct video_device *v) { kfree(v); }
+static int __video_register_device(struct video_device *v, int t, int n,
+                                   int warn, int owner)
+{
+    return fail_stage == 3 ? -EIO : 0;
+}
+static void video_unregister_device(struct video_device *v) { kfree(v); }
+static void v4l2_device_unregister_subdev(struct v4l2_subdev *sd)
+{
+    assert(registered);
+    registered = 0;
+    unregisters++;
+    if (sd->devnode) {
+        video_unregister_device(sd->devnode);
+        sd->devnode = NULL;
+    }
+}
+'''
+        harness += internal + "\n" + public + r'''
+int main(void)
+{
+    const int errors[] = {0, -ENODEV, -ENOMEM, -EIO};
+    for (fail_stage = 0; fail_stage <= 3; fail_stage++) {
+        struct msm_sd_subdev sub = { .sd = { .name = "eeprom", .flags = 1 } };
+        linked = registered = allocated = unregisters = 0;
+        assert(legacy_msm_sd_register(&sub) == errors[fail_stage]);
+        if (fail_stage) {
+            assert(!linked && !registered && !allocated && !sub.sd.devnode);
+            assert(unregisters == (fail_stage >= 2));
+        } else {
+            assert(linked && registered && allocated == 1 && sub.sd.devnode);
+            v4l2_device_unregister_subdev(&sub.sd);
+        }
+    }
+    struct msm_sd_subdev sub = { .sd = { .name = "cci" } };
+    linked = registered = allocated = unregisters = fail_stage = 0;
+    assert(legacy_msm_sd_register(&sub) == 0);
+    assert(linked && registered && !allocated && !sub.sd.devnode);
+    v4l2_device_unregister_subdev(&sub.sd);
+    msm_v4l2_dev = NULL;
+    linked = 0;
+    assert(legacy_msm_sd_register(&sub) == -EIO && !linked);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "register.c", Path(tmp) / "register"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            result = subprocess.run([str(exe)], capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+
+    def test_clock_failure_cleanup_stays_within_acquired_entries(self):
+        source = (CAM / "common/cam_soc_api.c").read_text()
+        single = source.split("static int msm_camera_get_clk_info_internal(", 1)[1]
+        single = single.split("EXPORT_SYMBOL(legacy_msm_camera_get_clk_info);", 1)[0]
+        multiple = source.split("int legacy_msm_camera_get_clk_info_and_rates(", 1)[1]
+        multiple = multiple.split("EXPORT_SYMBOL(", 1)[0]
+        cleanups = {
+            "single-clock": single.split("err4:", 1)[1].split("err3:", 1)[0],
+            "rate-allocation": multiple.split("if (!rates[i]) {", 1)[1]
+                .split("goto err3;", 1)[0],
+            "multiple-clocks": multiple.split("err5:", 1)[1].split("err4:", 1)[0],
+        }
+        for name, cleanup in cleanups.items():
+            with self.subTest(cleanup=name):
+                # Check each subscript before access, including unsigned wrap.
+                cleanup = re.sub(
+                    r"(?:\(\*clk_ptr\)|clks|rates)\[([^]]+)\]",
+                    r"checked(\1)", cleanup)
+                harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
+static unsigned int acquired, expected, released;
+static void *checked(uint32_t index)
+{
+    if (index >= acquired || !expected || index != expected - 1)
+        exit(1);
+    expected--;
+    return (void *)(uintptr_t)(index + 1);
+}
+static void release(void *dev, void *entry) { released++; }
+#define devm_clk_put release
+#define devm_kfree release
+int main(void)
+{
+    void *dev = NULL;
+    struct { int dev; } device, *pdev = &device;
+    for (acquired = 0; acquired < 5; acquired++) {
+        uint32_t i = acquired;
+        int rc = 0;
+        expected = acquired;
+        released = 0;
+'''
+                harness += cleanup + r'''
+        assert(expected == 0 && released == acquired);
+    }
+}
+'''
+                with tempfile.TemporaryDirectory() as tmp:
+                    cfile, exe = Path(tmp) / "cleanup.c", Path(tmp) / "cleanup"
+                    cfile.write_text(harness)
+                    subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                                    "-o", str(exe)], check=True)
+                    result = subprocess.run([str(exe)], capture_output=True,
+                                            timeout=5)
+                    self.assertEqual(result.returncode, 0, result.stderr.decode())
+
+    def test_cci_irq_is_not_enabled_during_probe(self):
+        source = (CAM / "sensor/cci/msm_cci.c").read_text()
+        probe = source.split("static int msm_cci_probe(", 1)[1]
+        probe = probe.split("static void msm_cci_exit(", 1)[0]
+        request = re.search(r"rc = legacy_msm_camera_register_irq\(.*?;",
+                            probe, re.S)[0]
+        harness = r'''
+#include <assert.h>
+#define IRQF_TRIGGER_RISING 1
+#define IRQF_NO_AUTOEN 0x80000
+struct resource { int unused; };
+struct cci_device { struct resource *irq; };
+static int handler_called;
+static void msm_cci_irq(void) { handler_called++; }
+static int legacy_msm_camera_register_irq(void *pdev, struct resource *irq,
+    void (*handler)(void), int flags, const char *name, void *state)
+{
+    /* Model a pending IRQ delivered synchronously by request_irq(). */
+    if (!(flags & IRQF_NO_AUTOEN))
+        handler();
+    return 0;
+}
+int main(void)
+{
+    int rc;
+    struct cci_device dev = {0}, *new_cci_dev = &dev;
+    void *pdev = 0;
+'''
+        harness += request + r'''
+    assert(rc == 0 && handler_called == 0);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "irq-race.c", Path(tmp) / "irq-race"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            result = subprocess.run([str(exe)], capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+        # NO_AUTOEN already leaves disable depth at one, so don't disable twice.
+        self.assertNotIn("legacy_msm_camera_enable_irq(", probe)
+        init = source.split("static int32_t msm_cci_init(", 1)[1]
+        init = init.split("static int32_t msm_cci_release(", 1)[0]
+        self.assertLess(init.index("rc = legacy_msm_camera_clk_enable("),
+                        init.index("legacy_msm_camera_enable_irq(cci_dev->irq, true)"))
+
+    def test_irq_lookup_errors_and_handle(self):
+        source = (CAM / "common/cam_soc_api.c").read_text()
+        function = re.search(
+            r"^struct resource \*legacy_msm_camera_get_irq\(.*?^}",
+            source, re.M | re.S)[0]
+        self.assertNotIn("platform_get_resource_byname", function)
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#define GFP_KERNEL 0
+#define IORESOURCE_IRQ 0x400
+#define ERR_PTR(n) ((void *)(intptr_t)(n))
+#define pr_err(...) ((void)0)
+struct device { int unused; };
+struct platform_device { struct device dev; };
+struct resource { unsigned long start, end, flags; const char *name; };
+static int irq_result, fail_alloc;
+static struct resource handle;
+static int platform_get_irq_byname(struct platform_device *p, char *name)
+{
+    assert(p && !strcmp(name, "cci"));
+    return irq_result;
+}
+static void *devm_kzalloc(struct device *d, size_t n, int flags)
+{
+    assert(d && n == sizeof(handle));
+    memset(&handle, 0, n);
+    return fail_alloc ? NULL : &handle;
+}
+'''
+        harness += function + r'''
+int main(void)
+{
+    struct platform_device p = {0};
+    struct resource *r;
+    assert(legacy_msm_camera_get_irq(NULL, "cci") == ERR_PTR(-EINVAL));
+    assert(legacy_msm_camera_get_irq(&p, NULL) == ERR_PTR(-EINVAL));
+    irq_result = -517; /* EPROBE_DEFER must survive. */
+    assert(legacy_msm_camera_get_irq(&p, "cci") == ERR_PTR(-517));
+    irq_result = -ENXIO;
+    assert(legacy_msm_camera_get_irq(&p, "cci") == ERR_PTR(-ENXIO));
+    irq_result = 82;
+    fail_alloc = 1;
+    assert(legacy_msm_camera_get_irq(&p, "cci") == ERR_PTR(-ENOMEM));
+    fail_alloc = 0;
+    r = legacy_msm_camera_get_irq(&p, "cci");
+    assert(r == &handle && r->start == 82 && r->end == 82);
+    assert(r->flags == IORESOURCE_IRQ && !strcmp(r->name, "cci"));
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cfile, exe = Path(tmp) / "irq.c", Path(tmp) / "irq"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
+        callers = 0
+        for path in CAM.rglob("*.c"):
+            text = path.read_text()
+            for match in re.finditer(
+                    r"([\w>\-]+) = legacy_msm_camera_get_irq\([^;]+;", text):
+                tail = text[match.end():match.end() + 350]
+                self.assertIn(f"IS_ERR({match[1]})", tail, str(path))
+                self.assertIn(f"PTR_ERR({match[1]})", tail, str(path))
+                callers += 1
+        self.assertEqual(callers, 9)
+
+    def test_firmware_preflight(self):
+        script = (ROOT / "porting/tools/build-kernel.sh").read_text()
+        guard = script.split("# Firmware is gitignored", 1)[1]
+        guard = guard.split("# --- the base image", 1)[0]
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ, FW_DIR=tmp, VENUS_FW_DIR=tmp)
+            files = ["wcnss.mdt", "wcnss.b00", "wcnss.b01", "wcnss.b02",
+                     "wcnss.b04", "wcnss.b06", "wcnss.b09", "wcnss.b10",
+                     "wcnss.b11", "wcnss.b12",
+                     "wlan/prima/WCNSS_qcom_wlan_nv.bin", "venus.mdt"]
+            files += [f"venus.b{i:02d}" for i in range(5)]
+            for name in files:
+                p = Path(tmp) / name
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(b"firmware")
+            def run():
+                return subprocess.run(["bash", "-eu", "-c", "# Firmware is gitignored" + guard],
+                                      env=env, capture_output=True)
+            self.assertEqual(run().returncode, 0)
+            for name in files:
+                p = Path(tmp) / name
+                p.unlink()
+                self.assertNotEqual(run().returncode, 0, name)
+                p.write_bytes(b"")
+                self.assertNotEqual(run().returncode, 0, name)
+                p.write_bytes(b"firmware")
+
+    def test_core_and_media_prerequisites(self):
+        dts = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
+        self.assertIn('compatible = "qcom,msm-cam";', dts)
+        for mode in ("standard", "fast", "custom", "fast_plus"):
+            node = re.search(rf"qcom,i2c_{mode}_mode {{(.*?)}};", dts, re.S)[1]
+            for prop in ("thigh", "tlow", "tsu-sto", "tsu-sta", "thd-dat",
+                         "thd-sta", "tbuf", "scl-stretch-en", "trdhld", "tsp"):
+                self.assertIn(f"qcom,hw-{prop}", node)
+        for path in ("msm.c", "camera/camera.c"):
+            text = (CAM / path).read_text()
+            self.assertLess(text.index("->mdev->dev ="),
+                            text.index("media_device_init("))
+            self.assertLess(text.index("media_device_init("),
+                            text.index("rc = media_device_register("))
+        for path in ("msm.c", "camera/camera.c", "fd/msm_fd_dev.c",
+                     "jpeg_dma/msm_jpeg_dma_dev.c"):
+            self.assertIn("->device_caps =" if path in ("msm.c", "camera/camera.c")
+                          else ".device_caps =", (CAM / path).read_text())
+
+    def test_core_driver_name_is_not_drm_msm(self):
+        # CONFIG_DRM_MSM registers a platform driver named "msm"
+        # (drivers/gpu/drm/msm/msm_drv.c), so the camera core would fail
+        # driver_register with -EBUSY before its probe could run. That
+        # is what run371 measured: Error: Driver 'msm' is already
+        # registered, aborting...
+        source = (CAM / "msm.c").read_text()
+        block = source.split("static struct platform_driver msm_driver",
+                             1)[1]
+        block = block.split("};", 1)[0]
+        match = re.search(r'\.name = "([^"]+)"', block)
+        self.assertIsNotNone(match)
+        self.assertNotEqual(match[1], "msm")
+        drm = ROOT / "drivers/gpu/drm/msm/msm_drv.c"
+        self.assertIsNotNone(re.search(r'name\s+= "msm"', drm.read_text()),
+                             "the conflicting DRM msm driver moved")
+
+    def test_ahb_vote_client_carries_its_device(self):
+        # The interconnect compat layer resolves votes through
+        # pdata->dev (msm-bus-compat.c msm_bus_scale_register_client);
+        # the DT-parse path sets it, cam_hw_ops did not.
+        source = (CAM / "common/cam_hw_ops.c").read_text()
+        block = source.split(
+            "*data.pbus_data = (struct msm_bus_scale_pdata) {", 1)[1]
+        block = block.split("};", 1)[0]
+        self.assertIn(".dev = &pdev->dev", block)
+
+
+if __name__ == "__main__":
+    unittest.main()
