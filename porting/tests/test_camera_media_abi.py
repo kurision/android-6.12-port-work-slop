@@ -41,6 +41,8 @@ typedef uint32_t compat_uptr_t;
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define MEDIA_IOC_FL_GRAPH_MUTEX 1
 #define QCAMERA_VNODE_GROUP_ID 2
+#define MSM_CAMERA_SUBDEV_CPP 9
+#define MSM_CAMERA_SUBDEV_VPE 5
 struct media_device;
 struct media_device_ops;
 struct media_pad;
@@ -55,7 +57,8 @@ struct media_entity {
     struct list_head links;
     union { struct { u32 major, minor; } dev; } info;
 };
-struct v4l2_subdev { struct media_entity entity; u32 grp_id; };
+struct video_device { int num; };
+struct v4l2_subdev { struct media_entity entity; u32 grp_id; struct video_device *devnode; };
 struct media_pad { struct media_entity *entity; unsigned index, flags; };
 struct media_link { struct list_head list; struct media_pad *source, *sink; u32 flags; };
 struct media_device { const struct media_device_ops *ops; struct media_entity *entities; int graph_mutex; };
@@ -177,9 +180,47 @@ int main(void) {
     copy_fault=true; desc.id=2;
     assert(media_device_ioctl(&f,MEDIA_IOC_ENUM_ENTITIES,(unsigned long)&desc)==-EFAULT);
     copy_fault=false;
+    /* CPP stores revision, then opens /dev/v4l-subdev<revision>. */
+    struct video_device cpp_node={.num=16};
+    actuator.devnode=&cpp_node;
+    actuator.entity.info.dev.major=81;actuator.entity.info.dev.minor=19;
+    for(unsigned group=0;group<2;group++) {
+        actuator.grp_id=group?MSM_CAMERA_SUBDEV_VPE:MSM_CAMERA_SUBDEV_CPP;
+        for(unsigned compat=0;compat<2;compat++) {
+            desc=(struct media_entity_desc){.id=3,.revision=0xa5a5a5a5};
+            assert(!(compat?media_device_compat_ioctl:media_device_ioctl)(
+                &f,MEDIA_IOC_ENUM_ENTITIES,(unsigned long)&desc));
+            assert(desc.revision==16 && desc.dev.minor==19);
+            char selected[32];snprintf(selected,sizeof(selected),"/dev/v4l-subdev%u",desc.revision);
+            assert(!strcmp(selected,"/dev/v4l-subdev16"));
+        }
+        /* Lookup/link paths do not request a revision output. */
+        u32 id,group_id;
+        media_device_legacy_entity_info(&actuator.entity,&id,&group_id,NULL);
+        assert(id==3 && group_id==actuator.grp_id);
+        cpp_node.num=7;
+        desc.id=3;assert(!media_device_ioctl(&f,MEDIA_IOC_ENUM_ENTITIES,(unsigned long)&desc));
+        assert(desc.revision==7);
+        cpp_node.num=16;actuator.devnode=NULL;
+        desc.id=3;assert(!media_device_ioctl(&f,MEDIA_IOC_ENUM_ENTITIES,(unsigned long)&desc));
+        assert(!desc.revision);
+        actuator.devnode=&cpp_node;
+    }
+    /* Native devices keep revision zero even for a CPP-shaped entity. */
+    m.ops=NULL;desc.id=9;
+    assert(!media_device_ioctl(&f,MEDIA_IOC_ENUM_ENTITIES,(unsigned long)&desc));
+    assert(!desc.revision && !desc.group_id && desc.id==9);
+    m.ops=&native_ops;desc.id=9;
+    assert(!media_device_ioctl(&f,MEDIA_IOC_ENUM_ENTITIES,(unsigned long)&desc));
+    assert(!desc.revision);
+    m.ops=&camera_ops;actuator.grp_id=7;
+    for(unsigned id=1;id<=3;id++) {
+        desc.id=id;assert(!media_device_ioctl(&f,MEDIA_IOC_ENUM_ENTITIES,(unsigned long)&desc));
+        assert(!desc.revision);
+    }
     assert(video.graph_obj.id==1 && sensor.entity.graph_obj.id==4 && actuator.entity.graph_obj.id==9);
     assert(!m.graph_mutex && lock_calls>10);
-    puts("native defaults, legacy HAL scan, NEXT, link IDs, compat routing and faults PASS");
+    puts("native defaults, HAL scan, CPP/VPE revision paths, NEXT, links and compat faults PASS");
 }
 '''
 
@@ -254,6 +295,7 @@ static const struct media_ioctl_info ioctl_info[] = {
         for name in ("media_entity_desc", "media_links_enum"):
             code += re.search(r"^struct " + name + r" {.*?^};", source, re.M | re.S)[0]
         code += '\n_Static_assert(sizeof(struct media_entity_desc)==256,"entity size");\n'
+        code += '_Static_assert(__builtin_offsetof(struct media_entity_desc,revision)==40,"revision offset");\n'
         code += '_Static_assert(__builtin_offsetof(struct media_entity_desc,group_id)==48,"group offset");\n'
         with tempfile.TemporaryDirectory(prefix="camera-media-layout-") as directory:
             c = Path(directory) / "layout.c"
