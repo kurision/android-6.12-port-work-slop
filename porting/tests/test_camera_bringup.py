@@ -15,6 +15,114 @@ CAM = ROOT / "drivers/media/platform/msm/camera"
 
 
 class CameraBringup(unittest.TestCase):
+    def test_sensor_slot_publication_and_failed_clock_cleanup(self):
+        source = (CAM / "sensor/msm_sensor_driver.c").read_text()
+        def extract(name):
+            return re.search(r"^static [^\n]*\b" + name + r"\([^;{]*\)\n\{.*?^}",
+                             source, re.M | re.S)[0]
+        self.assertNotIn("g_sctrl[", extract("msm_sensor_driver_parse"))
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#define GFP_KERNEL 0
+#define I2C_FUNC_I2C 1
+#define MSM_CAMERA_PLATFORM_DEVICE 1
+#define MSM_CAMERA_I2C_DEVICE 2
+#define pr_err(...) ((void)0)
+#define CDBG(...) ((void)0)
+struct device { void *of_node; };
+struct platform_device { struct device dev; void *data; int id; };
+struct i2c_client { struct device dev; void *data, *adapter; const char *name; };
+struct msm_camera_gpio_conf { void *gpio_num_info, *cam_gpio_req_tbl, *cam_gpio_set_tbl; };
+struct msm_camera_power_ctrl_t {
+    struct msm_camera_gpio_conf *gpio_conf;
+    void *cam_vreg, *clk_info, *clk_ptr;
+    size_t clk_info_size;
+    struct device *dev;
+};
+struct board { struct msm_camera_power_ctrl_t power_info; void *sensor_info; };
+struct sensor_client { void *cci_client; struct i2c_client *client; };
+struct msm_sensor_ctrl_t {
+    struct board *sensordata;
+    struct sensor_client *sensor_i2c_client;
+    void *msm_sensor_mutex, *of_node;
+    struct platform_device *pdev;
+    int id, sensor_device_type;
+};
+static struct msm_sensor_ctrl_t *g_sctrl[3];
+static int live, parse_rc, clock_rc;
+static bool fail_alloc;
+static void *alloc(size_t n) {
+    if (fail_alloc) return NULL;
+    void *p = calloc(1,n); assert(p); ++live; return p;
+}
+#define kzalloc(n,f) alloc(n)
+static void kfree(void *p) { if (p) { assert(live>0); --live; free(p); } }
+static void platform_set_drvdata(struct platform_device *p,void *v) { p->data=v; }
+static void i2c_set_clientdata(struct i2c_client *p,void *v) { p->data=v; }
+static bool i2c_check_functionality(void *p,int f) { return true; }
+static int msm_sensor_driver_parse(struct msm_sensor_ctrl_t *s) {
+    if (parse_rc) return parse_rc;
+    s->sensordata=alloc(sizeof(*s->sensordata));
+    s->sensordata->sensor_info=alloc(1);
+    s->msm_sensor_mutex=alloc(1);
+    s->sensor_i2c_client=alloc(sizeof(*s->sensor_i2c_client));
+    s->sensor_i2c_client->cci_client=alloc(1);
+    struct msm_camera_power_ctrl_t *p=&s->sensordata->power_info;
+    p->cam_vreg=alloc(1); p->gpio_conf=alloc(sizeof(*p->gpio_conf));
+    p->gpio_conf->gpio_num_info=alloc(1);
+    p->gpio_conf->cam_gpio_req_tbl=alloc(1);
+    p->gpio_conf->cam_gpio_set_tbl=alloc(1);
+    return 0;
+}
+static int legacy_msm_camera_get_clk_info(struct platform_device *p,
+    void **info,void **ptr,size_t *cnt) {
+    assert(!g_sctrl[0]);
+    /* Failed clock helpers may leave freed addresses in their outputs. */
+    *info=(void *)1; *ptr=(void *)2; *cnt=2;
+    return clock_rc;
+}
+static int legacy_msm_camera_i2c_dev_get_clk_info(struct device *d,
+    void **info,void **ptr,size_t *cnt) {
+    return legacy_msm_camera_get_clk_info(NULL,info,ptr,cnt);
+}
+'''
+        functions = "\n".join(extract(name) for name in (
+            "msm_sensor_driver_free_parsed_data", "msm_sensor_driver_platform_probe",
+            "msm_sensor_driver_i2c_probe"))
+        main = r'''
+int main(void) {
+    for (int bus=0;bus<2;bus++) for (int scenario=0;scenario<5;scenario++) {
+        struct platform_device p={0}; struct i2c_client c={0};
+        parse_rc=scenario==1 ? -EINVAL : 0;
+        clock_rc=scenario==2 ? -517 : scenario==3 ? -EINVAL : 0;
+        fail_alloc=scenario==0;
+        int rc=bus ? msm_sensor_driver_i2c_probe(&c) : msm_sensor_driver_platform_probe(&p);
+        if (scenario==4) {
+            assert(!rc && g_sctrl[0]);
+            assert((bus ? c.data : p.data)==g_sctrl[0]);
+            assert(g_sctrl[0]->sensordata->power_info.dev==(bus ? &c.dev : &p.dev));
+            msm_sensor_driver_free_parsed_data(g_sctrl[0]);
+            kfree(g_sctrl[0]); g_sctrl[0]=NULL;
+        } else {
+            assert(rc==(scenario==0 ? -ENOMEM : scenario==1 ? parse_rc : clock_rc));
+            assert(!g_sctrl[0] && !p.data && !c.data);
+        }
+        assert(!live);
+    }
+    return 0;
+}
+'''
+        with tempfile.TemporaryDirectory() as folder:
+            cfile, exe = Path(folder) / "sensor.c", Path(folder) / "sensor"
+            cfile.write_text(harness + functions + main)
+            subprocess.run([os.environ.get("CC", "cc"), "-Wall", "-Werror",
+                            str(cfile), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True, timeout=5)
+
     def test_eeprom_power_sequence_lengths_match(self):
         dts = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
         for match in re.finditer(r"qcom,eeprom@\w+\s*{([^}]+)};", dts, re.S):
