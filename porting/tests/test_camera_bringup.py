@@ -15,6 +15,71 @@ CAM = ROOT / "drivers/media/platform/msm/camera"
 
 
 class CameraBringup(unittest.TestCase):
+    def test_subdevice_unregister_unlinks_shutdown_order(self):
+        source = (CAM / "msm.c").read_text()
+        functions = "\n".join(re.search(
+            r"^(?:static )?(?:void|int) " + name + r"\([^;{]*\)\n\{.*?^}",
+            source, re.M | re.S)[0] for name in (
+                "msm_add_sd_in_position", "legacy_msm_sd_register", "legacy_msm_sd_unregister"))
+        harness = r'''
+#include <assert.h>
+#include <errno.h>
+#include <stddef.h>
+#define WARN_ON(x) (x)
+#define pr_err(...) ((void)0)
+struct list_head { struct list_head *next,*prev; };
+static void INIT_LIST_HEAD(struct list_head *p) { p->next=p->prev=p; }
+static void list_add_tail(struct list_head *p,struct list_head *h) {
+    p->next=h; p->prev=h->prev; h->prev->next=p; h->prev=p;
+}
+static void list_del_init(struct list_head *p) {
+    p->prev->next=p->next; p->next->prev=p->prev; INIT_LIST_HEAD(p);
+}
+#define list_for_each_entry(e,h,m) \
+    for (struct list_head *p_=(h)->next; p_!=(h) && \
+         ((e)=(void *)((char *)p_-offsetof(__typeof__(*(e)),m)),1); p_=p_->next)
+struct v4l2_subdev { int registered; };
+struct msm_sd_subdev { struct v4l2_subdev sd; struct list_head list; unsigned close_seq; };
+static struct { void *dev; } v4l2_dev, *msm_v4l2_dev=&v4l2_dev;
+static struct list_head ordered_sd_list;
+static int ordered_sd_mtx, reg_error, unregistered;
+static void mutex_lock(int *m) { assert(!*m); ++*m; }
+static void mutex_unlock(int *m) { assert(*m); --*m; }
+static int __msm_sd_register_subdev(struct v4l2_subdev *sd) {
+    assert(!ordered_sd_mtx);
+    if (reg_error) return reg_error;
+    sd->registered=1; return 0;
+}
+static void v4l2_device_unregister_subdev(struct v4l2_subdev *sd) {
+    struct msm_sd_subdev *entry;
+    assert(!ordered_sd_mtx);
+    list_for_each_entry(entry,&ordered_sd_list,list) assert(&entry->sd!=sd);
+    sd->registered=0; ++unregistered;
+}
+'''
+        harness += functions + r'''
+int main(void) {
+    struct msm_sd_subdev a={.close_seq=20}, b={.close_seq=10}, c={.close_seq=30}, failed={0};
+    INIT_LIST_HEAD(&ordered_sd_list); v4l2_dev.dev=&v4l2_dev;
+    assert(!legacy_msm_sd_register(&a)); assert(!legacy_msm_sd_register(&b));
+    assert(!legacy_msm_sd_register(&c));
+    assert(ordered_sd_list.next==&b.list && b.list.next==&a.list && a.list.next==&c.list);
+    assert(!legacy_msm_sd_unregister(&a));
+    assert(b.list.next==&c.list && c.list.prev==&b.list && a.list.next==&a.list);
+    reg_error=-ENOMEM; assert(legacy_msm_sd_register(&failed)==-ENOMEM);
+    assert(!legacy_msm_sd_unregister(&failed)); assert(!legacy_msm_sd_unregister(&a));
+    assert(!legacy_msm_sd_unregister(&b)); assert(!legacy_msm_sd_unregister(&c));
+    assert(ordered_sd_list.next==&ordered_sd_list && unregistered==5);
+    assert(legacy_msm_sd_unregister(NULL)==-EINVAL);
+}
+'''
+        with tempfile.TemporaryDirectory() as folder:
+            cfile, exe = Path(folder) / "sd-order.c", Path(folder) / "sd-order"
+            cfile.write_text(harness)
+            subprocess.run([os.environ.get("CC", "cc"), str(cfile),
+                            "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True, timeout=5)
+
     def test_clock_release_indexes_clock_array(self):
         source = (CAM / "common/cam_soc_api.c").read_text()
         functions = "\n".join(re.search(
