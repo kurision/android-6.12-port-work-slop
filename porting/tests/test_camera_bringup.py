@@ -15,6 +15,54 @@ CAM = ROOT / "drivers/media/platform/msm/camera"
 
 
 class CameraBringup(unittest.TestCase):
+    def test_csi_nodes_describe_all_sensor_routes(self):
+        source = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
+        header = (ROOT / "include/dt-bindings/clock/qcom,gcc-msm8953.h").read_text()
+        for kind, addresses, irqs, version, count in (
+                ("csid", (0x1b30000, 0x1b30400, 0x1b30800), (51, 52, 153), "3.5.1", 9),
+                ("csiphy", (0x1b34000, 0x1b35000, 0x1b36000), (78, 79, 315), "3.5", 6)):
+            nodes = re.findall(r"qcom," + kind + r"@([0-9a-f]+)\s*{([^}]+)};", source)
+            self.assertEqual(len(nodes), 3)
+            for slot, (address, node) in enumerate(nodes):
+                with self.subTest(kind=kind, slot=slot):
+                    self.assertEqual(int(address, 16), addresses[slot])
+                    properties = dict(re.findall(r'([\w,\-]+)\s*=\s*([^;]+);', node))
+                    self.assertEqual(properties["cell-index"], f"<{slot}>")
+                    self.assertEqual(properties["compatible"], f'"qcom,{kind}-v{version}", "qcom,{kind}"')
+                    self.assertIn(properties["status"], ('"ok"', '"okay"'))
+                    self.assertEqual(properties["interrupts"], f'<GIC_SPI {irqs[slot]} IRQ_TYPE_LEVEL_HIGH>')
+                    self.assertEqual(properties["interrupt-names"], f'"{kind}"')
+                    self.assertIn(hex(addresses[slot]), properties["reg"])
+                    self.assertIn(f'"{kind}"', properties["reg-names"])
+                    clocks = re.findall(r'<&gcc (\w+)>', properties["clocks"])
+                    self.assertEqual(len(clocks), count)
+                    self.assertEqual(len(re.findall(r'"[^"]+"', properties["clock-names"])), count)
+                    self.assertEqual(len(properties["qcom,clock-rates"].strip('<> ').split()), count)
+                    for clock in clocks:
+                        self.assertRegex(header, r'(?m)^#define\s+' + clock + r'\b')
+                    if kind == "csid":
+                        self.assertEqual(properties["qcom,mipi-csi-vdd-supply"], '<&pm8953_s3>')
+
+    def test_csid_voltage_matches_fixed_s3_and_provider_steps(self):
+        board = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot.dts").read_text()
+        rail = re.search(r'pm8953_s3: s3\s*{([^}]+)};', board)[1]
+        low = int(re.search(r'regulator-min-microvolt = <(\d+)>', rail)[1])
+        high = int(re.search(r'regulator-max-microvolt = <(\d+)>', rail)[1])
+        self.assertEqual(low, high)
+        source = (ROOT / "arch/arm64/boot/dts/qcom/msm8953-xiaomi-tissot-camera.dtsi").read_text()
+        requests = re.findall(r'qcom,csi-vdd-voltage = <(\d+)>', source)
+        self.assertEqual(len(requests), 3)
+        for request in requests:
+            self.assertEqual(int(request), low)
+        provider = (ROOT / "drivers/regulator/qcom_smd-regulator.c").read_text()
+        pm8953 = provider.split('rpm_pm8953_regulators[] = {', 1)[1].split('\n};', 1)[0]
+        descriptor = re.search(r'"s3"[^\n]+&(\w+)', pm8953)[1]
+        desc = provider.split(f'struct regulator_desc {descriptor} = {{', 1)[1].split('\n};', 1)[0]
+        base, first, last, step = map(int, re.search(
+            r'REGULATOR_LINEAR_RANGE\((\d+), (\d+), (\d+), (\d+)\)', desc).groups())
+        self.assertIn(low, range(base, base + (last - first + 1) * step, step))
+        self.assertNotIn(1225000, range(base, base + (last - first + 1) * step, step))
+
     def test_csi_irqs_are_not_enabled_during_probe(self):
         for kind, probe_name in (("csid", "csid_probe"), ("csiphy", "csiphy_probe")):
             with self.subTest(kind=kind):
