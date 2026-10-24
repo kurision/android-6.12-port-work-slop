@@ -65,17 +65,47 @@ User-reported numbers from the stock (4.19) boot, benchmark tool unrecorded:
   controller, so there is no cluster-local memory advantage to find —
   equal floors are the expected hardware truth, and this measures it.
 
-Implications for the port comparison:
+### Direct verification on run403 (`porting/tools/membench.c`, root, pinned)
 
-1. Memory subsystem parity is confirmed from the hardware side; the port's
-   1.7x exec-latency gap is not a DRAM bandwidth problem.
+A purpose-built static benchmark (`aarch64-linux-gnu-gcc -static -O2`) run
+on the port measured **copy 2.6–4.1 GB/s, sequential read ~10.2 GB/s, and
+pointer-chase latency 149.2 ns (cpu0) vs 151.0 ns (cpu4)**. The memory
+subsystem on the port is healthy and at hardware-parity; the two A53
+clusters show equal DRAM latency floors through CCI-500, exactly as on the
+4.19 baseline. Transparent hugepages make no difference (madvise vs always
+within noise). `aarch64-linux-gnu-gcc` was used with no runtime glibc issue
+because the benchmark bypasses the vDSO (see the two environment gotchas
+below).
+
+Consequences:
+
+1. **DevCheck's 762 MB/s "CPU-DRAM bandwidth" reading on the port is an
+   artifact of the app's own test, not hardware.** The direct measurement
+   is ~5x higher, and DevCheck's per-core latency floors missing on the
+   port is consistent with its benchmark failing partway rather than the
+   memory being slow. Hardware exonerated on both kernels; the 1.7x
+   exec-latency gap remains a kernel-path matter.
 2. Scheduler placement on this SoC has no memory-locality dimension —
-   cluster choice affects power/thermal headroom, not latency. Nothing to
-   gain from cluster-affine placement work in the 6.12 port.
-3. The port's remaining performance levers are the ones already identified:
-   the sugov churn and the housekeeping-thread costs, not memory.
+   cluster choice affects power/thermal headroom, not latency.
+3. For a formal stock-vs-port bandwidth A/B, rerun the same binary after
+   the next stock flash; the current comparison rests on direct-port
+   numbers vs the app-reported stock number.
 
-## Follow-up: dual-phase frequency traces (same day, ~10:00 +0545)
+### Environment gotchas for host-built binaries on the device
+
+Both were hit while building this benchmark and will bite any future
+statically-linked glibc tooling pushed to the phone:
+
+- **glibc + 6.12 vvar contract:** static glibc's clock path reads the
+  vvar time-namespace page unconditionally; `vvar_fault()` in
+  `arch/arm64/kernel/vdso.c` returns `VM_FAULT_SIGBUS` for that page
+  unless the task is inside a time namespace. Every clock access then
+  SIGBUSes (BUS_ADRERR). Bionic never touches that page, so the Android
+  system is unaffected. Host-built benchmarks must call
+  `syscall(SYS_clock_gettime)` directly.
+- **CNTVCT_EL0 reads 0 from EL0** on this platform (Qualcomm traps it),
+  so the generic-timer register is not a usable timing source either;
+  `cntfrq_el0` reads fine but the counter does not advance.
 
 After the table above, the baseline was traced at 2 Hz through three phases on
 one continuous session (`06-freq-trace-dual-phase.txt`,
