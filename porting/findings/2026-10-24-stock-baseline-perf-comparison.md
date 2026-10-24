@@ -51,6 +51,30 @@ first honest A/B.
 | Fuel gauge while charging | `current_now` flips sign between samples (−10 mA … −195 mA … +35 mA) | stable positive (+453 mA charging) | Same `qpnp-fg` hardware reads sanely on 4.19 but is erratic on the port — the 6.12 `qpnp-fg` port's current reporting is suspect (calibration, sign convention, or sampling path). Fixing this is a prerequisite for any port-side battery measurement. |
 | Thermal mitigation | CPU tsens zones bound to `cpufreq-cpu0` cdev, trips 80/88/100 °C | separate `*-usr` zones (`apc0-cpu*`, `apc1-l2`), mitgov-style | Different frameworks; both wired. Under-load throttle behavior unverified on both. |
 
+## Follow-up: memory subsystem measurement (user-provided, same day)
+
+User-reported numbers from the stock (4.19) boot, benchmark tool unrecorded:
+
+- **CPU→DRAM bandwidth: 7095 MB/s.** SD625 ships single-channel LPDDR3-1866
+  (theoretical ~14.9 GB/s = 1866 MT/s × 8 B), with practical single-channel
+  stream results on this memory class typically ~5.3–7.5 GB/s
+  (nanoreview/versus listings). 7095 MB/s is ~48% of theoretical — squarely
+  normal for LPDDR3 stream efficiency on Cortex-A53.
+- **cpu0→DRAM latency floor == cpu4→DRAM latency floor.** The two A53
+  clusters both hang off the CCI-500 interconnect to a single memory
+  controller, so there is no cluster-local memory advantage to find —
+  equal floors are the expected hardware truth, and this measures it.
+
+Implications for the port comparison:
+
+1. Memory subsystem parity is confirmed from the hardware side; the port's
+   1.7x exec-latency gap is not a DRAM bandwidth problem.
+2. Scheduler placement on this SoC has no memory-locality dimension —
+   cluster choice affects power/thermal headroom, not latency. Nothing to
+   gain from cluster-affine placement work in the 6.12 port.
+3. The port's remaining performance levers are the ones already identified:
+   the sugov churn and the housekeeping-thread costs, not memory.
+
 ## Follow-up: dual-phase frequency traces (same day, ~10:00 +0545)
 
 After the table above, the baseline was traced at 2 Hz through three phases on
