@@ -1,4 +1,14 @@
-# Handoff — tissot 6.12 port, update 2026-10-18
+# Handoff — tissot 6.12 port, update 2026-10-24
+
+## Camera checkpoint, 2026-10-24
+
+Start with [HANDOFF-camera-2026-10-24.md](HANDOFF-camera-2026-10-24.md).
+User kernel #43 has working front/rear preview; rear orientation, JPEG
+corruption and software video encoding remain open. CPP/ABI changes are
+committed, with the newer QRD orientation correction marked not boot-tested.
+Camera capture originals remain locally under `artifacts/snapshot60/` and
+must be preserved; the older artifact-disposal wording below does not apply
+to this milestone. No new kernel build or boot was run by the agent.
 
 > **Current state: CURRENT-STATE.md.** The entries below are the
 > running log and are ordered newest first; the top entry is not

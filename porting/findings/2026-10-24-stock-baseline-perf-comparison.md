@@ -1,0 +1,198 @@
+# Stock-baseline performance comparison — port 6.12 vs 4.19 st20-perf, 2026-10-24
+
+Companion to
+[2026-10-24-performance-battery-analysis.md](2026-10-24-performance-battery-analysis.md),
+which had no baseline to compare against. This adds the baseline side and the
+first honest A/B.
+
+## Evidence basis
+
+- Baseline device state: the user flashed and booted their maintained 4.19
+  daily-driver kernel — **`4.19.325-cip136-st20-perf-mglru-next-gdf4a1f863991
+  #5`** (user-built, clang 21, MGLRU enabled). This is *not* OEM stock; it is
+  the comparison kernel the port should ultimately beat.
+- Port side: `6.12.96-4k-g0286193ba3c8-dirty #47` from the earlier analysis.
+- Raw captures: `porting/artifacts/snapshot60/stock-perf-20261024T*/`
+  (01-cpu-thermal.txt, 02-power-mem.txt, 03-settled-state.txt,
+  04-benchmarks.txt; gitignored).
+- Method parity: same serial (`2819f2320604`), same adb read-only sampling,
+  same benchmark commands, both sessions **on charger**, screen on, load
+  allowed to settle (port sampled at ~2032 s uptime / load 2.09; stock at
+  ~798 s / load 2.08). Battery current is charging-state on both sides, so
+  idle-drain comparison is still not possible.
+- All deltas below are single-window observations. The exec benchmark and
+  the governor-thread cost repeat twice with consistent numbers; everything
+  else is one sample.
+
+## Config deltas that matter (from live `/proc/config.gz` on both)
+
+| Setting | Port 6.12.96 | Baseline 4.19 | Expected effect |
+|---|---|---|---|
+| `CONFIG_HZ` | 250 | 100 | Port takes 2.5x the timer ticks; feeds per-tick work incl. schedutil updates. |
+| KASAN | `KASAN_HW_TAGS` on (diagnostic) | off (`KASAN_STACK=0` remnant only) | Allocation-path cost + memory reservation on the port. |
+| LRU | standard | `LRU_GEN=y` + `LRU_GEN_ENABLED` (MGLRU) | Baseline has MGLRU reclaim; the 6.12 tree also carries MGLRU-capable mm but `CONFIG_LRU_GEN` was not found enabled in the port's live config — **unverified**; worth a config check. |
+| PAN | `ARM64_SW_TTBR0_PAN` on | `ARM64_PAN=y` + `ARM64_SW_TTBR0_PAN=y` | Baseline sets both; software-PAN cost is common to both, so not an A/B factor. |
+| `SCHEDSTATS` | on | on | Even. |
+
+## Measured A/B
+
+| Metric | Port 6.12.96 #47 | Baseline 4.19 st20 | Verdict |
+|---|---|---|---|
+| `sugov:0` thread CPU | **8.3–8.4%** of one core, twice sampled | **0.3%** | **~27x governor-thread burn on the port.** Same schedutil, same 19-OPP OC table (480 MHz–2784 MHz), same single policy0 over CPUs 0-7 on both, and neither exposes a `schedutil/rate_limit_us` tunable — so the empty-tunable directory is not the differentiator. The port's qcom cpufreq driver is firing updates ~27x more often. Top suspect for the elevated idle load and a real battery cost. |
+| `ramoops_snap` thread | 1.4% (disabled in source by `e20f8035e2`, not yet built/booted) | n/a (feature does not exist) | Reclaimed once a post-`e20f8035e2` build is flashed. |
+| 200 sequential execs | 5.64 s (28.2 ms/exec) | **3.34 s (16.7 ms/exec)** | **Port is ~1.7x slower** on fork+exec+page-in. Candidates, unverified: KASAN_HW_TAGS allocation cost, HZ=250 timer pressure, heavier 6.12 fork/exec paths, or the port's larger swap pressure (1.48 GiB vs 1.15 GiB in zram). Needs a controlled re-run (ideally KASAN-off build) before attributing. |
+| md5 of 200 MB stream | 0.96 s | 0.95 s | Tie — pure compute+memcpy at boosted freq is equivalent. |
+| 128 MB write through page cache | 487 MB/s | 506 MB/s | Within noise; memory bandwidth is not the problem. |
+| kswapd0 | ~1.0–1.1% at 34 min uptime | 3.7–13.1% at 6–13 min uptime | Not comparable yet — stock was still settling from boot with app restore. Re-sample at matched uptime. |
+| zram swap in use | 1.48 GiB (lzo-rle+zstd recomp) | 1.15 GiB (lzo default, zstd avail) | Port holds ~29% more swapped pages in a similar session; consistent with KASAN's footprint and different usage length. Compression ratio similar (~3.7x both). |
+| Resched IPIs (IPI0) | ~78/s avg | ~2063/s avg | Not comparable — stock window had active UI interaction. Function-call IPIs ran the other way (~913/s port vs ~116/s stock); both consistent with workload difference, not evidence of a defect. |
+| Wakeup sources | clean, no `prevent_suspend_time` | clean (`wlan` 108 ms total is the largest) | Even; no wakelock abuser on either side. |
+| Suspend stats | 0 attempts (screen on) | 0 attempts (screen on) | Deep sleep remains **untested on both** — the overnight unplugged screen-off test is still the decisive battery experiment. |
+| Fuel gauge while charging | `current_now` flips sign between samples (−10 mA … −195 mA … +35 mA) | stable positive (+453 mA charging) | Same `qpnp-fg` hardware reads sanely on 4.19 but is erratic on the port — the 6.12 `qpnp-fg` port's current reporting is suspect (calibration, sign convention, or sampling path). Fixing this is a prerequisite for any port-side battery measurement. |
+| Thermal mitigation | CPU tsens zones bound to `cpufreq-cpu0` cdev, trips 80/88/100 °C | separate `*-usr` zones (`apc0-cpu*`, `apc1-l2`), mitgov-style | Different frameworks; both wired. Under-load throttle behavior unverified on both. |
+
+## Follow-up: memory subsystem measurement (user-provided, same day)
+
+User-reported numbers from the stock (4.19) boot, benchmark tool unrecorded:
+
+- **CPU→DRAM bandwidth: 7095 MB/s.** SD625 ships single-channel LPDDR3-1866
+  (theoretical ~14.9 GB/s = 1866 MT/s × 8 B), with practical single-channel
+  stream results on this memory class typically ~5.3–7.5 GB/s
+  (nanoreview/versus listings). 7095 MB/s is ~48% of theoretical — squarely
+  normal for LPDDR3 stream efficiency on Cortex-A53.
+- **cpu0→DRAM latency floor == cpu4→DRAM latency floor.** The two A53
+  clusters both hang off the CCI-500 interconnect to a single memory
+  controller, so there is no cluster-local memory advantage to find —
+  equal floors are the expected hardware truth, and this measures it.
+
+### Direct verification on run403 (`porting/tools/membench.c`, root, pinned)
+
+A purpose-built static benchmark (`aarch64-linux-gnu-gcc -static -O2`) run
+on the port measured **copy 2.6–4.1 GB/s, sequential read ~10.2 GB/s, and
+pointer-chase latency 149.2 ns (cpu0) vs 151.0 ns (cpu4)**. The memory
+subsystem on the port is healthy and at hardware-parity; the two A53
+clusters show equal DRAM latency floors through CCI-500, exactly as on the
+4.19 baseline. Transparent hugepages make no difference (madvise vs always
+within noise). `aarch64-linux-gnu-gcc` was used with no runtime glibc issue
+because the benchmark bypasses the vDSO (see the two environment gotchas
+below).
+
+Consequences:
+
+1. **DevCheck's 762 MB/s "CPU-DRAM bandwidth" reading on the port is an
+   artifact of the app's own test, not hardware.** The direct measurement
+   is ~5x higher, and DevCheck's per-core latency floors missing on the
+   port is consistent with its benchmark failing partway rather than the
+   memory being slow. Hardware exonerated on both kernels; the 1.7x
+   exec-latency gap remains a kernel-path matter.
+2. Scheduler placement on this SoC has no memory-locality dimension —
+   cluster choice affects power/thermal headroom, not latency.
+3. For a formal stock-vs-port bandwidth A/B, rerun the same binary after
+   the next stock flash; the current comparison rests on direct-port
+   numbers vs the app-reported stock number.
+
+### Environment gotchas for host-built binaries on the device
+
+Both were hit while building this benchmark and will bite any future
+statically-linked glibc tooling pushed to the phone:
+
+- **glibc + 6.12 vvar contract:** static glibc's clock path reads the
+  vvar time-namespace page unconditionally; `vvar_fault()` in
+  `arch/arm64/kernel/vdso.c` returns `VM_FAULT_SIGBUS` for that page
+  unless the task is inside a time namespace. Every clock access then
+  SIGBUSes (BUS_ADRERR). Bionic never touches that page, so the Android
+  system is unaffected. Host-built benchmarks must call
+  `syscall(SYS_clock_gettime)` directly.
+- **CNTVCT_EL0 reads 0 from EL0** on this platform (Qualcomm traps it),
+  so the generic-timer register is not a usable timing source either;
+  `cntfrq_el0` reads fine but the counter does not advance.
+
+After the table above, the baseline was traced at 2 Hz through three phases on
+one continuous session (`06-freq-trace-dual-phase.txt`,
+`07-freq-trace-screenoff-idle.txt`): ~3 min in use, ~3 min untouched with the
+screen on, ~3 min screen-off/dozing. Aggregate CPU busy fell 18.2% → 8.4% →
+3.6% across the phases, and the requested frequency's median fell
+2304 → 1958 → 1804 MHz with max-bin residency 45% → 22% → 13%.
+
+Two corrections and one caveat came out of it:
+
+1. **Residency percentages corrected.** The port's full `time_in_state`
+   sums to ~179k ticks (~716 s) — the top bin (2784 MHz) is **52% of
+   accounted time and the 480 MHz floor 42%**, not the "72%" first quoted
+   (an addition error). The baseline's table covers ~100% of its 952 s
+   session: floor 62%, max 26%, mid steps 12%. The directional conclusion
+   is unchanged and now arithmetically checked: stock's floor:max ratio is
+   2.4:1, the port's is 0.8:1 — the port really does live nearer the top.
+   The port table covering only ~35% of its session remains unexplained
+   (likely busy-time-only accounting in the 6.12 stats path).
+2. **`scaling_cur_freq` is misleading during light load.** Even fully
+   dozing (3.6% busy), the live readout never reported the 480 MHz floor —
+   the 2 Hz sampler's own wakeups keep the cluster out of deep idle and
+   pin the last requested frequency. Any live-trace methodology must
+   account for this observer effect; `time_in_state` is the authoritative
+   view of where time went.
+3. The 2 Hz trace data and the phase timing chart are captured in
+   `porting/artifacts/snapshot60/stock-perf-20261024T*/`; the same capture
+   is to be repeated on the port with
+   `porting/tools/freq-phase-trace.sh` (uses + idle + screen-off, one run
+   per phase) after the next port flash.
+
+## Verification on run403-camera (kernel `6.12.96-4k-gc168752039f0-dirty #48`, booted 2026-10-24 16:19 +0545)
+
+First build with the sugov rate-limit fix (`8c59c4232a`), the KASAN removal
+(`c168752039`) and the parked snapshotter (`e20f8035e2`):
+
+| Check | Result |
+|---|---|
+| `cpuinfo_transition_latency` | **5000000** — the DT fix is live and schedutil's limit is now 7.5 ms. |
+| `sugov:0` PCPU, settled (783 s, screen off) | **2.5%** (was 8.3%) — 3.3x better, still 8x the stock 0.3%. |
+| Transitions | 29537 over 783 s ≈ **38/s** (was implicitly hundreds; stock ~7/s). |
+| `ramoops_snap` | 0.0% PCPU — parked as designed (was 1.4% busy). |
+| Exec benchmark (200 runs) | 5.89 s ≈ unchanged vs 5.64 s — confirms KASAN was never the exec gap (it was inert); the 1.7x gap vs stock's 3.34 s persists. |
+| md5 200 MB | 0.95 s — compute parity unchanged. |
+| Image size | **47,566,848 B** — comfortable headroom under the 54,001,664 B DTB-overrun ceiling. |
+| `MemAvailable` | 1.84 GiB at settle (was 1.51 GiB on #47) — partly KASAN removal, partly session difference; single sample. |
+| Fuel gauge | still erratic while charging (−12.5 mA) — the `qpnp-fg` port issue stands. |
+
+Two residuals, in priority order:
+
+1. **Frequency still rides 2.15–2.4 GHz while the screen is off and dozing**
+   (`scaling_cur_freq` samples across a doze window), with `kswapd0` at a
+   steady ~2.4% and ~1.05 GiB of zram swap in use. The freq floor problem
+   is not the update *rate* alone: something sustains utilization during
+   doze. Prime suspect: reclaim/swap activity keeping util_avg elevated
+   (a reclaim↔freq feedback), or another polling thread. Next step: during
+   doze, capture per-thread CPU again plus a `cpu_frequency` trace if
+   available, and try the same window with swap pressure lower.
+2. **Per-transition cost is high**: 2.5% sugov at ~38 accepted transitions/s
+   ≈ 0.66 ms each (kthread wake + clk_set_rate + CPR corner + bandwidth
+   vote). If the doze-residency item above doesn't already shrink the
+   transition count, a further rate-limit bump (10 ms) is a cheap
+   experiment, but the honest fix is a fast-switch path in cpufreq-dt/APCC.
+
+The exec gap is untouched by both changes, as predicted; its next lever
+remains the HZ=100 config A/B or on-device profiling.
+
+## Conclusions
+
+1. **The port's biggest measured defect is the `sugov:0` burn (8.3% vs 0.3%).**
+   It is port-specific, reproducible in two samples, and cheap to chase:
+   instrument the 6.12 cpufreq driver's update path (possibly per-CPU tick
+   updates against the shared policy, or the missing ratelimit wiring noted
+   earlier). Fixing it likely removes most of the port's elevated idle load.
+2. **The exec-path gap (1.7x) is the second real target.** Re-run after a
+   KASAN-off, post-`e20f8035e2` build; if the gap persists, profile
+   `do_fork`/`exec` on-device (simpleperf is present on the baseline; the
+   port has `PERF_EVENTS=y`).
+3. **Compute and memory bandwidth are at parity** (md5, dd). The port's raw
+   speed is fine; its overheads are in housekeeping threads and hot kernel
+   paths.
+4. **Battery conclusions remain blocked** on: (a) the erratic port fuel-gauge
+   readings, (b) untested deep sleep on both kernels. Both are prerequisites
+   before any mA comparison means anything.
+
+## Re-run checklist for the next port build
+
+Flash a post-`e20f8035e2` build and repeat: sugov PCPU over 10 s, the 200-exec
+benchmark, `current_now` stability while charging, and — if possible — one
+unplugged screen-off suspend/overnight drain window on each kernel.

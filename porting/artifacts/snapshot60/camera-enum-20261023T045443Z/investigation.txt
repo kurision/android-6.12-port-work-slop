@@ -1,0 +1,40 @@
+Camera discovery investigation — run380 live, metadata only
+
+Observed twice in media-enum.txt and media-enum-repeat.txt:
+- /dev/media0 model msm_config; driver msm_cam.
+- Dense query ID1 returns video0, ID2 returns EINVAL.
+- NEXT enumeration returns IDs1,4,6,8,9,11,13,15,17.
+- ID4 is v4l-subdev0 (sysfs name msm_sensor_init), type0x20000,
+  group_id0, device81:1. All returned group IDs are0.
+- Camera provider reports Open sensor_init subdev failed and0cameras.
+- Node name translation is already correct; no /dev/msm_sensor_init
+  pathname is needed when enumeration succeeds.
+
+Installed library proof:
+/vendor/lib/libmmcamera_interface.so archived locally (32-bit ARM ELF).
+get_num_of_cameras is exported at0x11089 (Thumb), size1588.
+Thumb disassembly archived as get_num_of_cameras.disasm.txt:
+-0x111ec initializes requested entity ID to1.
+-0x1121e..0x1122a issues MEDIA_IOC_ENUM_ENTITIES0xc1007c01.
+-0x11230..0x11236 branches away on ioctl failure.
+-0x11268..0x11272 requires type0x20000 and group14.
+-0x11274 increments entity ID by1; no NEXT flag.
+Thus the actual installed HAL stops at ID2 before reaching sensor-init ID4;
+fixing ID traversal alone would still fail the group14 predicate.
+
+Source/history cross-check:
+- Donor ../oc-test/drivers/media/platform/msm/camera_v2/sensor/msm_sensor_init.c:197 sets group MSM_CAMERA_SUBDEV_SENSOR_INIT(14).
+- Donor sensor driver sets group6, actuator7, eeprom8, CCI10, buffer-manager13; camera video group2. Other driver registration sites also use donor group metadata.
+- Current camera import contains no grp_id restoration. drivers/media/mc/mc-device.c:115 deliberately returns group_id0.
+- Import commit e7baf73f97a5515ae8bd605d883db849d4430a07 explicitly says not built/not booted; it does not establish legacy media enumeration ABI compatibility.
+- Camera model msm_config is retained; platform-driver rename msm_cam is not the model comparison failure.
+
+Conclusion: confirmed first camera discovery blocker is legacy media enumeration ABI incompatibility (sparse modern graph IDs plus discarded Qualcomm group metadata). This does not prove sensor power, I2C identification, calibration, ISP or capture work; qcamerasvr's complete exit path is not established here.
+
+Fix direction: camera-scoped compatibility for old entity enumeration and donor group metadata; preserve modern graph IDs internally. Review ENUM_LINKS/SETUP_LINK identity semantics and32-bit compat before choosing the implementation. Do not globally renumber graph objects or change standard enumeration for unrelated devices.
+
+Primary references:
+https://android.googlesource.com/platform/hardware/qcom/camera/+/3d63919a23d7e7954e160c48c36713267106c3c2/msmcobalt/QCamera2/stack/mm-camera-interface/src/mm_camera_interface.c
+https://docs.kernel.org/userspace-api/media/mediactl/media-ioc-enum-entities.html
+
+Only DEVICE_INFO and ENUM_ENTITIES metadata ioctls were issued. No sensor probe/power/capture ioctls, service restarts, source edits, kernel builds, reboots or flashes. Diagnostic executable remains on phone at the path recorded in remote-path.txt.
