@@ -107,6 +107,42 @@ Two corrections and one caveat came out of it:
    `porting/tools/freq-phase-trace.sh` (uses + idle + screen-off, one run
    per phase) after the next port flash.
 
+## Verification on run403-camera (kernel `6.12.96-4k-gc168752039f0-dirty #48`, booted 2026-10-24 16:19 +0545)
+
+First build with the sugov rate-limit fix (`8c59c4232a`), the KASAN removal
+(`c168752039`) and the parked snapshotter (`e20f8035e2`):
+
+| Check | Result |
+|---|---|
+| `cpuinfo_transition_latency` | **5000000** — the DT fix is live and schedutil's limit is now 7.5 ms. |
+| `sugov:0` PCPU, settled (783 s, screen off) | **2.5%** (was 8.3%) — 3.3x better, still 8x the stock 0.3%. |
+| Transitions | 29537 over 783 s ≈ **38/s** (was implicitly hundreds; stock ~7/s). |
+| `ramoops_snap` | 0.0% PCPU — parked as designed (was 1.4% busy). |
+| Exec benchmark (200 runs) | 5.89 s ≈ unchanged vs 5.64 s — confirms KASAN was never the exec gap (it was inert); the 1.7x gap vs stock's 3.34 s persists. |
+| md5 200 MB | 0.95 s — compute parity unchanged. |
+| Image size | **47,566,848 B** — comfortable headroom under the 54,001,664 B DTB-overrun ceiling. |
+| `MemAvailable` | 1.84 GiB at settle (was 1.51 GiB on #47) — partly KASAN removal, partly session difference; single sample. |
+| Fuel gauge | still erratic while charging (−12.5 mA) — the `qpnp-fg` port issue stands. |
+
+Two residuals, in priority order:
+
+1. **Frequency still rides 2.15–2.4 GHz while the screen is off and dozing**
+   (`scaling_cur_freq` samples across a doze window), with `kswapd0` at a
+   steady ~2.4% and ~1.05 GiB of zram swap in use. The freq floor problem
+   is not the update *rate* alone: something sustains utilization during
+   doze. Prime suspect: reclaim/swap activity keeping util_avg elevated
+   (a reclaim↔freq feedback), or another polling thread. Next step: during
+   doze, capture per-thread CPU again plus a `cpu_frequency` trace if
+   available, and try the same window with swap pressure lower.
+2. **Per-transition cost is high**: 2.5% sugov at ~38 accepted transitions/s
+   ≈ 0.66 ms each (kthread wake + clk_set_rate + CPR corner + bandwidth
+   vote). If the doze-residency item above doesn't already shrink the
+   transition count, a further rate-limit bump (10 ms) is a cheap
+   experiment, but the honest fix is a fast-switch path in cpufreq-dt/APCC.
+
+The exec gap is untouched by both changes, as predicted; its next lever
+remains the HZ=100 config A/B or on-device profiling.
+
 ## Conclusions
 
 1. **The port's biggest measured defect is the `sugov:0` burn (8.3% vs 0.3%).**
