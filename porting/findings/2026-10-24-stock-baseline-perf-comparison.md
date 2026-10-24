@@ -51,6 +51,38 @@ first honest A/B.
 | Fuel gauge while charging | `current_now` flips sign between samples (−10 mA … −195 mA … +35 mA) | stable positive (+453 mA charging) | Same `qpnp-fg` hardware reads sanely on 4.19 but is erratic on the port — the 6.12 `qpnp-fg` port's current reporting is suspect (calibration, sign convention, or sampling path). Fixing this is a prerequisite for any port-side battery measurement. |
 | Thermal mitigation | CPU tsens zones bound to `cpufreq-cpu0` cdev, trips 80/88/100 °C | separate `*-usr` zones (`apc0-cpu*`, `apc1-l2`), mitgov-style | Different frameworks; both wired. Under-load throttle behavior unverified on both. |
 
+## Follow-up: dual-phase frequency traces (same day, ~10:00 +0545)
+
+After the table above, the baseline was traced at 2 Hz through three phases on
+one continuous session (`06-freq-trace-dual-phase.txt`,
+`07-freq-trace-screenoff-idle.txt`): ~3 min in use, ~3 min untouched with the
+screen on, ~3 min screen-off/dozing. Aggregate CPU busy fell 18.2% → 8.4% →
+3.6% across the phases, and the requested frequency's median fell
+2304 → 1958 → 1804 MHz with max-bin residency 45% → 22% → 13%.
+
+Two corrections and one caveat came out of it:
+
+1. **Residency percentages corrected.** The port's full `time_in_state`
+   sums to ~179k ticks (~716 s) — the top bin (2784 MHz) is **52% of
+   accounted time and the 480 MHz floor 42%**, not the "72%" first quoted
+   (an addition error). The baseline's table covers ~100% of its 952 s
+   session: floor 62%, max 26%, mid steps 12%. The directional conclusion
+   is unchanged and now arithmetically checked: stock's floor:max ratio is
+   2.4:1, the port's is 0.8:1 — the port really does live nearer the top.
+   The port table covering only ~35% of its session remains unexplained
+   (likely busy-time-only accounting in the 6.12 stats path).
+2. **`scaling_cur_freq` is misleading during light load.** Even fully
+   dozing (3.6% busy), the live readout never reported the 480 MHz floor —
+   the 2 Hz sampler's own wakeups keep the cluster out of deep idle and
+   pin the last requested frequency. Any live-trace methodology must
+   account for this observer effect; `time_in_state` is the authoritative
+   view of where time went.
+3. The 2 Hz trace data and the phase timing chart are captured in
+   `porting/artifacts/snapshot60/stock-perf-20261024T*/`; the same capture
+   is to be repeated on the port with
+   `porting/tools/freq-phase-trace.sh` (uses + idle + screen-off, one run
+   per phase) after the next port flash.
+
 ## Conclusions
 
 1. **The port's biggest measured defect is the `sugov:0` burn (8.3% vs 0.3%).**
