@@ -573,7 +573,13 @@ int main(int argc, char **argv)
         ram = (ROOT / "fs/pstore/ram.c").read_text()
         eeprom = (CAM / "sensor/eeprom/msm_eeprom.c").read_text()
         self.assertIn("late_initcall(msm_eeprom_init_module);", eeprom)
-        self.assertRegex(ram, r"#define RAMOOPS_PERIODIC_SNAPSHOTS\s+1\b")
+        # Periodic snapshots are off, so the flushed-sample gate never fires
+        # on its own: the snapshotter must release the camera late-init
+        # waiters at start or EEPROM/CPP registration would always time out.
+        self.assertRegex(ram, r"#define RAMOOPS_PERIODIC_SNAPSHOTS\s+0\b")
+        thread_head = ram.split("static int ramoops_snap_thread(", 1)[1]
+        thread_head = thread_head.split("while (!kthread_should_stop())", 1)[0]
+        self.assertIn("complete_all(&ramoops_snapshot_ready)", thread_head)
         self.assertIn("static DECLARE_COMPLETION(ramoops_snapshot_ready);", ram)
         wait = re.search(r"^int ramoops_wait_snapshot_ready\(.*?^}",
                          ram, re.M | re.S)[0]

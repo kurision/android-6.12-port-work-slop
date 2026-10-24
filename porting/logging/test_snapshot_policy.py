@@ -33,6 +33,7 @@ STUBS = r"""
 #define RAMOOPS_SNAP_SLOTS 2
 #define RAMOOPS_SNAP_VERSION 1
 #define RAMOOPS_TAIL_OFFSET 0
+#define MAX_SCHEDULE_TIMEOUT (1 << 30)
 #define smp_load_acquire(p) (*(p))
 #define msecs_to_jiffies(ms) (ms)
 #define pr_info(...) ((void)0)
@@ -50,10 +51,17 @@ struct ramoops_snapper {
 };
 static char buffer[8192], ramoops_reset_previous[4096];
 static struct ramoops_snapper ramoops_snapper;
+static struct completion ramoops_snapshot_ready;
 static bool ramoops_reset_capture = true, ramoops_snap_fast = true;
 static bool stopped, stop_on_request;
 static unsigned int waits, snapshots, previous_commits, watchdog_reads;
-static unsigned int requests, failed_snapshots;
+static unsigned int requests, failed_snapshots, ready_releases;
+
+static void complete_all(struct completion *c)
+{
+    (void)c;
+    ready_releases++;
+}
 
 static bool kthread_should_stop(void) { return stopped; }
 static int ramoops_snap_open_logdump(struct ramoops_snapper *s)
@@ -64,16 +72,23 @@ static int ramoops_snap_open_logdump(struct ramoops_snapper *s)
 static int wait_for_completion_interruptible_timeout(struct completion *c, int ms)
 {
     (void)c;
+    if (ms == MAX_SCHEDULE_TIMEOUT) {
+        /* Parked worker: only an explicit request wakes it. */
+        if (requests) {
+            requests--;
+            if (stop_on_request)
+                stopped = true;
+            return 1;
+        }
+        waits++;
+        if (waits > 8)
+            stopped = true;
+        return 0;
+    }
     assert(ms == RAMOOPS_SNAP_INTERVAL_MS);
     if (waits++ > 8) {
         stopped = true;
         return 0;
-    }
-    if (requests) {
-        requests--;
-        if (stop_on_request)
-            stopped = true;
-        return 1;
     }
     return 0;
 }
@@ -111,17 +126,22 @@ static void check(unsigned int pending, unsigned int failures, bool stop,
     stopped = false;
     stop_on_request = stop;
     waits = snapshots = previous_commits = watchdog_reads = 0;
+    ready_releases = 0;
     requests = pending;
     failed_snapshots = failures;
     assert(ramoops_snap_thread(NULL) == 0);
     assert(snapshots == expected);
     assert(previous_commits == 1);
     assert(watchdog_reads == 0);
+    assert(ready_releases >= 1); /* Camera gates must be released at least
+                                    once; the first-success snapshot site may
+                                    complete again (idempotent). */
     assert(waits < 12);
 }
 int main(void)
 {
     check(0, 0, false, 0); /* Timeouts must not write periodic snapshots. */
+                           /* Worker stays parked on an explicit request. */
     check(1, 0, false, 1); /* Explicit panic wake still captures once. */
     check(1, 1, false, 2); /* A transient failure keeps the panic retry. */
     check(2, 1, false, 3); /* A later explicit request can capture again. */
